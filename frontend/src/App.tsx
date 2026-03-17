@@ -19,22 +19,19 @@ import Explore from './pages/Explore'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Pricing from './pages/Pricing'
-import ProjectView from './pages/ProjectView'
 import PublicProfile from './pages/PublicProfile'
-import Model3DView from './pages/Model3DView'
 import NotFound from './pages/NotFound'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminNutritionists from './pages/admin/Nutritionists'
 
 // Páginas do nutricionista
 import Dashboard from './pages/dashboard/Dashboard'
-import Galleries from './pages/dashboard/Galleries'
+import NutritionistMealPlans from './pages/dashboard/MealPlans'
 import PublicProfileEdit from './pages/dashboard/PublicProfile'
 import Chat from './pages/dashboard/Chat'
 import Services from './pages/dashboard/Services'
 import Settings from './pages/dashboard/Settings'
 import Calendar from './pages/dashboard/Calendar'
-import Models3D from './pages/dashboard/Models3D'
 import Analytics from './pages/dashboard/Analytics'
 import Patients from './pages/dashboard/Patients'
 import LabExams from './pages/dashboard/LabExams'
@@ -42,7 +39,6 @@ import FoodDiaryPatients from './pages/dashboard/FoodDiaryPatients'
 
 // Páginas do paciente
 import ClientDashboard from './pages/client/ClientDashboard'
-import ClientProjects from './pages/client/ClientProjects'
 import ClientFavorites from './pages/client/ClientFavorites'
 import ClientMessages from './pages/client/ClientMessages'
 import ClientBookings from './pages/client/ClientBookings'
@@ -78,9 +74,7 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<Signup />} />
                             <Route path="/pricing" element={<Pricing />} />
-                            <Route path="/project/:id" element={<ProjectView />} />
                             <Route path="/portfolio/:username" element={<PublicProfile />} />
-                            <Route path="/models3d/:id" element={<Model3DView />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                         </main>
@@ -97,8 +91,7 @@ function App() {
                         <DashboardLayout>
                           <Routes>
                             <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/meal-plans" element={<Galleries />} />
-                            <Route path="/projects" element={<Galleries />} />
+                            <Route path="/meal-plans" element={<NutritionistMealPlans />} />
                             <Route path="/patients" element={<Patients />} />
                             <Route path="/food-diary" element={<FoodDiaryPatients />} />
                             <Route path="/lab-exams" element={<LabExams />} />
@@ -106,7 +99,6 @@ function App() {
                             <Route path="/messages" element={<Chat />} />
                             <Route path="/services" element={<Services />} />
                             <Route path="/calendar" element={<Calendar />} />
-                            <Route path="/models" element={<Models3D />} />
                             <Route path="/analytics" element={<Analytics />} />
                             <Route path="/settings" element={<Settings />} />
                             <Route path="*" element={<NotFound />} />
@@ -131,7 +123,6 @@ function App() {
                             <Route path="/progress" element={<PatientProgress />} />
                             <Route path="/shopping-list" element={<PatientShoppingList />} />
                             <Route path="/assistant" element={<PatientAIAssistant />} />
-                            <Route path="/projects" element={<ClientProjects />} />
                             <Route path="/favorites" element={<ClientFavorites />} />
                             <Route path="/messages" element={<ClientMessages />} />
                             <Route path="/bookings" element={<ClientBookings />} />

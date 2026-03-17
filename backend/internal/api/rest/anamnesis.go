@@ -90,9 +90,22 @@ func submitAnamnesisAnswers(c *gin.Context) {
 }
 
 func generateAnamnesisAISummary(c *gin.Context) {
-	anamnesisID := c.Param("id")
+	patientID := c.Param("patientId")
+	userID, _ := c.Get("userID")
+	userIDStr := userID.(string)
 
-	summary, err := ai.GenerateAnamnesisSummary(c.Request.Context(), anamnesisID)
+	// Buscar última anamnese do paciente para este nutricionista
+	anam, err := anamnesis.GetAnamnesis(c.Request.Context(), patientID, userIDStr)
+	if err != nil {
+		if err == anamnesis.ErrAnamnesisNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Anamnese não encontrada"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar anamnese"})
+		return
+	}
+
+	summary, err := ai.GenerateAnamnesisSummary(c.Request.Context(), anam.ID.Hex())
 	if err != nil {
 		if err == ai.ErrAIUnavailable {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "IA não disponível"})

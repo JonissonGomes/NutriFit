@@ -66,32 +66,7 @@ func SetupRouter() *gin.Engine {
 				mealPlans.GET("/:id/substitutions/:foodId", getFoodSubstitutions)
 			}
 
-			// Images
-			images := protected.Group("/images")
-			{
-				images.POST("/upload", uploadImage)
-				images.POST("/upload/batch", uploadImagesBatch)
-				images.GET("/:id", getImage)
-				images.GET("/:id/url", getImageURLs)
-				images.PUT("/:id", updateImage)
-				images.DELETE("/:id", deleteImage)
-				images.POST("/:id/reprocess", reprocessImage)
-			}
-
-			// 3D Models
-			models3d := protected.Group("/models3d")
-			{
-				models3d.POST("/upload", uploadModel3D)
-				models3d.GET("", listModels3D)
-				models3d.GET("/stats", getModel3DStats)
-				models3d.GET("/formats", getSupportedFormats)
-				models3d.GET("/:id", getModel3D)
-				models3d.PUT("/:id", updateModel3D)
-				models3d.DELETE("/:id", deleteModel3D)
-				models3d.GET("/:id/download", downloadModel3D)
-				models3d.POST("/:id/retry", retryModel3DProcessing)
-				models3d.GET("/project/:projectId", getModel3DsByProject)
-			}
+			// Images e Models3D eram recursos legados (portfólio/arquivos) e foram descontinuados no NuFit.
 
 			// Messages
 			messages := protected.Group("/messages")
@@ -189,7 +164,8 @@ func SetupRouter() *gin.Engine {
 				anamnesis.POST("/templates", createAnamnesisTemplate)
 				anamnesis.GET("/:patientId", getAnamnesis)
 				anamnesis.POST("/:patientId/answers", submitAnamnesisAnswers)
-				anamnesis.POST("/:id/ai-summary", generateAnamnesisAISummary)
+				// AI summary da última anamnese registrada do paciente
+				anamnesis.POST("/:patientId/ai-summary", generateAnamnesisAISummary)
 			}
 
 			// Food Diary
@@ -379,8 +355,7 @@ func SetupRouter() *gin.Engine {
 			// Public nutritionist services
 			public.GET("/nutritionists/:nutritionistId/services", getPublicNutritionistServices)
 
-			// Public 3D Models
-			public.GET("/models3d/:id", getPublicModel3D)
+			// Public 3D Models (descontinuado)
 
 			// Public nutritionist reviews
 			public.GET("/nutritionists/:nutritionistId/reviews", getNutritionistReviews)

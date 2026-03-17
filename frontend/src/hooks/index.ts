@@ -1,9 +1,5 @@
-// ============================================
-// EXPORTAÇÃO CENTRALIZADA DOS HOOKS
-// ============================================
-
-export { useProjects, useProject } from './useProjects'
-export { useImages } from './useImages'
+// Hooks legados (projects/images) foram descontinuados no NuFit.
+// Mantemos este arquivo para evitar imports quebrados caso existam.
 
 
 

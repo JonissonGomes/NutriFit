@@ -16,7 +16,6 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import WarningIcon from '@mui/icons-material/Warning'
 import InfoIcon from '@mui/icons-material/Info'
-import ViewInArIcon from '@mui/icons-material/ViewInAr'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import PeopleIcon from '@mui/icons-material/People'
 import ScienceIcon from '@mui/icons-material/Science'
@@ -54,7 +53,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/nutritionist/messages', icon: ChatIcon, label: 'Mensagens' },
     { path: '/nutritionist/services', icon: WorkIcon, label: 'Serviços' },
     { path: '/nutritionist/calendar', icon: CalendarTodayIcon, label: 'Agenda' },
-    { path: '/nutritionist/models', icon: ViewInArIcon, label: 'Modelos 3D' },
     { path: '/nutritionist/analytics', icon: BarChartIcon, label: 'Estatísticas' },
     { path: '/nutritionist/settings', icon: SettingsIcon, label: 'Configurações' },
   ]
