@@ -1,13 +1,16 @@
 package rest
 
 import (
+	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"arck-design/backend/internal/api/dto"
 	"arck-design/backend/internal/models"
 	"arck-design/backend/internal/services/auth"
+	"arck-design/backend/internal/services/cfm"
 )
 
 func register(c *gin.Context) {
@@ -111,6 +114,23 @@ func logout(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Sessão encerrada com sucesso"})
+}
+
+func validateCRM(c *gin.Context) {
+	uf := strings.TrimSpace(strings.ToUpper(c.Query("uf")))
+	number := strings.TrimSpace(c.Query("number"))
+	if uf == "" || number == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetros uf e number são obrigatórios"})
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 12*time.Second)
+	defer cancel()
+	valid, err := cfm.NewClient().ValidateCRM(ctx, uf, number)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"valid": false, "error": "Não foi possível verificar no portal do CFM no momento"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"valid": valid, "error": ""})
 }
 
 func checkRegistrationAvailable(c *gin.Context) {

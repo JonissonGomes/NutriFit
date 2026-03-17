@@ -13,6 +13,7 @@ import (
 	"arck-design/backend/internal/config"
 	"arck-design/backend/internal/database"
 	"arck-design/backend/internal/models"
+	"arck-design/backend/internal/services/cfm"
 )
 
 var (
@@ -101,6 +102,19 @@ func Register(req *models.RegisterRequest) (*models.User, *TokenPair, error) {
 		}
 		if taken {
 			return nil, nil, errors.New("este CRN/CRM já está cadastrado na plataforma")
+		}
+		// Validação opcional de CRM no portal do CFM (gratuita). Em falha, não bloqueia o registro.
+		if role == models.RoleMedico && reg.Type == "CRM" {
+			if uf, number, ok := cfm.ParseCRMNumber(reg.Number); ok && uf != "" && number != "" {
+				cfmCtx, cfmCancel := context.WithTimeout(context.Background(), 12*time.Second)
+				valid, cfmErr := cfm.NewClient().ValidateCRM(cfmCtx, uf, number)
+				cfmCancel()
+				if cfmErr == nil && !valid {
+					// CRM não encontrado no CFM; mesmo assim permitimos registro (fallback solicitado).
+					// Opcional: log ou flag "não verificado" no futuro.
+				}
+				// Se cfmErr != nil (timeout, indisponível, etc.), ignoramos e seguimos com o cadastro.
+			}
 		}
 	}
 

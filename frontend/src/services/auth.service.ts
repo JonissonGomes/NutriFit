@@ -289,6 +289,17 @@ export const authService = {
       { requiresAuth: false }
     )
   },
+
+  /**
+   * Validar CRM no portal do CFM (opcional, gratuito).
+   * Requer UF + número. Retorna { valid, error }.
+   */
+  async validateCRM(uf: string, number: string): Promise<ApiResponse<{ valid: boolean; error?: string }>> {
+    return api.get<{ valid: boolean; error?: string }>(
+      `/auth/validate-crm?uf=${encodeURIComponent(uf.trim().toUpperCase())}&number=${encodeURIComponent(number.trim())}`,
+      { requiresAuth: false }
+    )
+  },
 }
 
 // ============================================

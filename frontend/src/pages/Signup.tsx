@@ -25,6 +25,7 @@ const Signup = () => {
   const [registrationNumber, setRegistrationNumber] = useState('')
   const [registrationAvailable, setRegistrationAvailable] = useState<boolean | null>(null)
   const [checkingReg, setCheckingReg] = useState(false)
+  const [crmCfmStatus, setCrmCfmStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid' | 'unavailable'>('idle')
 
   // Preselect role from querystring (?role=nutricionista|medico|paciente)
   useEffect(() => {
@@ -33,9 +34,14 @@ const Signup = () => {
       setFormData((prev) => ({ ...prev, accountType: qsRole }))
       setRegistrationNumber('')
       setRegistrationAvailable(null)
+      setCrmCfmStatus('idle')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
+
+  useEffect(() => {
+    if (formData.accountType !== 'medico') setCrmCfmStatus('idle')
+  }, [formData.accountType])
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
@@ -182,9 +188,11 @@ const Signup = () => {
     const number = registrationNumber.trim()
     if (!number) {
       setRegistrationAvailable(null)
+      if (formData.accountType === 'medico') setCrmCfmStatus('idle')
       return
     }
     setCheckingReg(true)
+    if (formData.accountType === 'medico') setCrmCfmStatus('idle')
     const type: 'CRN' | 'CRM' = formData.accountType === 'nutricionista' ? 'CRN' : 'CRM'
     const res = await authService.checkRegistrationAvailable(type, number)
     setCheckingReg(false)
@@ -193,6 +201,19 @@ const Signup = () => {
       return
     }
     setRegistrationAvailable(res.data?.available ?? null)
+    // Para médico: se o CRM tiver formato CRM/UF 123456, validar no CFM
+    if (formData.accountType === 'medico' && type === 'CRM') {
+      const match = number.match(/CRM\s*\/?\s*([A-Za-z]{2})\s*(\d{4,8})/i)
+      if (match) {
+        const [, uf, num] = match
+        setCrmCfmStatus('checking')
+        const cfmRes = await authService.validateCRM(uf!, num!)
+        if (cfmRes.error) setCrmCfmStatus('unavailable')
+        else setCrmCfmStatus(cfmRes.data?.valid ? 'valid' : 'invalid')
+      } else {
+        setCrmCfmStatus('idle')
+      }
+    }
   }
 
   return (
@@ -354,15 +375,31 @@ const Signup = () => {
                     placeholder={formData.accountType === 'nutricionista' ? 'Ex.: CRN-1 12345 (ou apenas o número)' : 'Ex.: CRM/SP 123456 (ou apenas o número)'}
                   />
                 </div>
-                <div className="mt-2 text-xs">
+                <div className="mt-2 space-y-1 text-xs">
                   {checkingReg ? (
                     <span className="text-stone-400">Verificando disponibilidade...</span>
                   ) : registrationAvailable === true ? (
-                    <span className="text-green-400">Registro disponível</span>
+                    <span className="text-green-400">Registro disponível na plataforma</span>
                   ) : registrationAvailable === false ? (
                     <span className="text-red-400">Este CRN/CRM já está cadastrado na plataforma</span>
                   ) : (
-                    <span className="text-stone-400">O registro será validado e deve ser único na plataforma.</span>
+                    <span className="text-stone-400">O registro deve ser único na plataforma.</span>
+                  )}
+                  {formData.accountType === 'medico' && registrationNumber.trim() && (
+                    <>
+                      {crmCfmStatus === 'checking' && (
+                        <span className="block text-stone-400">Verificando no portal do CFM...</span>
+                      )}
+                      {crmCfmStatus === 'valid' && (
+                        <span className="block text-green-400">CRM encontrado no portal do CFM.</span>
+                      )}
+                      {crmCfmStatus === 'invalid' && (
+                        <span className="block text-amber-400">CRM não encontrado no CFM. Use o formato CRM/UF 123456 para verificar.</span>
+                      )}
+                      {crmCfmStatus === 'unavailable' && (
+                        <span className="block text-stone-500">Verificação no CFM indisponível no momento. O cadastro será aceito.</span>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
