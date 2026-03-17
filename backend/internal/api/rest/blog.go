@@ -79,8 +79,8 @@ func createBlogPost(c *gin.Context) {
 
 	// Verificar se é arquiteto
 	userRole, _ := c.Get("userRole")
-	if userRole != "arquiteto" && userRole != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Apenas arquitetos podem criar posts"})
+	if userRole != "nutricionista" && userRole != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Apenas nutricionistas podem criar posts"})
 		return
 	}
 

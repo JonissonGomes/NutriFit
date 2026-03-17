@@ -272,8 +272,8 @@ func UpdateReview(ctx context.Context, reviewID, patientID string, updates *mode
 		return nil, err
 	}
 
-	// Atualizar média de avaliação do arquiteto
-	go updateArchitectRating(context.Background(), review.ArchitectID.Hex())
+	// Atualizar média de avaliação do nutricionista
+	go updateNutritionistRating(context.Background(), review.NutritionistID.Hex())
 
 	return &review, nil
 }

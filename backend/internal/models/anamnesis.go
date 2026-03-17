@@ -29,7 +29,8 @@ const (
 	QuestionTypeBoolean    QuestionType = "boolean"
 )
 
-type Question struct {
+// FormQuestion representa um item de pergunta em um template de anamnese (evita conflito com models.Question do fórum).
+type FormQuestion struct {
 	ID          string      `bson:"id" json:"id"`
 	Type        QuestionType `bson:"type" json:"type"`
 	Label       string      `bson:"label" json:"label"`
@@ -42,11 +43,11 @@ type Question struct {
 }
 
 type FormTemplate struct {
-	ID          string     `bson:"id" json:"id"`
-	Name        string     `bson:"name" json:"name"`
-	Description string     `bson:"description,omitempty" json:"description,omitempty"`
-	Category    string     `bson:"category,omitempty" json:"category,omitempty"`
-	Questions   []Question `bson:"questions" json:"questions"`
+	ID          string         `bson:"id" json:"id"`
+	Name        string         `bson:"name" json:"name"`
+	Description string         `bson:"description,omitempty" json:"description,omitempty"`
+	Category    string         `bson:"category,omitempty" json:"category,omitempty"`
+	Questions   []FormQuestion `bson:"questions" json:"questions"`
 	IsDefault   bool       `bson:"isDefault" json:"isDefault"`
 	CreatedAt   time.Time  `bson:"createdAt" json:"createdAt"`
 	UpdatedAt   time.Time  `bson:"updatedAt" json:"updatedAt"`

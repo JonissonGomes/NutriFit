@@ -50,7 +50,7 @@ func createReview(c *gin.Context) {
 		return
 	}
 
-	patientObjID, err := primitive.ObjectIDFromHex(clientID.(string))
+	patientObjID, err := primitive.ObjectIDFromHex(patientID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno"})
 		return

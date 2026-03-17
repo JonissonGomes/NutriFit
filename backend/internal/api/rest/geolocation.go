@@ -16,7 +16,7 @@ import (
 // HANDLERS DE GEOLOCALIZAÇÃO
 // ============================================
 
-// searchNearby busca arquitetos próximos a uma localização
+// searchNearby busca nutricionistas próximos a uma localização
 func searchNearby(c *gin.Context) {
 	latStr := c.Query("lat")
 	lngStr := c.Query("lng")
@@ -78,14 +78,14 @@ func searchNearby(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Coordenadas inválidas"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar arquitetos próximos"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar nutricionistas próximos"})
 		return
 	}
 
 	c.JSON(http.StatusOK, result)
 }
 
-// searchByLocation busca arquitetos por cidade/estado
+// searchByLocation busca nutricionistas por cidade/estado
 func searchByLocation(c *gin.Context) {
 	city := c.Query("city")
 	state := c.Query("state")
@@ -103,7 +103,7 @@ func searchByLocation(c *gin.Context) {
 
 	result, err := geolocation.SearchByCity(ctx, city, state, page, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar arquitetos"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar nutricionistas"})
 		return
 	}
 
@@ -185,7 +185,7 @@ func updateMyLocation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "location": location})
 }
 
-// getAvailableCities retorna cidades com arquitetos
+// getAvailableCities retorna cidades com nutricionistas
 func getAvailableCities(c *gin.Context) {
 	state := c.Query("state")
 
@@ -201,7 +201,7 @@ func getAvailableCities(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"cities": cities})
 }
 
-// getAvailableStates retorna estados com arquitetos
+// getAvailableStates retorna estados com nutricionistas
 func getAvailableStates(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()

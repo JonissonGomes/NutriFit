@@ -35,7 +35,7 @@ func Register(email, password, name string, role models.UserRole) (*models.User,
 
 	// Determine storage limit based on plan
 	storageLimit := config.AppConfig.StorageLimitFree
-	if role == models.RoleArquiteto {
+	if role == models.RoleNutricionista {
 		storageLimit = config.AppConfig.StorageLimitFree
 	}
 
@@ -163,7 +163,7 @@ func OAuthGoogle(code string) (*models.User, *TokenPair, error) {
 				ID:           primitive.NewObjectID(),
 				Email:        googleUser.Email,
 				Name:         googleUser.Name,
-				Role:         models.RoleArquiteto, // Default, can be changed
+				Role:         models.RoleNutricionista, // Default, can be changed
 				OAuth: &models.OAuth{
 					Google: &models.GoogleOAuth{
 						ID:      googleUser.ID,

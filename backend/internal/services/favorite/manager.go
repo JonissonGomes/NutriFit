@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	ErrAlreadyFavorited = errors.New("arquiteto já está nos favoritos")
-	ErrNotFavorited     = errors.New("arquiteto não está nos favoritos")
+	ErrAlreadyFavorited = errors.New("nutricionista já está nos favoritos")
+	ErrNotFavorited     = errors.New("nutricionista não está nos favoritos")
 	ErrInvalidData      = errors.New("dados inválidos")
 	ErrSelfFavorite     = errors.New("não é possível favoritar a si mesmo")
 )
@@ -23,7 +23,7 @@ var (
 // GERENCIAMENTO DE FAVORITOS
 // ============================================
 
-// AddFavorite adiciona um arquiteto aos favoritos do cliente
+// AddFavorite adiciona um nutricionista aos favoritos do paciente
 func AddFavorite(ctx context.Context, clientID, architectID string) (*models.Favorite, error) {
 	clientObjID, err := primitive.ObjectIDFromHex(clientID)
 	if err != nil {
@@ -64,7 +64,7 @@ func AddFavorite(ctx context.Context, clientID, architectID string) (*models.Fav
 	return favorite, nil
 }
 
-// RemoveFavorite remove um arquiteto dos favoritos
+// RemoveFavorite remove um nutricionista dos favoritos
 func RemoveFavorite(ctx context.Context, clientID, architectID string) error {
 	clientObjID, err := primitive.ObjectIDFromHex(clientID)
 	if err != nil {
@@ -92,7 +92,7 @@ func RemoveFavorite(ctx context.Context, clientID, architectID string) error {
 	return nil
 }
 
-// IsFavorited verifica se um arquiteto está nos favoritos
+// IsFavorited verifica se um nutricionista está nos favoritos
 func IsFavorited(ctx context.Context, clientID, architectID string) (bool, error) {
 	clientObjID, err := primitive.ObjectIDFromHex(clientID)
 	if err != nil {
@@ -124,7 +124,7 @@ type FavoriteWithProfile struct {
 	CreatedAt   time.Time               `json:"createdAt"`
 }
 
-// GetFavorites retorna a lista de favoritos do cliente com perfis
+// GetFavorites retorna a lista de favoritos do paciente com perfis
 func GetFavorites(ctx context.Context, clientID string, page, limit int) ([]*FavoriteWithProfile, int64, error) {
 	clientObjID, err := primitive.ObjectIDFromHex(clientID)
 	if err != nil {
@@ -188,7 +188,7 @@ func GetFavorites(ctx context.Context, clientID string, page, limit int) ([]*Fav
 	return results, total, nil
 }
 
-// GetFavoriteIDs retorna apenas os IDs dos arquitetos favoritados
+// GetFavoriteIDs retorna apenas os IDs dos nutricionistas favoritados
 func GetFavoriteIDs(ctx context.Context, clientID string) ([]string, error) {
 	clientObjID, err := primitive.ObjectIDFromHex(clientID)
 	if err != nil {
@@ -217,7 +217,7 @@ func GetFavoriteIDs(ctx context.Context, clientID string) ([]string, error) {
 	return ids, nil
 }
 
-// GetFavoritesCount retorna o número de favoritos do cliente
+// GetFavoritesCount retorna o número de favoritos do paciente
 func GetFavoritesCount(ctx context.Context, clientID string) (int64, error) {
 	clientObjID, err := primitive.ObjectIDFromHex(clientID)
 	if err != nil {
@@ -227,7 +227,7 @@ func GetFavoritesCount(ctx context.Context, clientID string) (int64, error) {
 	return database.FavoritesCollection.CountDocuments(ctx, bson.M{"clientId": clientObjID})
 }
 
-// GetFansCount retorna o número de "fãs" (clientes que favoritaram) de um arquiteto
+// GetFansCount retorna o número de "fãs" (pacientes que favoritaram) de um nutricionista
 func GetFansCount(ctx context.Context, architectID string) (int64, error) {
 	archObjID, err := primitive.ObjectIDFromHex(architectID)
 	if err != nil {

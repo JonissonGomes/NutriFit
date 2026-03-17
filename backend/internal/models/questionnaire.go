@@ -32,7 +32,7 @@ type Questionnaire struct {
 	Type          QuestionnaireType  `bson:"type" json:"type"`
 	Title         string             `bson:"title" json:"title"`
 	Description   string             `bson:"description,omitempty" json:"description,omitempty"`
-	Questions      []Question         `bson:"questions" json:"questions"` // reutiliza Question de anamnesis
+	Questions      []FormQuestion     `bson:"questions" json:"questions"` // item de formulário (models.FormQuestion)
 	Answers        []AnamnesisAnswer  `bson:"answers,omitempty" json:"answers,omitempty"` // reutiliza AnamnesisAnswer
 	Status        QuestionnaireStatus `bson:"status" json:"status"`
 	SentAt        *time.Time          `bson:"sentAt,omitempty" json:"sentAt,omitempty"`

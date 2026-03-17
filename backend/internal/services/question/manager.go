@@ -139,7 +139,7 @@ func CreateQuestion(ctx context.Context, userID, userName string, req models.Cre
 		UpdatedAt:   time.Now(),
 	}
 
-	// Se direcionada a um arquiteto específico
+	// Se direcionada a um nutricionista específico
 	if req.ArchitectID != "" {
 		architectOID, err := primitive.ObjectIDFromHex(req.ArchitectID)
 		if err == nil {
@@ -574,7 +574,7 @@ func GetPopularQuestions(ctx context.Context, limit int) ([]models.Question, err
 	return questions, nil
 }
 
-// GetQuestionsByArchitect retorna perguntas respondidas por um arquiteto
+// GetQuestionsByArchitect retorna perguntas respondidas por um nutricionista (nome mantido por compatibilidade)
 func GetQuestionsByArchitect(ctx context.Context, architectID string, limit int) ([]models.Question, error) {
 	architectOID, err := primitive.ObjectIDFromHex(architectID)
 	if err != nil {

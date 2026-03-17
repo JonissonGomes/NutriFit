@@ -24,14 +24,14 @@ type AuthPayload struct {
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
-	Type     string `json:"type" binding:"required,oneof=arquiteto cliente"`
+	Type     string `json:"type" binding:"required,oneof=nutricionista paciente"`
 }
 
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
 	Name     string `json:"name" binding:"required,min=2"`
-	Role     string `json:"role" binding:"required,oneof=arquiteto cliente"`
+	Role     string `json:"role" binding:"required,oneof=nutricionista paciente"`
 }
 
 type OAuthGoogleRequest struct {

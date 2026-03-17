@@ -2,7 +2,6 @@ package ai
 
 import (
 	"context"
-	"fmt"
 
 	"arck-design/backend/internal/models"
 )

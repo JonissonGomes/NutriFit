@@ -50,7 +50,7 @@ func GetEventByID(ctx context.Context, eventID, userID string) (*models.Event, e
 		return nil, ErrInvalidData
 	}
 
-	// Buscar evento do arquiteto ou onde o usuário é cliente
+	// Buscar evento do nutricionista ou onde o usuário é paciente
 	filter := bson.M{
 		"_id": evtObjID,
 		"$or": []bson.M{
@@ -79,7 +79,7 @@ func GetEventsByUser(ctx context.Context, userID string, filters EventFilters) (
 		return nil, 0, ErrInvalidData
 	}
 
-	// Filtro base: eventos do usuário ou onde é cliente
+	// Filtro base: eventos do usuário ou onde é paciente
 	filter := bson.M{
 		"$or": []bson.M{
 			{"userId": userObjID},

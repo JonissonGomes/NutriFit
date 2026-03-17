@@ -68,7 +68,7 @@ type Ratings struct {
 	Distribution map[string]int   `bson:"distribution" json:"distribution"` // "5": 100, "4": 20, etc
 }
 
-// ProfileLayout define o layout do perfil do arquiteto
+// ProfileLayout define o layout do perfil do nutricionista
 type ProfileLayoutType string
 
 const (

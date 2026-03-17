@@ -66,7 +66,7 @@ func GetServiceByID(ctx context.Context, serviceID, userID string) (*models.Serv
 	return &service, nil
 }
 
-// GetServicesByUser retorna todos os serviços de um arquiteto
+// GetServicesByUser retorna todos os serviços de um nutricionista
 func GetServicesByUser(ctx context.Context, userID string, activeOnly bool, page, limit int) ([]*models.Service, int64, error) {
 	userObjID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
@@ -202,7 +202,7 @@ type ServiceStats struct {
 	ByCategory  map[string]int64 `json:"byCategory"`
 }
 
-// GetServiceStats retorna estatísticas dos serviços do arquiteto
+// GetServiceStats retorna estatísticas dos serviços do nutricionista
 func GetServiceStats(ctx context.Context, userID string) (*ServiceStats, error) {
 	userObjID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
@@ -278,7 +278,7 @@ func GetServiceStats(ctx context.Context, userID string) (*ServiceStats, error) 
 }
 
 // ============================================
-// SERVIÇOS PÚBLICOS (para clientes)
+// SERVIÇOS PÚBLICOS (para pacientes)
 // ============================================
 
 // GetPublicServicesByNutritionist retorna serviços ativos de um nutricionista (visão pública)

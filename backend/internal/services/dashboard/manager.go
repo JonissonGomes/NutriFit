@@ -292,7 +292,137 @@ func GetUpcomingEvents(ctx context.Context, userID string, limit int) ([]*Upcomi
 }
 
 // ============================================
-// DASHBOARD DO CLIENTE
+// ALIASES NUTRICIONISTA (mesma lógica, cache/nomenclatura)
+// ============================================
+
+// RecentMealPlan resumo de plano alimentar para o dashboard do nutricionista.
+type RecentMealPlan struct {
+	ID         string    `json:"id"`
+	Title      string    `json:"title"`
+	Status     string    `json:"status"`
+	Category   string    `json:"category"`
+	PatientID  string    `json:"patientId,omitempty"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+}
+
+// GetNutritionistStats retorna estatísticas do nutricionista (planos alimentares e pacientes).
+func GetNutritionistStats(ctx context.Context, userID string) (*ArchitectStats, error) {
+	cacheKey := cache.DashboardStatsKey("nutritionist:" + userID)
+	var cachedStats ArchitectStats
+	if err := cache.Get(ctx, cacheKey, &cachedStats); err == nil {
+		return &cachedStats, nil
+	}
+
+	userObjID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := &ArchitectStats{}
+
+	// Total de planos alimentares
+	stats.TotalProjects, _ = database.MealPlansCollection.CountDocuments(ctx, bson.M{
+		"nutritionistId": userObjID,
+	})
+	stats.ActiveProjects, _ = database.MealPlansCollection.CountDocuments(ctx, bson.M{
+		"nutritionistId": userObjID,
+		"status":        bson.M{"$in": []string{string(models.MealPlanStatusActive), string(models.MealPlanStatusDraft)}},
+	})
+
+	// Total de pacientes (coleção patients)
+	stats.TotalClients, _ = database.PatientsCollection.CountDocuments(ctx, bson.M{
+		"nutritionistId": userObjID,
+	})
+
+	stats.TotalViews = 0 // planos alimentares não têm views por padrão
+
+	now := time.Now()
+	stats.PendingEvents, _ = database.EventsCollection.CountDocuments(ctx, bson.M{
+		"userId": userObjID,
+		"date":   bson.M{"$gte": now},
+		"status": bson.M{"$nin": []string{"cancelado", "concluido"}},
+	})
+
+	unreadPipeline := []bson.M{
+		{"$match": bson.M{"participants": userObjID}},
+		{"$project": bson.M{"unread": "$unreadCount." + userID}},
+		{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": "$unread"}}},
+	}
+	unreadCursor, err := database.ConversationsCollection.Aggregate(ctx, unreadPipeline)
+	if err == nil {
+		defer unreadCursor.Close(ctx)
+		if unreadCursor.Next(ctx) {
+			var result struct {
+				Total int64 `bson:"total"`
+			}
+			if unreadCursor.Decode(&result) == nil {
+				stats.UnreadMessages = result.Total
+			}
+		}
+	}
+
+	stats.TotalServices, _ = database.ServicesCollection.CountDocuments(ctx, bson.M{
+		"userId": userObjID,
+	})
+	stats.ActiveServices, _ = database.ServicesCollection.CountDocuments(ctx, bson.M{
+		"userId":  userObjID,
+		"active": true,
+	})
+
+	stats.ViewsChange = 0
+	stats.ProjectsChange = 0
+	stats.ClientsChange = 0
+	stats.RevenueChange = 0
+	stats.MonthlyRevenue = 0
+
+	_ = cache.Set(ctx, cacheKey, stats, cache.TTLMedium)
+	return stats, nil
+}
+
+// GetRecentMealPlans retorna planos alimentares recentes do nutricionista.
+func GetRecentMealPlans(ctx context.Context, userID string, limit int) ([]*RecentMealPlan, error) {
+	userObjID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	findOptions := options.Find().
+		SetSort(bson.D{{Key: "updatedAt", Value: -1}}).
+		SetLimit(int64(limit)).
+		SetProjection(bson.M{
+			"_id": 1, "title": 1, "status": 1, "category": 1, "patientId": 1, "updatedAt": 1,
+		})
+
+	cursor, err := database.MealPlansCollection.Find(ctx, bson.M{"nutritionistId": userObjID}, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var list []*RecentMealPlan
+	for cursor.Next(ctx) {
+		var mp models.MealPlan
+		if err := cursor.Decode(&mp); err != nil {
+			continue
+		}
+		pid := ""
+		if mp.PatientID != nil {
+			pid = mp.PatientID.Hex()
+		}
+		list = append(list, &RecentMealPlan{
+			ID:        mp.ID.Hex(),
+			Title:     mp.Title,
+			Status:    string(mp.Status),
+			Category:  string(mp.Category),
+			PatientID: pid,
+			UpdatedAt: mp.UpdatedAt,
+		})
+	}
+	return list, nil
+}
+
+// ============================================
+// DASHBOARD DO CLIENTE / PACIENTE
 // ============================================
 
 // GetClientStats retorna estatísticas do cliente
@@ -490,5 +620,105 @@ func GetClientAppointments(ctx context.Context, userID string, limit int) ([]*Up
 	}
 
 	return events, nil
+}
+
+// GetPatientStats retorna estatísticas do paciente (cache key "patient", usa meal plans).
+func GetPatientStats(ctx context.Context, userID string) (*ClientStats, error) {
+	cacheKey := cache.DashboardStatsKey("patient:" + userID)
+	var cachedStats ClientStats
+	if err := cache.Get(ctx, cacheKey, &cachedStats); err == nil {
+		return &cachedStats, nil
+	}
+
+	userObjID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := &ClientStats{}
+
+	stats.ActiveProjects, _ = database.MealPlansCollection.CountDocuments(ctx, bson.M{
+		"patientId": userObjID,
+		"status":    bson.M{"$in": []string{string(models.MealPlanStatusActive), string(models.MealPlanStatusDraft)}},
+	})
+	stats.CompletedProjects, _ = database.MealPlansCollection.CountDocuments(ctx, bson.M{
+		"patientId": userObjID,
+		"status":    string(models.MealPlanStatusCompleted),
+	})
+
+	stats.FavoriteArchitects, _ = database.FavoritesCollection.CountDocuments(ctx, bson.M{
+		"clientId": userObjID,
+	})
+
+	now := time.Now()
+	stats.UpcomingMeetings, _ = database.EventsCollection.CountDocuments(ctx, bson.M{
+		"clientId": userObjID,
+		"date":     bson.M{"$gte": now},
+		"status":   bson.M{"$nin": []string{"cancelado", "concluido"}},
+	})
+
+	unreadPipeline := []bson.M{
+		{"$match": bson.M{"participants": userObjID}},
+		{"$project": bson.M{"unread": "$unreadCount." + userID}},
+		{"$group": bson.M{"_id": nil, "total": bson.M{"$sum": "$unread"}}},
+	}
+	unreadCursor, err := database.ConversationsCollection.Aggregate(ctx, unreadPipeline)
+	if err == nil {
+		defer unreadCursor.Close(ctx)
+		if unreadCursor.Next(ctx) {
+			var result struct {
+				Total int64 `bson:"total"`
+			}
+			if unreadCursor.Decode(&result) == nil {
+				stats.UnreadMessages = result.Total
+			}
+		}
+	}
+	stats.TotalMessages = 0
+
+	_ = cache.Set(ctx, cacheKey, stats, cache.TTLMedium)
+	return stats, nil
+}
+
+// GetPatientMealPlans retorna planos alimentares do paciente.
+func GetPatientMealPlans(ctx context.Context, userID string, limit int) ([]*RecentMealPlan, error) {
+	userObjID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	findOptions := options.Find().
+		SetSort(bson.D{{Key: "updatedAt", Value: -1}}).
+		SetLimit(int64(limit)).
+		SetProjection(bson.M{
+			"_id": 1, "title": 1, "status": 1, "category": 1, "updatedAt": 1,
+		})
+
+	cursor, err := database.MealPlansCollection.Find(ctx, bson.M{"patientId": userObjID}, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var list []*RecentMealPlan
+	for cursor.Next(ctx) {
+		var mp models.MealPlan
+		if err := cursor.Decode(&mp); err != nil {
+			continue
+		}
+		list = append(list, &RecentMealPlan{
+			ID:        mp.ID.Hex(),
+			Title:     mp.Title,
+			Status:    string(mp.Status),
+			Category:  string(mp.Category),
+			UpdatedAt: mp.UpdatedAt,
+		})
+	}
+	return list, nil
+}
+
+// GetPatientAppointments retorna agendamentos do paciente (alias de GetClientAppointments).
+func GetPatientAppointments(ctx context.Context, userID string, limit int) ([]*UpcomingEvent, error) {
+	return GetClientAppointments(ctx, userID, limit)
 }
 

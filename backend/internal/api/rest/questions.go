@@ -197,8 +197,8 @@ func addAnswer(c *gin.Context) {
 
 	// Verificar se é arquiteto
 	userRole, _ := c.Get("userRole")
-	if userRole != "arquiteto" && userRole != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Apenas arquitetos podem responder perguntas"})
+	if userRole != "nutricionista" && userRole != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Apenas nutricionistas podem responder perguntas"})
 		return
 	}
 
@@ -344,9 +344,9 @@ func getPopularQuestions(c *gin.Context) {
 	c.JSON(http.StatusOK, questions)
 }
 
-// getQuestionsByArchitect retorna perguntas respondidas por um arquiteto
-func getQuestionsByArchitect(c *gin.Context) {
-	architectID := c.Param("architectId")
+// getQuestionsByNutritionist retorna perguntas respondidas por um nutricionista
+func getQuestionsByNutritionist(c *gin.Context) {
+	nutritionistID := c.Param("nutritionistId")
 
 	limit := 10
 	if l := c.Query("limit"); l != "" {
@@ -358,9 +358,9 @@ func getQuestionsByArchitect(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	questions, err := question.GetQuestionsByArchitect(ctx, architectID, limit)
+	questions, err := question.GetQuestionsByArchitect(ctx, nutritionistID, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar perguntas do arquiteto"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar perguntas do nutricionista"})
 		return
 	}
 

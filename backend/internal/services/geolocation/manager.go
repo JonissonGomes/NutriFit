@@ -351,7 +351,7 @@ func UpdateUserLocation(ctx context.Context, userID string, location GeoLocation
 // CIDADES E ESTADOS DISPONÍVEIS
 // ============================================
 
-// GetAvailableCities retorna as cidades com arquitetos cadastrados
+// GetAvailableCities retorna as cidades com nutricionistas cadastrados
 func GetAvailableCities(ctx context.Context, state string) ([]string, error) {
 	filter := bson.M{}
 	if state != "" {
@@ -373,7 +373,7 @@ func GetAvailableCities(ctx context.Context, state string) ([]string, error) {
 	return cities, nil
 }
 
-// GetAvailableStates retorna os estados com arquitetos cadastrados
+// GetAvailableStates retorna os estados com nutricionistas cadastrados
 func GetAvailableStates(ctx context.Context) ([]string, error) {
 	results, err := database.PublicProfilesCollection.Distinct(ctx, "location.address.state", bson.M{})
 	if err != nil {

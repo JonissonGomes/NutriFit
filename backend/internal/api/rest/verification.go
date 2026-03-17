@@ -19,7 +19,7 @@ import (
 // HANDLERS DE VERIFICAÇÃO - ARQUITETO
 // ============================================
 
-// getVerificationStatus retorna o status de verificação do arquiteto
+// getVerificationStatus retorna o status de verificação do nutricionista
 func getVerificationStatus(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -254,7 +254,7 @@ func getVerificationDetails(c *gin.Context) {
 	})
 }
 
-// approveVerification aprova a verificação de um arquiteto
+// approveVerification aprova a verificação de um nutricionista
 func approveVerification(c *gin.Context) {
 	adminID, exists := c.Get("userID")
 	if !exists {
@@ -314,14 +314,14 @@ func approveVerification(c *gin.Context) {
 	}
 
 	// TODO: Registrar ação de admin
-	// TODO: Enviar notificação para o arquiteto
+	// TODO: Enviar notificação para o nutricionista
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Verificação aprovada com sucesso",
 	})
 }
 
-// rejectVerification rejeita a verificação de um arquiteto
+// rejectVerification rejeita a verificação de um nutricionista
 func rejectVerification(c *gin.Context) {
 	adminID, exists := c.Get("userID")
 	if !exists {
@@ -376,7 +376,7 @@ func rejectVerification(c *gin.Context) {
 	}
 
 	// TODO: Registrar ação de admin com razão
-	// TODO: Enviar notificação para o arquiteto com o motivo
+	// TODO: Enviar notificação para o nutricionista com o motivo
 	_ = adminID // Usado para log de auditoria
 
 	c.JSON(http.StatusOK, gin.H{

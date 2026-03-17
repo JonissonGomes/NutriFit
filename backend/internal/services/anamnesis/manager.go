@@ -189,12 +189,13 @@ func SubmitAnswers(ctx context.Context, anamnesisID string, answers []models.Ana
 		},
 	}
 
+	after := options.After
 	result := database.AnamnesisCollection.FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": anamnesisOID},
 		update,
 		&options.FindOneAndUpdateOptions{
-			ReturnDocument: options.After,
+			ReturnDocument: &after,
 		},
 	)
 

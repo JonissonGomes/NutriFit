@@ -70,6 +70,11 @@ func getAnalyticsComparison(c *gin.Context) {
 	c.JSON(http.StatusOK, comparison)
 }
 
+// getMealPlanAnalytics retorna analytics de um plano alimentar (rota /meal-plans/:id).
+func getMealPlanAnalytics(c *gin.Context) {
+	getProjectAnalytics(c)
+}
+
 // getProjectAnalytics retorna analytics de um projeto específico
 func getProjectAnalytics(c *gin.Context) {
 	userID, exists := c.Get("userID")

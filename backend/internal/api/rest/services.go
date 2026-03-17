@@ -287,7 +287,7 @@ func getServiceStats(c *gin.Context) {
 }
 
 // ============================================
-// SERVIÇOS PÚBLICOS (para clientes)
+// SERVIÇOS PÚBLICOS (para pacientes)
 // ============================================
 
 // getPublicNutritionistServices retorna serviços ativos de um nutricionista (visão pública)

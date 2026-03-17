@@ -130,20 +130,20 @@ func createEvent(c *gin.Context) {
 		LocationAddress: req.LocationAddress,
 		Type:            models.EventType(req.Type),
 		Reminder:        req.Reminder,
-		RequestedBy:     "arquiteto",
+		RequestedBy:     "nutricionista",
 	}
 
-	// Parse clientId se fornecido
+	// Parse patientId se fornecido
 	if req.ClientID != "" {
-		if clientObjID, err := primitive.ObjectIDFromHex(req.ClientID); err == nil {
-			evt.ClientID = &clientObjID
+		if patientObjID, err := primitive.ObjectIDFromHex(req.ClientID); err == nil {
+			evt.PatientID = &patientObjID
 		}
 	}
 
-	// Parse projectId se fornecido
+	// Parse mealPlanId se fornecido
 	if req.ProjectID != "" {
-		if projectObjID, err := primitive.ObjectIDFromHex(req.ProjectID); err == nil {
-			evt.ProjectID = &projectObjID
+		if mealPlanObjID, err := primitive.ObjectIDFromHex(req.ProjectID); err == nil {
+			evt.MealPlanID = &mealPlanObjID
 		}
 	}
 

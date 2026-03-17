@@ -15,7 +15,7 @@ import (
 // HANDLERS DE FAVORITOS
 // ============================================
 
-// listFavorites lista os arquitetos favoritos do cliente
+// listFavorites lista os nutricionistas favoritos do paciente
 func listFavorites(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -53,7 +53,7 @@ func listFavorites(c *gin.Context) {
 	})
 }
 
-// addFavorite adiciona um arquiteto aos favoritos
+// addFavorite adiciona um nutricionista aos favoritos
 func addFavorite(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -63,7 +63,7 @@ func addFavorite(c *gin.Context) {
 
 	architectID := c.Param("architectId")
 	if architectID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do arquiteto é obrigatório"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do nutricionista é obrigatório"})
 		return
 	}
 
@@ -91,7 +91,7 @@ func addFavorite(c *gin.Context) {
 	})
 }
 
-// removeFavorite remove um arquiteto dos favoritos
+// removeFavorite remove um nutricionista dos favoritos
 func removeFavorite(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -101,7 +101,7 @@ func removeFavorite(c *gin.Context) {
 
 	architectID := c.Param("architectId")
 	if architectID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do arquiteto é obrigatório"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do nutricionista é obrigatório"})
 		return
 	}
 
@@ -124,7 +124,7 @@ func removeFavorite(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Arquiteto removido dos favoritos"})
 }
 
-// checkFavorite verifica se um arquiteto está nos favoritos
+// checkFavorite verifica se um nutricionista está nos favoritos
 func checkFavorite(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -134,7 +134,7 @@ func checkFavorite(c *gin.Context) {
 
 	architectID := c.Param("architectId")
 	if architectID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do arquiteto é obrigatório"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do nutricionista é obrigatório"})
 		return
 	}
 
