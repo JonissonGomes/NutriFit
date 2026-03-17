@@ -19,6 +19,8 @@ import InfoIcon from '@mui/icons-material/Info'
 import ViewInArIcon from '@mui/icons-material/ViewInAr'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import PeopleIcon from '@mui/icons-material/People'
+import ScienceIcon from '@mui/icons-material/Science'
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
 import LoadingButton from '../common/LoadingButton'
@@ -46,6 +48,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/nutritionist/dashboard', icon: DashboardIcon, label: 'Dashboard' },
     { path: '/nutritionist/meal-plans', icon: FolderIcon, label: 'Planos Alimentares' },
     { path: '/nutritionist/patients', icon: PeopleIcon, label: 'Pacientes' },
+    { path: '/nutritionist/food-diary', icon: RestaurantMenuIcon, label: 'Diário' },
+    { path: '/nutritionist/lab-exams', icon: ScienceIcon, label: 'Exames' },
     { path: '/nutritionist/profile', icon: PersonIcon, label: 'Perfil Público' },
     { path: '/nutritionist/messages', icon: ChatIcon, label: 'Mensagens' },
     { path: '/nutritionist/services', icon: WorkIcon, label: 'Serviços' },

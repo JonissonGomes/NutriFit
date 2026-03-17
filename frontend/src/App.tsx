@@ -35,6 +35,8 @@ import Calendar from './pages/dashboard/Calendar'
 import Models3D from './pages/dashboard/Models3D'
 import Analytics from './pages/dashboard/Analytics'
 import Patients from './pages/dashboard/Patients'
+import LabExams from './pages/dashboard/LabExams'
+import FoodDiaryPatients from './pages/dashboard/FoodDiaryPatients'
 
 // Páginas do paciente
 import ClientDashboard from './pages/client/ClientDashboard'
@@ -96,6 +98,8 @@ function App() {
                             <Route path="/meal-plans" element={<Galleries />} />
                             <Route path="/projects" element={<Galleries />} />
                             <Route path="/patients" element={<Patients />} />
+                            <Route path="/food-diary" element={<FoodDiaryPatients />} />
+                            <Route path="/lab-exams" element={<LabExams />} />
                             <Route path="/profile" element={<PublicProfileEdit />} />
                             <Route path="/messages" element={<Chat />} />
                             <Route path="/services" element={<Services />} />
