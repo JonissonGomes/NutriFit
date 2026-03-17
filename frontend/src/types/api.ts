@@ -26,7 +26,7 @@ export interface ApiError {
 // AUTENTICAÇÃO
 // ============================================
 
-export type UserRole = 'nutricionista' | 'paciente' | 'admin'
+export type UserRole = 'nutricionista' | 'paciente' | 'admin' | 'super_admin'
 
 export interface User {
   id: string // Token opaco (não é o ID real do banco)

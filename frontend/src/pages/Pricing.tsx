@@ -16,66 +16,58 @@ interface PricingPlan {
 const Pricing = () => {
   const plans: PricingPlan[] = [
     {
-      name: 'Freelancer',
-      price: 'R$ 149',
+      name: 'Free',
+      price: 'R$ 0',
       period: '/mês',
-      description: 'Para nutricionistas autônomos e freelancers',
+      description: 'Comece agora e fidelize pacientes com o básico do NuFit',
       highlighted: false,
-      cta: 'Começar teste grátis',
+      cta: 'Criar conta grátis',
       features: [
         { text: 'Até 10 pacientes ativos', included: true },
-        { text: '50GB de armazenamento', included: true },
-        { text: 'Planos alimentares com macros', included: true },
-        { text: 'Anamnese digital', included: true },
-        { text: 'Diário alimentar do paciente', included: true },
-        { text: 'Portfólio público', included: true },
+        { text: 'Planos alimentares básicos', included: true },
+        { text: 'Diário alimentar (foto + comentário)', included: true },
+        { text: 'Metas e evolução (básico)', included: true },
         { text: 'Lista de compras (por plano)', included: true },
-        { text: 'Relatórios básicos', included: true },
+        { text: 'Mensagens e agenda (básico)', included: true },
+        { text: 'Portfólio público', included: true },
         { text: 'Suporte por email', included: true },
-        { text: 'Gestão de equipe', included: false },
-        { text: 'White label', included: false },
+        { text: 'IA (resumos/análises)', included: false },
+        { text: 'Equipe (multiusuário)', included: false },
       ],
     },
     {
-      name: 'Escritório',
-      price: 'R$ 399',
+      name: 'Starter',
+      price: 'R$ 59',
       period: '/mês',
-      description: 'Para consultórios e equipes de nutrição',
+      description: 'Para atendimentos regulares com mais recursos e organização',
       highlighted: true,
       cta: 'Começar teste grátis',
       features: [
-        { text: 'Pacientes ilimitados', included: true },
-        { text: '500GB de armazenamento', included: true },
-        { text: 'Planos alimentares ilimitados', included: true },
-        { text: 'Anamnese e questionários', included: true },
-        { text: 'Diário com foto (beta)', included: true },
-        { text: 'Portfólio público categorizado', included: true },
-        { text: 'Relatórios e evolução do paciente', included: true },
+        { text: 'Até 50 pacientes ativos', included: true },
+        { text: 'Planos alimentares completos + substituições', included: true },
+        { text: 'Anamnese + questionários', included: true },
+        { text: 'Diário alimentar com foto + IA (limitado)', included: true },
+        { text: 'Exames laboratoriais (upload)', included: true },
+        { text: 'Relatórios básicos e evolução', included: true },
         { text: 'Agenda e lembretes', included: true },
-        { text: 'Gestão de equipe (até 10 membros)', included: true },
         { text: 'Suporte prioritário', included: true },
-        { text: 'White label', included: false },
+        { text: 'Equipe (multiusuário)', included: false },
       ],
     },
     {
-      name: 'Rede',
-      price: 'R$ 999',
+      name: 'Professional',
+      price: 'R$ 129',
       period: '/mês',
-      description: 'Para redes de escritórios e franquias',
+      description: 'Para nutricionistas com alto volume e automações',
       highlighted: false,
       cta: 'Falar com vendas',
       features: [
-        { text: 'Projetos ilimitados', included: true },
-        { text: '2TB de armazenamento', included: true },
-        { text: 'Upload de plantas, renders e fotos', included: true },
-        { text: 'Sistema de aprovação customizável', included: true },
-        { text: 'Visualizador de plantas avançado', included: true },
-        { text: 'Múltiplos portfólios públicos', included: true },
-        { text: 'Timeline e comparação de propostas', included: true },
-        { text: 'Sistema completo de contratos', included: true },
-        { text: 'Gestão de equipe ilimitada', included: true },
-        { text: 'Suporte prioritário 24/7', included: true },
-        { text: 'White label completo', included: true },
+        { text: 'Pacientes ilimitados', included: true },
+        { text: 'IA (resumos e análises) com limites maiores', included: true },
+        { text: 'Modelos de plano (biblioteca)', included: true },
+        { text: 'Relatórios avançados (aderência)', included: true },
+        { text: 'Equipe (até 3 usuários)', included: true },
+        { text: 'Suporte dedicado', included: true },
       ],
     },
   ]
@@ -87,10 +79,10 @@ const Pricing = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
-              Planos para arquitetos de todos os portes
+              Planos para nutricionistas de todos os portes
             </h1>
             <p className="text-base md:text-lg text-primary-100 mb-6">
-              Escolha o plano ideal para seu escritório. Cancele quando quiser, sem compromisso.
+              Escolha o plano ideal para sua prática. Cancele quando quiser, sem compromisso.
             </p>
             <div className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs md:text-sm font-medium">
               <AutoAwesomeIcon sx={{ fontSize: 16, marginRight: 1 }} />

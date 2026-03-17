@@ -24,7 +24,7 @@ type AuthPayload struct {
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
-	Type     string `json:"type" binding:"required,oneof=nutricionista paciente"`
+	Type     string `json:"type" binding:"required,oneof=nutricionista paciente super_admin admin"`
 }
 
 type RegisterRequest struct {

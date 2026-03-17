@@ -349,6 +349,11 @@ func SetupRouter() *gin.Engine {
 			// Admin routes (TODO: adicionar middleware de verificação de admin)
 			admin := protected.Group("/admin")
 			{
+				admin.GET("/overview", adminOverview)
+				admin.GET("/nutritionists", listNutritionistsAdmin)
+				admin.GET("/users", listUsersAdmin)
+				admin.PUT("/users/:id/plan", updateUserPlanAdmin)
+
 				// Verificações
 				verifications := admin.Group("/verifications")
 				{

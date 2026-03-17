@@ -23,6 +23,8 @@ import ProjectView from './pages/ProjectView'
 import PublicProfile from './pages/PublicProfile'
 import Model3DView from './pages/Model3DView'
 import NotFound from './pages/NotFound'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminNutritionists from './pages/admin/Nutritionists'
 
 // Páginas do nutricionista
 import Dashboard from './pages/dashboard/Dashboard'
@@ -137,6 +139,22 @@ function App() {
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                         </ClientLayout>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Admin Routes */}
+                  <Route
+                    path="/admin/*"
+                    element={
+                      <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
+                        <DashboardLayout>
+                          <Routes>
+                            <Route path="/dashboard" element={<AdminDashboard />} />
+                            <Route path="/nutritionists" element={<AdminNutritionists />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </DashboardLayout>
                       </ProtectedRoute>
                     }
                   />

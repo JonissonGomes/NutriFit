@@ -24,7 +24,12 @@ const Login = () => {
   // Redirecionar se já estiver autenticado (ao entrar na página)
   useEffect(() => {
     if (isAuthenticated && user) {
-      const redirectPath = user.role === 'nutricionista' ? '/nutritionist/dashboard' : '/patient/dashboard'
+      const redirectPath =
+        user.role === 'nutricionista'
+          ? '/nutritionist/dashboard'
+          : user.role === 'paciente'
+            ? '/patient/dashboard'
+            : '/admin/dashboard'
       navigate(redirectPath, { replace: true })
     }
   }, [isAuthenticated, user, navigate])
@@ -43,7 +48,9 @@ const Login = () => {
       }
     }
     
-    return userRole === 'nutricionista' ? '/nutritionist/dashboard' : '/patient/dashboard'
+    if (userRole === 'nutricionista') return '/nutritionist/dashboard'
+    if (userRole === 'paciente') return '/patient/dashboard'
+    return '/admin/dashboard'
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,7 +156,7 @@ const Login = () => {
         </div>
 
         {/* User Type Selection */}
-        <div className="mb-6 grid grid-cols-2 gap-3">
+        <div className="mb-6 grid grid-cols-3 gap-3">
           <button
             type="button"
             onClick={() => setUserType('nutricionista')}
@@ -186,6 +193,25 @@ const Login = () => {
               }`} />
               <div className="text-sm font-semibold">Paciente</div>
               <div className="text-xs mt-1 opacity-75">Buscar acompanhamento</div>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setUserType('super_admin')}
+            className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
+              userType === 'super_admin'
+                ? 'border-amber-500 bg-amber-600/20 shadow-lg shadow-amber-500/30'
+                : 'border-stone-700 hover:border-stone-600 bg-stone-800/50'
+            }`}
+          >
+            <div className={`flex flex-col items-center ${
+              userType === 'super_admin' ? 'text-white' : 'text-stone-400'
+            }`}>
+              <Building2 className={`h-7 w-7 mb-2 ${
+                userType === 'super_admin' ? 'text-amber-400' : 'text-stone-500'
+              }`} />
+              <div className="text-sm font-semibold">Super Admin</div>
+              <div className="text-xs mt-1 opacity-75">Plataforma</div>
             </div>
           </button>
         </div>

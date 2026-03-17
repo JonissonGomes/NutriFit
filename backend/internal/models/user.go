@@ -11,7 +11,8 @@ type UserRole string
 const (
 	RoleNutricionista UserRole = "nutricionista"
 	RolePaciente      UserRole = "paciente"
-	RoleAdmin         UserRole = "admin"
+	RoleSuperAdmin    UserRole = "super_admin"
+	RoleAdmin         UserRole = "admin" // legado (evitar quebra); preferir super_admin
 	RoleModerator     UserRole = "moderator"
 	RoleCurator       UserRole = "curator"
 	RoleSupport       UserRole = "support"
