@@ -56,15 +56,15 @@ func SetupRouter() *gin.Engine {
 			mealPlans := protected.Group("/meal-plans")
 			{
 				mealPlans.GET("", listMealPlans)
-				mealPlans.POST("", createMealPlan)
+				mealPlans.POST("", RequireRole("nutricionista"), createMealPlan)
 				mealPlans.GET("/:id", getMealPlan)
-				mealPlans.PUT("/:id", updateMealPlan)
-				mealPlans.DELETE("/:id", deleteMealPlan)
-				mealPlans.PUT("/:id/status", updateMealPlanStatus)
+				mealPlans.PUT("/:id", RequireRole("nutricionista"), updateMealPlan)
+				mealPlans.DELETE("/:id", RequireRole("nutricionista"), deleteMealPlan)
+				mealPlans.PUT("/:id/status", RequireRole("nutricionista"), updateMealPlanStatus)
 				mealPlans.GET("/:id/stats", getMealPlanStats)
-				mealPlans.POST("/ai-generate", generateMealPlanWithAI)
-				mealPlans.POST("/:id/ai-analyze", analyzeMealPlanWithAI)
-				mealPlans.GET("/:id/substitutions/:foodId", getFoodSubstitutions)
+				mealPlans.POST("/ai-generate", RequireRole("nutricionista"), generateMealPlanWithAI)
+				mealPlans.POST("/:id/ai-analyze", RequireRole("nutricionista"), analyzeMealPlanWithAI)
+				mealPlans.GET("/:id/substitutions/:foodId", RequireRole("nutricionista"), getFoodSubstitutions)
 			}
 
 			// Images e Models3D eram recursos legados (portfólio/arquivos) e foram descontinuados no NuFit.
@@ -161,41 +161,41 @@ func SetupRouter() *gin.Engine {
 			// Anamnesis
 			anamnesis := protected.Group("/anamnesis")
 			{
-				anamnesis.GET("/templates", listAnamnesisTemplates)
-				anamnesis.POST("/templates", createAnamnesisTemplate)
+				anamnesis.GET("/templates", RequireRole("nutricionista"), listAnamnesisTemplates)
+				anamnesis.POST("/templates", RequireRole("nutricionista"), createAnamnesisTemplate)
 				anamnesis.GET("/:patientId", getAnamnesis)
 				anamnesis.POST("/:patientId/answers", submitAnamnesisAnswers)
 				// AI summary da última anamnese registrada do paciente
-				anamnesis.POST("/:patientId/ai-summary", generateAnamnesisAISummary)
+				anamnesis.POST("/:patientId/ai-summary", RequireRole("nutricionista"), generateAnamnesisAISummary)
 			}
 
 			// Food Diary
 			foodDiary := protected.Group("/food-diary")
 			{
 				foodDiary.GET("/:patientId", getFoodDiaryEntries)
-				foodDiary.POST("", createFoodDiaryEntry)
+				foodDiary.POST("", RequireRole("nutricionista"), createFoodDiaryEntry)
 				foodDiary.POST("/:id/photo", uploadFoodDiaryPhoto)
-				foodDiary.POST("/:id/ai-analyze", analyzeFoodDiaryPhoto)
-				foodDiary.PUT("/:id/comment", addNutritionistComment)
+				foodDiary.POST("/:id/ai-analyze", RequireRole("nutricionista"), analyzeFoodDiaryPhoto)
+				foodDiary.PUT("/:id/comment", RequireRole("nutricionista"), addNutritionistComment)
 			}
 
 			// Goals
 			goals := protected.Group("/goals")
 			{
 				goals.GET("/:patientId", getPatientGoals)
-				goals.POST("", createGoal)
-				goals.PUT("/:id", updateGoal)
-				goals.DELETE("/:id", deleteGoal)
-				goals.POST("/:id/check-in", addGoalCheckIn)
+				goals.POST("", RequireRole("nutricionista"), createGoal)
+				goals.PUT("/:id", RequireRole("nutricionista"), updateGoal)
+				goals.DELETE("/:id", RequireRole("nutricionista"), deleteGoal)
+				goals.POST("/:id/check-in", RequireRole("nutricionista"), addGoalCheckIn)
 			}
 
 			// Anthropometric
 			anthropometric := protected.Group("/anthropometric")
 			{
 				anthropometric.GET("/:patientId", getAnthropometricRecords)
-				anthropometric.POST("", createAnthropometricRecord)
-				anthropometric.PUT("/:id", updateAnthropometricRecord)
-				anthropometric.DELETE("/:id", deleteAnthropometricRecord)
+				anthropometric.POST("", RequireRole("nutricionista"), createAnthropometricRecord)
+				anthropometric.PUT("/:id", RequireRole("nutricionista"), updateAnthropometricRecord)
+				anthropometric.DELETE("/:id", RequireRole("nutricionista"), deleteAnthropometricRecord)
 			}
 
 			// Lab Exams
@@ -222,8 +222,8 @@ func SetupRouter() *gin.Engine {
 			// Shopping List
 			shoppingList := protected.Group("/shopping-list")
 			{
-				shoppingList.GET("/:mealPlanId", getShoppingList)
-				shoppingList.PUT("/:id/item/:itemId", toggleShoppingListItem)
+				shoppingList.GET("/:mealPlanId", RequireRole("nutricionista"), getShoppingList)
+				shoppingList.PUT("/:id/item/:itemId", RequireRole("nutricionista"), toggleShoppingListItem)
 			}
 
 			// AI Assistant

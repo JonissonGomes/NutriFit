@@ -14,7 +14,7 @@ interface PricingPlan {
 }
 
 const Pricing = () => {
-  const plans: PricingPlan[] = [
+  const nutritionistPlans: PricingPlan[] = [
     {
       name: 'Free',
       price: 'R$ 0',
@@ -72,6 +72,43 @@ const Pricing = () => {
     },
   ]
 
+  const doctorPlans: PricingPlan[] = [
+    {
+      name: 'Doctor Free',
+      price: 'R$ 0',
+      period: '/mês',
+      description: 'Para médicos acompanharem pacientes sem prescrição alimentar estruturada',
+      highlighted: false,
+      cta: 'Criar conta grátis',
+      features: [
+        { text: 'Agenda e lembretes', included: true },
+        { text: 'Chat com paciente', included: true },
+        { text: 'Exames laboratoriais (upload)', included: true },
+        { text: 'IA Assistant (apoio clínico)', included: true },
+        { text: 'Analytics básico', included: true },
+        { text: 'Prescrição alimentar estruturada', included: false },
+        { text: 'IA gerar dieta', included: false },
+      ],
+    },
+    {
+      name: 'Doctor Pro',
+      price: 'R$ 89',
+      period: '/mês',
+      description: 'Recursos clínicos e organização para rotina médica',
+      highlighted: true,
+      cta: 'Começar teste grátis',
+      features: [
+        { text: 'Agenda e lembretes avançados', included: true },
+        { text: 'Chat com paciente', included: true },
+        { text: 'Exames laboratoriais (upload + IA)', included: true },
+        { text: 'Body3D', included: true },
+        { text: 'Analytics completo', included: true },
+        { text: 'Prescrição alimentar estruturada', included: false },
+        { text: 'IA gerar dieta', included: false },
+      ],
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -79,10 +116,10 @@ const Pricing = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
-              Planos para nutricionistas de todos os portes
+              Planos para profissionais de saúde
             </h1>
             <p className="text-base md:text-lg text-primary-100 mb-6">
-              Escolha o plano ideal para sua prática. Cancele quando quiser, sem compromisso.
+              Planos mensais com limites e recursos por perfil. Cancele quando quiser.
             </p>
             <div className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs md:text-sm font-medium">
               <AutoAwesomeIcon sx={{ fontSize: 16, marginRight: 1 }} />
@@ -95,75 +132,148 @@ const Pricing = () => {
       {/* Pricing Cards */}
       <section className="py-12 md:py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto">
-            {plans.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative rounded-xl md:rounded-2xl overflow-hidden transition-all duration-300 ${
-                  plan.highlighted
-                    ? 'bg-white shadow-2xl scale-105 border-2 border-primary-500'
-                    : 'bg-white shadow-lg hover:shadow-xl border border-gray-200'
-                }`}
-              >
-                {plan.highlighted && (
-                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-center py-1.5 text-xs font-semibold">
-                    MAIS POPULAR
-                  </div>
-                )}
-
-                <div className={`p-6 md:p-8 ${plan.highlighted ? 'pt-10 md:pt-12' : ''}`}>
-                  {/* Header */}
-                  <div className="mb-6">
-                    <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
-                      {plan.name}
-                    </h3>
-                    <p className="text-xs md:text-sm text-gray-600 mb-4">
-                      {plan.description}
-                    </p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl md:text-4xl font-bold text-gray-900">
-                        {plan.price}
-                      </span>
-                      <span className="text-sm md:text-base text-gray-600">
-                        {plan.period}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* CTA Button */}
-                  <Link
-                    to="/signup"
-                    className={`block w-full text-center py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 mb-6 ${
+          <div className="max-w-7xl mx-auto space-y-10">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Planos para Nutricionistas</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                {nutritionistPlans.map((plan) => (
+                  <div
+                    key={plan.name}
+                    className={`relative rounded-xl md:rounded-2xl overflow-hidden transition-all duration-300 ${
                       plan.highlighted
-                        ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
-                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                        ? 'bg-white shadow-2xl scale-105 border-2 border-primary-500'
+                        : 'bg-white shadow-lg hover:shadow-xl border border-gray-200'
                     }`}
                   >
-                    {plan.cta}
-                  </Link>
+                    {plan.highlighted && (
+                      <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-center py-1.5 text-xs font-semibold">
+                        MAIS POPULAR
+                      </div>
+                    )}
 
-                  {/* Features */}
-                  <ul className="space-y-3">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        {feature.included ? (
-                          <CheckIcon sx={{ fontSize: 18, color: '#10b981', flexShrink: 0 }} />
-                        ) : (
-                          <CloseIcon sx={{ fontSize: 18, color: '#d1d5db', flexShrink: 0 }} />
-                        )}
-                        <span
-                          className={`text-xs md:text-sm ${
-                            feature.included ? 'text-gray-700' : 'text-gray-400'
-                          }`}
-                        >
-                          {feature.text}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                    <div className={`p-6 md:p-8 ${plan.highlighted ? 'pt-10 md:pt-12' : ''}`}>
+                      <div className="mb-6">
+                        <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                          {plan.name}
+                        </h3>
+                        <p className="text-xs md:text-sm text-gray-600 mb-4">
+                          {plan.description}
+                        </p>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl md:text-4xl font-bold text-gray-900">
+                            {plan.price}
+                          </span>
+                          <span className="text-sm md:text-base text-gray-600">
+                            {plan.period}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        to="/signup?role=nutricionista"
+                        className={`block w-full text-center py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 mb-6 ${
+                          plan.highlighted
+                            ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
+                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                        }`}
+                      >
+                        {plan.cta}
+                      </Link>
+
+                      <ul className="space-y-3">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            {feature.included ? (
+                              <CheckIcon sx={{ fontSize: 18, color: '#10b981', flexShrink: 0 }} />
+                            ) : (
+                              <CloseIcon sx={{ fontSize: 18, color: '#d1d5db', flexShrink: 0 }} />
+                            )}
+                            <span
+                              className={`text-xs md:text-sm ${
+                                feature.included ? 'text-gray-700' : 'text-gray-400'
+                              }`}
+                            >
+                              {feature.text}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Planos para Médicos</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                {doctorPlans.map((plan) => (
+                  <div
+                    key={plan.name}
+                    className={`relative rounded-xl md:rounded-2xl overflow-hidden transition-all duration-300 ${
+                      plan.highlighted
+                        ? 'bg-white shadow-2xl scale-105 border-2 border-sky-500'
+                        : 'bg-white shadow-lg hover:shadow-xl border border-gray-200'
+                    }`}
+                  >
+                    {plan.highlighted && (
+                      <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-sky-600 to-primary-600 text-white text-center py-1.5 text-xs font-semibold">
+                        MAIS POPULAR
+                      </div>
+                    )}
+
+                    <div className={`p-6 md:p-8 ${plan.highlighted ? 'pt-10 md:pt-12' : ''}`}>
+                      <div className="mb-6">
+                        <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                          {plan.name}
+                        </h3>
+                        <p className="text-xs md:text-sm text-gray-600 mb-4">
+                          {plan.description}
+                        </p>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl md:text-4xl font-bold text-gray-900">
+                            {plan.price}
+                          </span>
+                          <span className="text-sm md:text-base text-gray-600">
+                            {plan.period}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        to="/signup?role=medico"
+                        className={`block w-full text-center py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 mb-6 ${
+                          plan.highlighted
+                            ? 'bg-sky-600 text-white hover:bg-sky-700 shadow-lg hover:shadow-xl'
+                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                        }`}
+                      >
+                        {plan.cta}
+                      </Link>
+
+                      <ul className="space-y-3">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            {feature.included ? (
+                              <CheckIcon sx={{ fontSize: 18, color: '#10b981', flexShrink: 0 }} />
+                            ) : (
+                              <CloseIcon sx={{ fontSize: 18, color: '#d1d5db', flexShrink: 0 }} />
+                            )}
+                            <span
+                              className={`text-xs md:text-sm ${
+                                feature.included ? 'text-gray-700' : 'text-gray-400'
+                              }`}
+                            >
+                              {feature.text}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -1,17 +1,19 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, User, Building2, Eye, EyeOff, Briefcase, Ruler, AlertCircle, CheckCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Mail, Lock, User, Building2, Eye, EyeOff, Briefcase, Ruler, AlertCircle, CheckCircle, Stethoscope } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { isStrongPassword } from '../services'
-import type { UserRole } from '../types/api'
+import type { ProfessionalRegistration, UserRole } from '../types/api'
 import LoadingButton from '../components/common/LoadingButton'
 import { sanitizeInput, validateEmail, INPUT_LIMITS, limitLength } from '../utils/inputUtils'
+import { authService } from '../services'
 
 const Signup = () => {
   const { showToast } = useToast()
   const { register, isLoading } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [formData, setFormData] = useState({
     name: '',
@@ -20,6 +22,20 @@ const Signup = () => {
     confirmPassword: '',
     accountType: 'nutricionista' as UserRole,
   })
+  const [registrationNumber, setRegistrationNumber] = useState('')
+  const [registrationAvailable, setRegistrationAvailable] = useState<boolean | null>(null)
+  const [checkingReg, setCheckingReg] = useState(false)
+
+  // Preselect role from querystring (?role=nutricionista|medico|paciente)
+  useEffect(() => {
+    const qsRole = searchParams.get('role') as UserRole | null
+    if (qsRole && (qsRole === 'nutricionista' || qsRole === 'medico' || qsRole === 'paciente')) {
+      setFormData((prev) => ({ ...prev, accountType: qsRole }))
+      setRegistrationNumber('')
+      setRegistrationAvailable(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
@@ -78,22 +94,52 @@ const Signup = () => {
       return
     }
 
+    let professionalRegistration: ProfessionalRegistration | undefined
+    if (formData.accountType === 'nutricionista' || formData.accountType === 'medico') {
+      const clean = registrationNumber.trim()
+      if (!clean) {
+        setError(formData.accountType === 'nutricionista' ? 'CRN é obrigatório' : 'CRM é obrigatório')
+        return
+      }
+      professionalRegistration = {
+        type: formData.accountType === 'nutricionista' ? 'CRN' : 'CRM',
+        number: clean,
+      }
+      // checar disponibilidade antes de enviar
+      setCheckingReg(true)
+      const availRes = await authService.checkRegistrationAvailable(professionalRegistration.type, professionalRegistration.number)
+      setCheckingReg(false)
+      if (availRes.error) {
+        setError(availRes.error)
+        return
+      }
+      if (availRes.data && availRes.data.available === false) {
+        setError('Este CRN/CRM já está cadastrado na plataforma')
+        setRegistrationAvailable(false)
+        return
+      }
+    }
+
     console.log('[Signup] Enviando registro com accountType:', formData.accountType)
     
     const result = await register(
       formData.email,
       formData.password,
       formData.name,
-      formData.accountType
+      formData.accountType,
+      professionalRegistration
     )
 
     if (result.success && result.user) {
       showToast('Conta criada com sucesso! Bem-vindo ao NuFit.', 'success')
       console.log('[Signup] Sucesso! User:', result.user)
       
-      const redirectPath = result.user.role === 'nutricionista'
-        ? '/nutritionist/dashboard'
-        : '/patient/dashboard'
+      const redirectPath =
+        result.user.role === 'nutricionista'
+          ? '/nutritionist/dashboard'
+          : result.user.role === 'medico'
+            ? '/medico/dashboard'
+            : '/patient/dashboard'
       
       console.log('[Signup] Redirecionando para:', redirectPath)
       
@@ -131,6 +177,24 @@ const Signup = () => {
     setFormData(prev => ({ ...prev, [name]: sanitizedValue }))
   }
 
+  const checkRegistration = async () => {
+    if (!(formData.accountType === 'nutricionista' || formData.accountType === 'medico')) return
+    const number = registrationNumber.trim()
+    if (!number) {
+      setRegistrationAvailable(null)
+      return
+    }
+    setCheckingReg(true)
+    const type: 'CRN' | 'CRM' = formData.accountType === 'nutricionista' ? 'CRN' : 'CRM'
+    const res = await authService.checkRegistrationAvailable(type, number)
+    setCheckingReg(false)
+    if (res.error) {
+      setRegistrationAvailable(null)
+      return
+    }
+    setRegistrationAvailable(res.data?.available ?? null)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background Pattern */}
@@ -158,7 +222,7 @@ const Signup = () => {
         </div>
 
         {/* Account Type Selection */}
-        <div className="mb-6 grid grid-cols-2 gap-3">
+        <div className="mb-6 grid grid-cols-3 gap-3">
           <button
             type="button"
             onClick={() => setFormData({ ...formData, accountType: 'nutricionista' })}
@@ -176,6 +240,25 @@ const Signup = () => {
               }`} />
               <div className="text-sm font-semibold">Nutricionista</div>
               <div className="text-xs mt-1 opacity-75">Profissional</div>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, accountType: 'medico' })}
+            className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
+              formData.accountType === 'medico'
+                ? 'border-sky-500 bg-sky-600/20 shadow-lg shadow-sky-500/30'
+                : 'border-stone-700 hover:border-stone-600 bg-stone-800/50'
+            }`}
+          >
+            <div className={`flex flex-col items-center ${
+              formData.accountType === 'medico' ? 'text-white' : 'text-stone-400'
+            }`}>
+              <Stethoscope className={`h-7 w-7 mb-2 ${
+                formData.accountType === 'medico' ? 'text-sky-400' : 'text-stone-500'
+              }`} />
+              <div className="text-sm font-semibold">Médico</div>
+              <div className="text-xs mt-1 opacity-75">Clínico</div>
             </div>
           </button>
           <button
@@ -251,6 +334,39 @@ const Signup = () => {
                 />
               </div>
             </div>
+
+            {/* Registro Profissional */}
+            {(formData.accountType === 'nutricionista' || formData.accountType === 'medico') && (
+              <div>
+                <label htmlFor="registration" className="block text-sm font-medium text-stone-300 mb-2">
+                  {formData.accountType === 'nutricionista' ? 'CRN' : 'CRM'}
+                </label>
+                <div className="relative">
+                  <input
+                    id="registration"
+                    type="text"
+                    value={registrationNumber}
+                    onChange={(e) => setRegistrationNumber(limitLength(sanitizeInput(e.target.value), 32))}
+                    onBlur={() => void checkRegistration()}
+                    className={`w-full px-4 py-3 bg-stone-900/50 border text-white rounded-lg focus:ring-2 outline-none transition-all placeholder-stone-500 ${
+                      registrationAvailable === false ? 'border-red-500 focus:ring-red-500' : 'border-stone-700 focus:ring-primary-500 focus:border-primary-500'
+                    }`}
+                    placeholder={formData.accountType === 'nutricionista' ? 'Ex.: CRN-1 12345 (ou apenas o número)' : 'Ex.: CRM/SP 123456 (ou apenas o número)'}
+                  />
+                </div>
+                <div className="mt-2 text-xs">
+                  {checkingReg ? (
+                    <span className="text-stone-400">Verificando disponibilidade...</span>
+                  ) : registrationAvailable === true ? (
+                    <span className="text-green-400">Registro disponível</span>
+                  ) : registrationAvailable === false ? (
+                    <span className="text-red-400">Este CRN/CRM já está cadastrado na plataforma</span>
+                  ) : (
+                    <span className="text-stone-400">O registro será validado e deve ser único na plataforma.</span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Password Field */}
             <div>

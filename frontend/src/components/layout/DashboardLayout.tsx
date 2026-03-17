@@ -27,9 +27,10 @@ import RestaurantIcon from '@mui/icons-material/Restaurant'
 
 interface DashboardLayoutProps {
   children: ReactNode
+  basePath?: '/nutritionist' | '/medico' | '/admin'
 }
 
-const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -43,6 +44,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const isActive = (path: string) => location.pathname === path
   const isAdminArea = location.pathname.startsWith('/admin')
+  const effectiveBasePath =
+    basePath ||
+    (isAdminArea ? '/admin' : user?.role === 'medico' ? '/medico' : '/nutritionist')
 
   const adminNavItems = [
     { path: '/admin/dashboard', icon: DashboardIcon, label: 'Dashboard' },
@@ -50,17 +54,17 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/admin/nutritionists', icon: WorkIcon, label: 'Nutricionistas' },
   ]
   const nutritionistNavItems = [
-    { path: '/nutritionist/dashboard', icon: DashboardIcon, label: 'Dashboard' },
-    { path: '/nutritionist/meal-plans', icon: FolderIcon, label: 'Planos Alimentares' },
-    { path: '/nutritionist/patients', icon: PeopleIcon, label: 'Pacientes' },
-    { path: '/nutritionist/food-diary', icon: RestaurantMenuIcon, label: 'Diário' },
-    { path: '/nutritionist/lab-exams', icon: ScienceIcon, label: 'Exames' },
-    { path: '/nutritionist/profile', icon: PersonIcon, label: 'Perfil Público' },
-    { path: '/nutritionist/messages', icon: ChatIcon, label: 'Mensagens' },
-    { path: '/nutritionist/services', icon: WorkIcon, label: 'Serviços' },
-    { path: '/nutritionist/calendar', icon: CalendarTodayIcon, label: 'Agenda' },
-    { path: '/nutritionist/analytics', icon: BarChartIcon, label: 'Estatísticas' },
-    { path: '/nutritionist/settings', icon: SettingsIcon, label: 'Configurações' },
+    { path: `${effectiveBasePath}/dashboard`, icon: DashboardIcon, label: 'Dashboard' },
+    { path: `${effectiveBasePath}/meal-plans`, icon: FolderIcon, label: 'Planos Alimentares' },
+    { path: `${effectiveBasePath}/patients`, icon: PeopleIcon, label: 'Pacientes' },
+    { path: `${effectiveBasePath}/food-diary`, icon: RestaurantMenuIcon, label: 'Diário' },
+    { path: `${effectiveBasePath}/lab-exams`, icon: ScienceIcon, label: 'Exames' },
+    { path: `${effectiveBasePath}/profile`, icon: PersonIcon, label: 'Perfil Público' },
+    { path: `${effectiveBasePath}/messages`, icon: ChatIcon, label: 'Mensagens' },
+    { path: `${effectiveBasePath}/services`, icon: WorkIcon, label: 'Serviços' },
+    { path: `${effectiveBasePath}/calendar`, icon: CalendarTodayIcon, label: 'Agenda' },
+    { path: `${effectiveBasePath}/analytics`, icon: BarChartIcon, label: 'Estatísticas' },
+    { path: `${effectiveBasePath}/settings`, icon: SettingsIcon, label: 'Configurações' },
   ]
   const navItems = isAdminArea ? adminNavItems : nutritionistNavItems
 
@@ -94,16 +98,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (notification.relatedType && notification.relatedId) {
       switch (notification.relatedType) {
         case 'project':
-          navigate(`/nutritionist/meal-plans`)
+          navigate(`${effectiveBasePath}/meal-plans`)
           break
         case 'event':
-          navigate(`/nutritionist/calendar`)
+          navigate(`${effectiveBasePath}/calendar`)
           break
         case 'message':
-          navigate(`/nutritionist/messages`)
+          navigate(`${effectiveBasePath}/messages`)
           break
         case 'review':
-          navigate(`/nutritionist/profile`)
+          navigate(`${effectiveBasePath}/profile`)
           break
       }
     }

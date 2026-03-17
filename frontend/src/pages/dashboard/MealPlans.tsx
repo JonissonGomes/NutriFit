@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Loader2, Plus, Search } from 'lucide-react'
 import { mealPlanService } from '../../services'
 import { useToast } from '../../contexts/ToastContext'
+import { useAuth } from '../../contexts/AuthContext'
 import { sanitizeInput, limitLength } from '../../utils/inputUtils'
 import type { MealPlan } from '../../types/api'
 
@@ -22,9 +23,12 @@ const statusClass: Record<string, string> = {
 
 const MealPlans = () => {
   const { showToast } = useToast()
+  const { user } = useAuth()
   const [items, setItems] = useState<MealPlan[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const isDoctor = user?.role === 'medico'
+  const basePath = isDoctor ? '/medico' : '/nutritionist'
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
@@ -73,8 +77,14 @@ const MealPlans = () => {
           </div>
 
           <Link
-            to="/nutritionist/meal-plans/new"
+            to={`${basePath}/meal-plans/new`}
+            aria-disabled={isDoctor}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition-colors"
+            onClick={(e) => {
+              if (!isDoctor) return
+              e.preventDefault()
+              showToast('Médicos não podem criar prescrição alimentar estruturada no sistema.', 'warning')
+            }}
           >
             <Plus className="h-4 w-4" />
             Novo
@@ -92,7 +102,7 @@ const MealPlans = () => {
           {filtered.map((mp) => (
             <Link
               key={mp.id}
-              to={`/nutritionist/meal-plans/${mp.id}`}
+              to={`${basePath}/meal-plans/${mp.id}`}
               className="bg-white border border-gray-200 rounded-xl p-5 hover:border-primary-300 hover:shadow-md transition-all"
             >
               <div className="flex items-start justify-between gap-3">

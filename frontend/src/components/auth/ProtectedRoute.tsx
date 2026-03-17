@@ -36,6 +36,8 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     // Redirecionar baseado na role do usuário
     if (user.role === 'nutricionista') {
       return <Navigate to="/nutritionist/dashboard" replace />
+    } else if (user.role === 'medico') {
+      return <Navigate to="/medico/dashboard" replace />
     } else if (user.role === 'paciente') {
       return <Navigate to="/patient/dashboard" replace />
     }

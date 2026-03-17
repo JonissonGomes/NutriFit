@@ -9,6 +9,7 @@ import type {
   LoginRequest,
   RegisterRequest,
   UserRole,
+  ProfessionalRegistration,
   ApiResponse,
 } from '../types/api'
 
