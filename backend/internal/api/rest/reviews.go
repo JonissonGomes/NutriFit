@@ -257,7 +257,32 @@ func markReviewHelpful(c *gin.Context) {
 
 // getMyReviews lista avaliações feitas pelo usuário autenticado
 func getMyReviews(c *gin.Context) {
-	// TODO: Implementar listagem de reviews do usuário
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "Funcionalidade ainda não implementada"})
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Não autenticado"})
+		return
+	}
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if limit < 1 || limit > 50 {
+		limit = 10
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	reviews, total, err := review.GetMyReviews(ctx, userID.(string), page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao carregar avaliações"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  reviews,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	})
 }
 

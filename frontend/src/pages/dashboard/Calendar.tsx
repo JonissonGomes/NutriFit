@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, User, ArrowLeft, X, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import ConfirmModal from '../../components/common/ConfirmModal'
 import { calendarService } from '../../services'
 import type { Event, CreateEventRequest, EventType, EventLocation } from '../../services/calendar.service'
 import { useToast } from '../../contexts/ToastContext'
@@ -112,7 +113,7 @@ const Calendar = () => {
 
     setDeletingId(eventToDelete)
     try {
-      const response = await calendarService.deleteEvent(eventId)
+      const response = await calendarService.deleteEvent(eventToDelete)
 
       if (response.data) {
         showToast('Evento excluído com sucesso!', 'success')
@@ -124,6 +125,8 @@ const Calendar = () => {
       showToast('Erro ao excluir evento', 'error')
     } finally {
       setDeletingId(null)
+      setShowDeleteModal(false)
+      setEventToDelete(null)
     }
   }
 
@@ -213,10 +216,24 @@ const Calendar = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        title="Excluir evento"
+        message="Tem certeza que deseja excluir este evento?"
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={() => void confirmDeleteEvent()}
+        onClose={() => {
+          setShowDeleteModal(false)
+          setEventToDelete(null)
+        }}
+        loading={!!deletingId}
+        variant="danger"
+      />
       {/* Header com botão voltar */}
       <div className="flex items-center gap-4">
         <button
-          onClick={() => navigate('/architect/dashboard')}
+          onClick={() => navigate('/nutritionist/dashboard')}
           className="p-2 rounded-lg"
         >
           <ArrowLeft className="h-5 w-5 text-gray-600" />

@@ -29,6 +29,10 @@ export { notificationService } from './notification.service'
 export type { Notification, NotificationType, NotificationPreferences } from './notification.service'
 export { reviewService } from './review.service'
 export type { Review, ReviewWithDetails, CreateReviewRequest, UpdateReviewRequest, ArchitectRatingStats } from './review.service'
+export { mealPlanService } from './mealPlan.service'
+export { foodDiaryService } from './foodDiary.service'
+export { anamnesisService } from './anamnesis.service'
+export { patientService } from './patient.service'
 
 // Re-exportar tipos principais (apenas da API)
 export type * from '../types/api'

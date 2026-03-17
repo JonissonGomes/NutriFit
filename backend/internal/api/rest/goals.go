@@ -6,11 +6,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"arck-design/backend/internal/models"
 	"arck-design/backend/internal/services/goal"
+	"arck-design/backend/internal/services/security"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func getPatientGoals(c *gin.Context) {
 	patientID := c.Param("patientId")
+	if patientID == "me" {
+		if uid, ok := c.Get("userID"); ok {
+			patientID = uid.(string)
+		}
+	} else if decoded, err := security.DecodeUserID(patientID); err == nil {
+		patientID = decoded
+	}
 
 	goals, err := goal.GetPatientGoals(c.Request.Context(), patientID)
 	if err != nil {

@@ -210,7 +210,7 @@ const Services = () => {
       {/* Header com botão voltar */}
       <div className="flex items-center gap-4">
         <button
-          onClick={() => navigate('/architect/dashboard')}
+          onClick={() => navigate('/nutritionist/dashboard')}
           className="p-2 rounded-lg"
         >
           <ArrowLeft className="h-5 w-5 text-gray-600" />

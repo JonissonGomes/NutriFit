@@ -454,7 +454,7 @@ const PublicProfile = () => {
       {/* Header */}
       <div className="flex items-center gap-3 md:gap-4">
         <button
-          onClick={() => navigate('/architect/dashboard')}
+          onClick={() => navigate('/nutritionist/dashboard')}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowBackIcon sx={{ fontSize: 20 }} />

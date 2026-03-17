@@ -258,7 +258,7 @@ const Chat = () => {
       {/* Header - apenas no desktop ou quando nenhuma conversa está selecionada no mobile */}
       <div className={`flex items-center gap-4 mb-4 ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
         <button
-          onClick={() => navigate('/architect/dashboard')}
+          onClick={() => navigate('/nutritionist/dashboard')}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-gray-600" />

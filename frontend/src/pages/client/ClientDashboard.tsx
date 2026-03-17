@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { FolderTree, Calendar, ArrowRight, Plus, Loader2, Heart, Search, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { dashboardService } from '../../services'
-import type { ClientStats, ClientProject, UpcomingEvent } from '../../services/dashboard.service'
+import type { ClientStats, UpcomingEvent } from '../../services/dashboard.service'
 
 const ClientDashboard = () => {
   const [stats, setStats] = useState<ClientStats | null>(null)
-  const [projects, setProjects] = useState<ClientProject[]>([])
+  const [projects, setProjects] = useState<any[]>([])
   const [appointments, setAppointments] = useState<UpcomingEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -18,9 +18,9 @@ const ClientDashboard = () => {
     setIsLoading(true)
     try {
       const [statsRes, projectsRes, appointmentsRes] = await Promise.all([
-        dashboardService.getClientStats(),
-        dashboardService.getClientProjects(3),
-        dashboardService.getClientAppointments(3),
+        dashboardService.getPatientStats(),
+        dashboardService.getPatientMealPlans(3),
+        dashboardService.getPatientAppointments(3),
       ])
 
       if (statsRes.data) {
@@ -87,7 +87,7 @@ const ClientDashboard = () => {
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Bem-vindo de volta!</h1>
-        <p className="text-gray-600 mt-2">Explore arquitetos, acompanhe seus projetos e organize suas reuniões</p>
+        <p className="text-gray-600 mt-2">Acompanhe seu plano alimentar, metas e consultas</p>
       </div>
 
       {/* Quick Actions */}
@@ -101,14 +101,14 @@ const ClientDashboard = () => {
               <Search className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">Descobrir Arquitetos</h3>
+              <h3 className="font-semibold text-lg">Descobrir Nutricionistas</h3>
               <p className="text-primary-100 text-sm">Encontre o profissional ideal</p>
             </div>
           </div>
         </Link>
 
         <Link
-          to="/client/favorites"
+          to="/patient/favorites"
           className="bg-white p-6 rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-md hover:border-primary-300 transition-all"
         >
           <div className="flex items-center gap-4">
@@ -117,13 +117,13 @@ const ClientDashboard = () => {
             </div>
             <div>
               <h3 className="font-semibold text-lg text-gray-900">Favoritos</h3>
-              <p className="text-gray-600 text-sm">{stats?.favoriteArchitects || 0} arquitetos salvos</p>
+              <p className="text-gray-600 text-sm">{stats?.favoriteArchitects || 0} nutricionistas salvos</p>
             </div>
           </div>
         </Link>
 
         <Link
-          to="/client/messages"
+          to="/patient/messages"
           className="bg-white p-6 rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-md hover:border-primary-300 transition-all"
         >
           <div className="flex items-center gap-4">
@@ -132,7 +132,7 @@ const ClientDashboard = () => {
             </div>
             <div>
               <h3 className="font-semibold text-lg text-gray-900">Mensagens</h3>
-              <p className="text-gray-600 text-sm">Converse com arquitetos</p>
+              <p className="text-gray-600 text-sm">Converse com nutricionistas</p>
             </div>
           </div>
         </Link>
@@ -141,12 +141,12 @@ const ClientDashboard = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link
-          to="/client/projects"
+          to="/patient/meal-plans"
           className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Projetos Contratados</p>
+              <p className="text-sm text-gray-600 mb-1">Planos Ativos</p>
               <p className="text-3xl font-bold text-gray-900">{stats?.activeProjects || 0}</p>
               <p className="text-xs text-gray-500 mt-1">Em andamento</p>
             </div>
@@ -157,7 +157,7 @@ const ClientDashboard = () => {
         </Link>
 
         <Link
-          to="/client/bookings"
+          to="/patient/bookings"
           className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
         >
           <div className="flex items-center justify-between">
@@ -173,12 +173,12 @@ const ClientDashboard = () => {
         </Link>
 
         <Link
-          to="/client/favorites"
+          to="/patient/favorites"
           className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Arquitetos Favoritos</p>
+              <p className="text-sm text-gray-600 mb-1">Nutricionistas Favoritos</p>
               <p className="text-3xl font-bold text-gray-900">{stats?.favoriteArchitects || 0}</p>
               <p className="text-xs text-gray-500 mt-1">Salvos para referência</p>
             </div>
@@ -189,16 +189,16 @@ const ClientDashboard = () => {
         </Link>
       </div>
 
-      {/* Recent Projects */}
+      {/* Planos recentes */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Projetos em Andamento</h2>
-            <p className="text-sm text-gray-600 mt-1">Acompanhe o progresso dos seus projetos com arquitetos</p>
+            <h2 className="text-xl font-bold text-gray-900">Planos recentes</h2>
+            <p className="text-sm text-gray-600 mt-1">Acesse seus planos alimentares publicados</p>
           </div>
           {projects.length > 0 && (
             <Link 
-              to="/client/projects"
+              to="/patient/meal-plans"
               className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center gap-1"
             >
               Ver todos
@@ -212,7 +212,7 @@ const ClientDashboard = () => {
             {projects.map((project) => (
               <Link
                 key={project.id}
-                to={`/client/projects/${project.id}`}
+                to={`/patient/meal-plans/${project.id}`}
                 className="group flex gap-4 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all hover:-translate-y-1"
               >
                 {project.coverImage ? (
@@ -231,7 +231,7 @@ const ClientDashboard = () => {
                     {project.title}
                   </h3>
                   {project.architectName && (
-                    <p className="text-sm text-gray-600 mb-2">Arquiteto: {project.architectName}</p>
+                    <p className="text-sm text-gray-600 mb-2">Nutricionista: {project.architectName}</p>
                   )}
                   <p className="text-xs text-gray-500">
                     Atualizado em {formatDate(project.updatedAt)}
@@ -251,13 +251,13 @@ const ClientDashboard = () => {
         ) : (
           <div className="text-center py-12">
             <FolderTree className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">Você ainda não tem projetos</p>
+            <p className="text-gray-500 mb-4">Você ainda não tem planos</p>
             <Link
               to="/explore"
               className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold"
             >
               <Plus className="h-4 w-4" />
-              Encontrar um arquiteto
+              Encontrar um nutricionista
             </Link>
           </div>
         )}
@@ -268,7 +268,7 @@ const ClientDashboard = () => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">Próximas Reuniões</h2>
           <Link 
-            to="/client/bookings"
+            to="/patient/bookings"
             className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center gap-1"
           >
             Ver agenda
@@ -306,13 +306,13 @@ const ClientDashboard = () => {
         )}
       </div>
 
-      {/* CTA - Explore Architects */}
+      {/* CTA - Explore Nutricionistas */}
       <div className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl p-8 text-white shadow-lg">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <h2 className="text-2xl font-bold mb-2">Encontre o arquiteto ideal</h2>
+            <h2 className="text-2xl font-bold mb-2">Encontre o nutricionista ideal</h2>
             <p className="text-primary-100">
-              Explore nossa comunidade de profissionais, compare portfólios e encontre o arquiteto perfeito para seu projeto.
+              Explore nossa comunidade de profissionais e encontre o nutricionista perfeito para seus objetivos.
             </p>
           </div>
           <Link
@@ -320,7 +320,7 @@ const ClientDashboard = () => {
             className="bg-white text-primary-600 px-8 py-3 rounded-lg hover:bg-primary-50 transition-colors font-semibold whitespace-nowrap flex items-center gap-2"
           >
             <Search className="h-5 w-5" />
-            Descobrir Arquitetos
+            Descobrir Nutricionistas
             <ArrowRight className="h-5 w-5" />
           </Link>
         </div>

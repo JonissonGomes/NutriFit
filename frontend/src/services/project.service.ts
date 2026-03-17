@@ -38,7 +38,12 @@ const validateProject = (data: CreateProjectRequest): { valid: boolean; error?: 
     return { valid: false, error: 'Categoria é obrigatória' }
   }
 
-  if (!data.location || data.location.trim().length < 2) {
+  const locationText =
+    typeof data.location === 'string'
+      ? data.location.trim()
+      : `${data.location?.city || ''} ${data.location?.state || ''} ${data.location?.address || ''}`.trim()
+
+  if (!locationText || locationText.length < 2) {
     return { valid: false, error: 'Localização é obrigatória' }
   }
 
@@ -100,9 +105,12 @@ export const projectService = {
     const sanitizedData: CreateProjectRequest = {
       ...data,
       title: sanitizeInput(data.title.trim()),
-      description: sanitizeInput(data.description.trim()),
-      location: sanitizeInput(data.location.trim()),
-      tags: data.tags?.map(tag => sanitizeInput(tag.trim())).filter(Boolean),
+      description: sanitizeInput((data.description || '').trim()),
+      location:
+        typeof data.location === 'string'
+          ? sanitizeInput(data.location.trim())
+          : data.location,
+      tags: data.tags?.map((tag: string) => sanitizeInput(tag.trim())).filter(Boolean),
     }
 
     return api.post<Project>('/projects', sanitizedData)
@@ -139,8 +147,13 @@ export const projectService = {
     const sanitizedData: UpdateProjectRequest = { ...data }
     if (data.title) sanitizedData.title = sanitizeInput(data.title.trim())
     if (data.description) sanitizedData.description = sanitizeInput(data.description.trim())
-    if (data.location) sanitizedData.location = sanitizeInput(data.location.trim())
-    if (data.tags) sanitizedData.tags = data.tags.map(tag => sanitizeInput(tag.trim())).filter(Boolean)
+    if (data.location) {
+      sanitizedData.location =
+        typeof data.location === 'string'
+          ? sanitizeInput(data.location.trim())
+          : data.location
+    }
+    if (data.tags) sanitizedData.tags = data.tags.map((tag: string) => sanitizeInput(tag.trim())).filter(Boolean)
 
     return api.put<Project>(`/projects/${encodeURIComponent(id)}`, sanitizedData)
   },

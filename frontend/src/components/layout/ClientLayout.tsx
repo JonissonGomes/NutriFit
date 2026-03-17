@@ -1,13 +1,28 @@
 import { ReactNode, useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { 
-  LayoutDashboard, FolderTree, MessageSquare, 
-  Heart, Calendar, Settings, LogOut, Menu, X, Bell, CheckCircle, Trash2
+import {
+  LayoutDashboard,
+  FolderTree,
+  MessageSquare,
+  Heart,
+  Calendar,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  Bell,
+  CheckCircle,
+  Trash2,
+  ShoppingCart,
+  Target,
+  LineChart,
+  BookText,
+  Bot,
+  Utensils,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
 import LoadingButton from '../common/LoadingButton'
-import arkLogo from '../../assets/ark-logo.png'
 
 interface ClientLayoutProps {
   children: ReactNode
@@ -28,12 +43,17 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
   const isActive = (path: string) => location.pathname === path
 
   const navItems = [
-    { path: '/client/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/client/projects', icon: FolderTree, label: 'Projetos Contratados' },
-    { path: '/client/favorites', icon: Heart, label: 'Favoritos' },
-    { path: '/client/messages', icon: MessageSquare, label: 'Mensagens' },
-    { path: '/client/bookings', icon: Calendar, label: 'Agendamentos' },
-    { path: '/client/settings', icon: Settings, label: 'Configurações' },
+    { path: '/patient/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/patient/meal-plans', icon: BookText, label: 'Plano Alimentar' },
+    { path: '/patient/food-diary', icon: FolderTree, label: 'Diário Alimentar' },
+    { path: '/patient/goals', icon: Target, label: 'Metas' },
+    { path: '/patient/progress', icon: LineChart, label: 'Evolução' },
+    { path: '/patient/shopping-list', icon: ShoppingCart, label: 'Lista de Compras' },
+    { path: '/patient/assistant', icon: Bot, label: 'Assistente' },
+    { path: '/patient/favorites', icon: Heart, label: 'Favoritos' },
+    { path: '/patient/messages', icon: MessageSquare, label: 'Mensagens' },
+    { path: '/patient/bookings', icon: Calendar, label: 'Agendamentos' },
+    { path: '/patient/settings', icon: Settings, label: 'Configurações' },
   ]
 
   const handleLogout = () => {
@@ -93,17 +113,17 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
     if (notification.relatedType && notification.relatedId) {
       switch (notification.relatedType) {
         case 'project':
-          navigate(`/client/projects`)
+          navigate(`/patient/meal-plans`)
           break
         case 'event':
         case 'booking':
-          navigate(`/client/bookings`)
+          navigate(`/patient/bookings`)
           break
         case 'message':
-          navigate(`/client/messages`)
+          navigate(`/patient/messages`)
           break
         case 'favorite':
-          navigate(`/client/favorites`)
+          navigate(`/patient/favorites`)
           break
       }
     }
@@ -142,7 +162,8 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
               {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             <Link to="/" className="flex items-center gap-2">
-              <img src={arkLogo} alt="ArckDesign" className="h-8 w-auto" />
+              <Utensils className="h-6 w-6 text-primary-600" />
+              <span className="font-bold text-primary-700">NutriFit</span>
             </Link>
           </div>
 

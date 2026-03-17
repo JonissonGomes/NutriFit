@@ -611,6 +611,85 @@ export interface FoodDiaryEntry {
 }
 
 // ============================================
+// COMPATIBILIDADE (migração de ArckDesign → NutriFit)
+// ============================================
+
+// Algumas telas ainda usam o vocabulário antigo (Project/Arquitetura).
+// Mantemos tipos legados enquanto a migração é finalizada.
+
+export type ProjectAccessType = 'public' | 'private' | 'password'
+export type ProjectStatus = 'rascunho' | 'em-andamento' | 'revisao' | 'aprovado' | 'concluido'
+
+export type ProjectLocation =
+  | string
+  | {
+      city?: string
+      state?: string
+      address?: string
+    }
+
+export interface ProjectSpecs {
+  area?: string
+  rooms?: string
+  budget?: string
+  style?: string
+}
+
+export interface Project {
+  id: string
+  userId: string
+  title: string
+  description?: string
+  category?: string
+  coverImage?: string
+  views?: number
+  filesCount?: number
+  projectStatus?: ProjectStatus
+  accessType?: ProjectAccessType
+  password?: string
+  location?: ProjectLocation
+  tags?: string[]
+  specs?: ProjectSpecs
+  createdAt: string
+  updatedAt: string
+  // Alguns componentes esperam isso no card/lista:
+  architect?: {
+    id: string
+    name: string
+    avatar?: string
+    username?: string
+    rating?: number
+    projectsCount?: number
+  }
+  clientId?: string
+}
+
+export interface CreateProjectRequest {
+  title: string
+  description?: string
+  category?: string
+  accessType?: ProjectAccessType
+  password?: string
+  location?: ProjectLocation
+  tags?: string[]
+  specs?: ProjectSpecs
+}
+
+export interface UpdateProjectRequest extends Partial<CreateProjectRequest> {
+  coverImage?: string
+  projectStatus?: ProjectStatus
+}
+
+export interface ProjectFilters {
+  status?: ProjectStatus
+  category?: string
+  accessType?: ProjectAccessType
+  search?: string
+  page?: number
+  limit?: number
+}
+
+// ============================================
 // AVALIAÇÃO ANTROPOMÉTRICA
 // ============================================
 

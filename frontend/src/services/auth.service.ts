@@ -16,7 +16,8 @@ import type {
 // CONSTANTES
 // ============================================
 
-const USER_STORAGE_KEY = 'arckdesign_user'
+const USER_STORAGE_KEY = 'nufit_user'
+const LEGACY_USER_STORAGE_KEY = 'arckdesign_user'
 
 // ============================================
 // FUNÇÕES AUXILIARES
@@ -33,13 +34,14 @@ const saveUser = (user: User): void => {
 
 const getStoredUser = (): User | null => {
   try {
-    const stored = localStorage.getItem(USER_STORAGE_KEY)
+    const stored = localStorage.getItem(USER_STORAGE_KEY) || localStorage.getItem(LEGACY_USER_STORAGE_KEY)
     if (!stored) return null
     const user = JSON.parse(stored)
     // Garantir que type seja sempre igual a role para compatibilidade
     return { ...user, type: user.role || user.type }
   } catch {
     localStorage.removeItem(USER_STORAGE_KEY)
+    localStorage.removeItem(LEGACY_USER_STORAGE_KEY)
     return null
   }
 }
@@ -47,6 +49,7 @@ const getStoredUser = (): User | null => {
 const clearUserData = (): void => {
   tokenManager.clearTokens()
   localStorage.removeItem(USER_STORAGE_KEY)
+  localStorage.removeItem(LEGACY_USER_STORAGE_KEY)
 }
 
 // ============================================

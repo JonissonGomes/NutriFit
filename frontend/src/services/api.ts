@@ -10,27 +10,36 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 // GERENCIAMENTO DE TOKENS
 // ============================================
 
-const TOKEN_KEY = 'arckdesign_access_token'
-const REFRESH_TOKEN_KEY = 'arckdesign_refresh_token'
+const TOKEN_KEY = 'nufit_access_token'
+const REFRESH_TOKEN_KEY = 'nufit_refresh_token'
+const LEGACY_TOKEN_KEY = 'arckdesign_access_token'
+const LEGACY_REFRESH_TOKEN_KEY = 'arckdesign_refresh_token'
+const LEGACY_USER_KEY = 'arckdesign_user'
+const USER_KEY = 'nufit_user'
 
 export const tokenManager = {
   getAccessToken: (): string | null => {
-    return localStorage.getItem(TOKEN_KEY)
+    return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(LEGACY_TOKEN_KEY)
   },
 
   getRefreshToken: (): string | null => {
-    return localStorage.getItem(REFRESH_TOKEN_KEY)
+    return localStorage.getItem(REFRESH_TOKEN_KEY) || localStorage.getItem(LEGACY_REFRESH_TOKEN_KEY)
   },
 
   setTokens: (tokens: AuthTokens): void => {
     localStorage.setItem(TOKEN_KEY, tokens.accessToken)
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken)
+
+    // migrar chaves legadas (evitar estados inconsistentes)
+    localStorage.removeItem(LEGACY_TOKEN_KEY)
+    localStorage.removeItem(LEGACY_REFRESH_TOKEN_KEY)
   },
 
   clearTokens: (): void => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
-    localStorage.removeItem('arckdesign_user')
+    localStorage.removeItem(USER_KEY)
+    localStorage.removeItem(LEGACY_USER_KEY)
   },
 
   isTokenExpired: (token: string): boolean => {

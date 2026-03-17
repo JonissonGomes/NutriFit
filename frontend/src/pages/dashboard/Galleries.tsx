@@ -175,7 +175,7 @@ const Galleries = () => {
       reforma: 'https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=400&h=300&fit=crop',
       interiores: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&h=300&fit=crop',
     }
-    return placeholders[project.category] || placeholders.residencial
+    return placeholders[project.category || 'residencial'] || placeholders.residencial
   }
 
   if (loading) {
@@ -310,9 +310,9 @@ const Galleries = () => {
               
               {/* Status Badges */}
               <div className="absolute top-3 left-3 flex flex-col gap-2">
-                <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.accessType)}`}>
-                  {getStatusIcon(project.accessType)}
-                  {getStatusLabel(project.accessType)}
+                <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.accessType || 'public')}`}>
+                  {getStatusIcon(project.accessType || 'public')}
+                  {getStatusLabel(project.accessType || 'public')}
                 </span>
                 {project.projectStatus && (
                   <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getProjectStatusColor(project.projectStatus)}`}>
@@ -334,7 +334,7 @@ const Galleries = () => {
             <div className="p-5">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-medium px-2 py-1 bg-primary-100 text-primary-700 rounded">
-                  {getCategoryLabel(project.category)}
+                  {getCategoryLabel(project.category || '')}
                 </span>
                 <span className="text-xs text-gray-500 flex items-center gap-1">
                   <Calendar className="h-3 w-3" />

@@ -1,6 +1,6 @@
 import {
-  Search, Users, Eye, MessageSquare, FileText, Calendar,
-  Building2, CheckSquare, BarChart3, Restaurant, ClipboardList,
+  Search, Users, MessageSquare, FileText, Calendar,
+  Building2, CheckSquare, BarChart3, Utensils, ClipboardList,
   Target, Shield, Apple
 } from 'lucide-react'
 
@@ -72,7 +72,7 @@ const FeaturesList = () => {
         description: 'Cadastro, histórico e gestão de pacientes em um só lugar',
       },
       {
-        icon: <Restaurant className="h-5 w-5" />,
+        icon: <Utensils className="h-5 w-5" />,
         title: 'Planos Alimentares',
         description: 'Prescrição com macros, refeições e substituições. Modelos e IA opcional',
       },

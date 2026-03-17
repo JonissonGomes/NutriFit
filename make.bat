@@ -1,5 +1,5 @@
 @echo off
-REM ArckDesign - Script de Comandos para Windows
+REM NuFit - Script de Comandos para Windows
 REM Uso: make.bat [comando]
 
 setlocal enabledelayedexpansion

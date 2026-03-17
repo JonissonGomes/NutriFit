@@ -34,10 +34,10 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     console.log('[ProtectedRoute] Role não permitida:', user.role, 'Permitidas:', allowedRoles)
     // Redirecionar baseado na role do usuário
-    if (user.role === 'arquiteto') {
-      return <Navigate to="/architect/dashboard" replace />
-    } else if (user.role === 'cliente') {
-      return <Navigate to="/client/dashboard" replace />
+    if (user.role === 'nutricionista') {
+      return <Navigate to="/nutritionist/dashboard" replace />
+    } else if (user.role === 'paciente') {
+      return <Navigate to="/patient/dashboard" replace />
     }
     return <Navigate to="/" replace />
   }

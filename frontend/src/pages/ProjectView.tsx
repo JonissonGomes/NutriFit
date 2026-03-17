@@ -249,7 +249,11 @@ const ProjectView = () => {
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
-                      {project.location || 'Localização não informada'}
+                      {typeof project.location === 'string'
+                        ? (project.location || 'Localização não informada')
+                        : (project.location
+                            ? `${project.location.city || ''}${project.location.state ? `, ${project.location.state}` : ''}`.trim() || 'Localização não informada'
+                            : 'Localização não informada')}
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />

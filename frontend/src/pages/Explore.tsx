@@ -19,12 +19,12 @@ const Explore = () => {
 
   const categories = [
     { value: '', label: 'Todas as Categorias' },
-    { value: 'residencial', label: 'Residencial' },
-    { value: 'comercial', label: 'Comercial' },
-    { value: 'interiores', label: 'Design de Interiores' },
-    { value: 'sustentavel', label: 'Arquitetura Sustentável' },
-    { value: 'reforma', label: 'Reforma' },
-    { value: 'urbanismo', label: 'Urbanismo' },
+    { value: 'emagrecimento', label: 'Emagrecimento' },
+    { value: 'ganho-massa', label: 'Ganho de massa' },
+    { value: 'nutricao-esportiva', label: 'Nutrição esportiva' },
+    { value: 'clinica', label: 'Nutrição clínica' },
+    { value: 'vegetariana', label: 'Vegetariana/vegana' },
+    { value: 'saude-intestinal', label: 'Saúde intestinal' },
   ]
 
   // Estados brasileiros
@@ -142,7 +142,7 @@ const Explore = () => {
             <span>Voltar</span>
           </button>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            Encontre o Arquiteto Ideal
+            Encontre o Nutricionista Ideal
           </h1>
           <p className="text-gray-600 text-lg">
             Conecte-se com profissionais qualificados para o seu projeto

@@ -1,8 +1,11 @@
 package rest
 
 import (
+	"encoding/csv"
 	"net/http"
+	"strings"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"arck-design/backend/internal/services/patient"
@@ -115,6 +118,91 @@ func deletePatient(c *gin.Context) {
 }
 
 func importPatients(c *gin.Context) {
-	// TODO: Implementar importação de pacientes de planilhas ou outros sistemas
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "Funcionalidade em desenvolvimento"})
+	userID, _ := c.Get("userID")
+	userIDStr := userID.(string)
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo não enviado (campo: file)"})
+		return
+	}
+
+	f, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao abrir arquivo"})
+		return
+	}
+	defer f.Close()
+
+	reader := csv.NewReader(f)
+	reader.FieldsPerRecord = -1
+	rows, err := reader.ReadAll()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "CSV inválido"})
+		return
+	}
+	if len(rows) < 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "CSV sem dados"})
+		return
+	}
+
+	// Cabeçalho esperado (flexível): name,email,phone,dateOfBirth,gender,address,notes,isActive
+	header := make(map[string]int)
+	for i, h := range rows[0] {
+		header[strings.ToLower(strings.TrimSpace(h))] = i
+	}
+
+	get := func(row []string, key string) string {
+		idx, ok := header[key]
+		if !ok || idx < 0 || idx >= len(row) {
+			return ""
+		}
+		return strings.TrimSpace(row[idx])
+	}
+
+	created := 0
+	skipped := 0
+	var errorsList []string
+
+	for i := 1; i < len(rows); i++ {
+		row := rows[i]
+		name := get(row, "name")
+		email := get(row, "email")
+		phone := get(row, "phone")
+
+		if name == "" {
+			skipped++
+			continue
+		}
+
+		var dobPtr *time.Time
+		if dob := get(row, "dateofbirth"); dob != "" {
+			if t, parseErr := time.Parse("2006-01-02", dob); parseErr == nil {
+				dobPtr = &t
+			}
+		}
+
+		p := patient.Patient{
+			Name:        name,
+			Email:       email,
+			Phone:       phone,
+			Gender:      get(row, "gender"),
+			Address:     get(row, "address"),
+			Notes:       get(row, "notes"),
+			DateOfBirth: dobPtr,
+		}
+
+		if _, err := patient.CreatePatient(c.Request.Context(), userIDStr, p); err != nil {
+			errorsList = append(errorsList, "linha "+strconv.Itoa(i+1)+": "+err.Error())
+			continue
+		}
+		created++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Importação concluída",
+		"created": created,
+		"skipped": skipped,
+		"errors":  errorsList,
+	})
 }

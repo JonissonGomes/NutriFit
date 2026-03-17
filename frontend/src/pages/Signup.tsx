@@ -147,7 +147,7 @@ const Signup = () => {
             <div className="p-3 bg-primary-600 rounded-xl shadow-lg">
               <Building2 className="h-8 w-8 text-white" />
             </div>
-            <span className="text-3xl font-bold text-white">ArckDesign</span>
+            <span className="text-3xl font-bold text-white">NuFit</span>
           </div>
           <h2 className="text-2xl font-bold text-white">
             Crie sua conta

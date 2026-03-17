@@ -77,22 +77,35 @@ export const dashboardService = {
   /**
    * Obter estatísticas do dashboard do arquiteto
    */
-  async getArchitectStats(): Promise<ApiResponse<ArchitectStats>> {
-    return api.get<ArchitectStats>('/architect/dashboard/stats')
+  async getNutritionistStats(): Promise<ApiResponse<ArchitectStats>> {
+    return api.get<ArchitectStats>('/nutritionist/dashboard/stats')
   },
 
   /**
    * Obter projetos recentes do arquiteto
    */
-  async getArchitectRecentProjects(limit = 5): Promise<ApiResponse<RecentProject[]>> {
-    return api.get<RecentProject[]>(`/architect/dashboard/recent-projects?limit=${limit}`)
+  async getNutritionistRecentMealPlans(limit = 5): Promise<ApiResponse<any[]>> {
+    return api.get<any[]>(`/nutritionist/dashboard/recent-meal-plans?limit=${limit}`)
   },
 
   /**
    * Obter próximos eventos do arquiteto
    */
+  async getNutritionistUpcomingEvents(limit = 5): Promise<ApiResponse<UpcomingEvent[]>> {
+    return api.get<UpcomingEvent[]>(`/nutritionist/dashboard/upcoming-events?limit=${limit}`)
+  },
+
+  // Compatibilidade com nomes antigos (arquitetura)
+  async getArchitectStats(): Promise<ApiResponse<ArchitectStats>> {
+    return this.getNutritionistStats()
+  },
+
+  async getArchitectRecentProjects(limit = 5): Promise<ApiResponse<any[]>> {
+    return this.getNutritionistRecentMealPlans(limit)
+  },
+
   async getArchitectUpcomingEvents(limit = 5): Promise<ApiResponse<UpcomingEvent[]>> {
-    return api.get<UpcomingEvent[]>(`/architect/dashboard/upcoming-events?limit=${limit}`)
+    return this.getNutritionistUpcomingEvents(limit)
   },
 
   // ============================================
@@ -102,22 +115,35 @@ export const dashboardService = {
   /**
    * Obter estatísticas do dashboard do cliente
    */
-  async getClientStats(): Promise<ApiResponse<ClientStats>> {
-    return api.get<ClientStats>('/client/dashboard/stats')
+  async getPatientStats(): Promise<ApiResponse<ClientStats>> {
+    return api.get<ClientStats>('/patient/dashboard/stats')
   },
 
   /**
    * Obter projetos do cliente
    */
-  async getClientProjects(limit = 5): Promise<ApiResponse<ClientProject[]>> {
-    return api.get<ClientProject[]>(`/client/dashboard/projects?limit=${limit}`)
+  async getPatientMealPlans(limit = 5): Promise<ApiResponse<any[]>> {
+    return api.get<any[]>(`/patient/dashboard/meal-plans?limit=${limit}`)
   },
 
   /**
    * Obter próximos agendamentos do cliente
    */
+  async getPatientAppointments(limit = 5): Promise<ApiResponse<UpcomingEvent[]>> {
+    return api.get<UpcomingEvent[]>(`/patient/dashboard/appointments?limit=${limit}`)
+  },
+
+  // Compatibilidade com nomes antigos (cliente)
+  async getClientStats(): Promise<ApiResponse<ClientStats>> {
+    return this.getPatientStats()
+  },
+
+  async getClientProjects(limit = 5): Promise<ApiResponse<any[]>> {
+    return this.getPatientMealPlans(limit)
+  },
+
   async getClientAppointments(limit = 5): Promise<ApiResponse<UpcomingEvent[]>> {
-    return api.get<UpcomingEvent[]>(`/client/dashboard/appointments?limit=${limit}`)
+    return this.getPatientAppointments(limit)
   },
 }
 

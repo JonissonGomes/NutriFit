@@ -80,7 +80,7 @@ const ClientMessages: React.FC = () => {
 
     if (architectId && initialMessage) {
       // Limpar query params da URL
-      navigate('/client/messages', { replace: true })
+      navigate('/patient/messages', { replace: true })
       
       // Iniciar conversa com o arquiteto
       initializeConversationWithMessage(architectId, initialMessage)
@@ -347,14 +347,14 @@ const ClientMessages: React.FC = () => {
       {/* Header - apenas no desktop ou quando nenhuma conversa está selecionada no mobile */}
       <div className={`flex items-center gap-4 mb-4 ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
         <button
-          onClick={() => navigate('/client/dashboard')}
+          onClick={() => navigate('/patient/dashboard')}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </button>
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">Mensagens</h1>
-          <p className="text-gray-600 mt-1 text-xs md:text-sm hidden md:block">Converse com arquitetos</p>
+          <p className="text-gray-600 mt-1 text-xs md:text-sm hidden md:block">Converse com nutricionistas</p>
         </div>
       </div>
 
@@ -384,7 +384,7 @@ const ClientMessages: React.FC = () => {
             <Chat className="text-5xl mb-4 text-gray-400" />
             <h3 className="font-semibold text-gray-900 mb-2">Nenhuma conversa</h3>
             <p className="text-gray-500 text-sm">
-              Inicie uma conversa com um arquiteto para tirar dúvidas ou solicitar orçamentos.
+              Inicie uma conversa com um nutricionista para tirar dúvidas.
             </p>
           </div>
         ) : (
@@ -407,7 +407,7 @@ const ClientMessages: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5 md:mb-1">
                     <p className="font-semibold md:font-medium text-gray-900 truncate text-sm md:text-base">
-                      {conv.otherUser?.name || 'Arquiteto'}
+                      {conv.otherUser?.name || 'Nutricionista'}
                     </p>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {conv.lastMessage?.createdAt && (
@@ -486,7 +486,7 @@ const ClientMessages: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900 text-sm md:text-base truncate">
-                          {conversations.find(c => c.id === selectedConversation)?.otherUser?.name || 'Arquiteto'}
+                          {conversations.find(c => c.id === selectedConversation)?.otherUser?.name || 'Nutricionista'}
                         </p>
                         <p className="text-xs text-gray-500 md:hidden">Ativo agora</p>
                       </div>

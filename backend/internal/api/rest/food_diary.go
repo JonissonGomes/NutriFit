@@ -2,16 +2,30 @@ package rest
 
 import (
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"arck-design/backend/internal/models"
 	"arck-design/backend/internal/services/food_diary"
+	"arck-design/backend/internal/services/cloudinary"
+	"arck-design/backend/internal/services/security"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func getFoodDiaryEntries(c *gin.Context) {
 	patientID := c.Param("patientId")
+	if patientID == "me" {
+		if uid, ok := c.Get("userID"); ok {
+			patientID = uid.(string)
+		}
+	} else {
+		// aceitar ID opaco (usr_*)
+		if decoded, err := security.DecodeUserID(patientID); err == nil {
+			patientID = decoded
+		}
+	}
 
 	var startDate, endDate *time.Time
 	if startStr := c.Query("startDate"); startStr != "" {
@@ -53,13 +67,49 @@ func createFoodDiaryEntry(c *gin.Context) {
 }
 
 func uploadFoodDiaryPhoto(c *gin.Context) {
-	// TODO: Implementar upload de foto usando Cloudinary
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "Funcionalidade em desenvolvimento"})
+	entryID := c.Param("id")
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo não enviado (campo: file)"})
+		return
+	}
+
+	f, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao abrir arquivo"})
+		return
+	}
+	defer f.Close()
+
+	buf := make([]byte, fileHeader.Size)
+	_, err = f.Read(buf)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao ler arquivo"})
+		return
+	}
+
+	ext := filepath.Ext(fileHeader.Filename)
+	publicID := "nutrifit/food_diary/" + entryID + "/photo" + ext
+
+	up, err := cloudinary.UploadImage(c.Request.Context(), buf, publicID, "nutrifit/food_diary")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao fazer upload da foto"})
+		return
+	}
+
+	updated, err := food_diary.UpdateEntry(c.Request.Context(), entryID, bson.M{"photoUrl": up.SecureURL})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar registro com foto"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": updated})
 }
 
 func analyzeFoodDiaryPhoto(c *gin.Context) {
 	// TODO: Implementar com integração Gemini Vision
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "Funcionalidade em desenvolvimento"})
+	c.JSON(http.StatusNotImplemented, gin.H{"error": "Análise por IA em desenvolvimento"})
 }
 
 func addNutritionistComment(c *gin.Context) {

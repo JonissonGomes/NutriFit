@@ -89,8 +89,8 @@ const PublicProfile = () => {
             }
           }
 
-          // Verificar se o arquiteto está nos favoritos
-          if (isAuthenticated && user?.role !== 'arquiteto' && response.data?.userId) {
+          // Verificar se o nutricionista está nos favoritos
+          if (isAuthenticated && user?.role !== 'nutricionista' && response.data?.userId) {
             try {
               console.log('[PublicProfile] Verificando favorito para userId:', response.data.userId)
               const favoriteCheck = await favoritesService.checkFavorite(response.data.userId)
@@ -240,7 +240,7 @@ const PublicProfile = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Perfil não encontrado</h2>
-          <p className="text-gray-600 mb-4">O arquiteto que você procura não existe.</p>
+          <p className="text-gray-600 mb-4">O nutricionista que você procura não existe.</p>
           <Link to="/explore" className="text-primary-600 hover:underline">
             Voltar para explorar
           </Link>
@@ -554,7 +554,7 @@ const PublicProfile = () => {
               </div>
 
               <div className="flex items-center gap-2 md:gap-3">
-                {user?.role !== 'arquiteto' && (
+                {user?.role !== 'nutricionista' && (
                   <button
                     onClick={handleToggleFavorite}
                     className={`px-4 md:px-6 py-2 md:py-3 rounded-lg border transition-all flex items-center justify-center ${
@@ -579,7 +579,7 @@ const PublicProfile = () => {
                     }
                     // Navegar para mensagens com query params para pré-preencher mensagem
                     const initialMessage = `Olá ${profile.displayName}! Gostaria de solicitar um orçamento para meu projeto. Poderia me enviar mais informações?`
-                    navigate(`/client/messages?architect=${profile.userId}&initialMessage=${encodeURIComponent(initialMessage)}`)
+                    navigate(`/patient/messages?architect=${profile.userId}&initialMessage=${encodeURIComponent(initialMessage)}`)
                   }}
                   className="px-4 md:px-6 py-2 md:py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold text-xs md:text-sm"
                 >

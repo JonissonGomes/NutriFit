@@ -200,6 +200,87 @@ func GetReviewsByNutritionist(ctx context.Context, nutritionistID string, page, 
 	return reviews, total, nil
 }
 
+// GetMyReviews lista avaliações feitas pelo usuário autenticado.
+// Para pacientes: reviews criadas pelo paciente. Para nutricionistas: reviews recebidas.
+func GetMyReviews(ctx context.Context, userID string, page, limit int) ([]ReviewWithDetails, int64, error) {
+	userObjID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 50 {
+		limit = 10
+	}
+
+	// Descobrir role do usuário
+	var u models.User
+	_ = database.UsersCollection.FindOne(ctx, bson.M{"_id": userObjID}).Decode(&u)
+
+	filter := bson.M{}
+	if u.Role == models.RoleNutricionista {
+		filter["nutritionistId"] = userObjID
+	} else {
+		filter["patientId"] = userObjID
+	}
+
+	total, err := database.ReviewsCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: filter}},
+		{{Key: "$sort", Value: bson.M{"createdAt": -1}}},
+		{{Key: "$skip", Value: int64((page - 1) * limit)}},
+		{{Key: "$limit", Value: int64(limit)}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "users",
+			"localField":   "patientId",
+			"foreignField": "_id",
+			"as":           "patient",
+		}}},
+		{{Key: "$unwind", Value: bson.M{"path": "$patient", "preserveNullAndEmptyArrays": true}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "users",
+			"localField":   "nutritionistId",
+			"foreignField": "_id",
+			"as":           "nutritionist",
+		}}},
+		{{Key: "$unwind", Value: bson.M{"path": "$nutritionist", "preserveNullAndEmptyArrays": true}}},
+		{{Key: "$lookup", Value: bson.M{
+			"from":         "meal_plans",
+			"localField":   "mealPlanId",
+			"foreignField": "_id",
+			"as":           "mealPlan",
+		}}},
+		{{Key: "$unwind", Value: bson.M{"path": "$mealPlan", "preserveNullAndEmptyArrays": true}}},
+		{{Key: "$addFields", Value: bson.M{
+			"patientName":   "$patient.name",
+			"patientAvatar": "$patient.avatar",
+			"mealPlanTitle": "$mealPlan.title",
+		}}},
+		{{Key: "$project", Value: bson.M{
+			"patient":      0,
+			"nutritionist": 0,
+			"mealPlan":     0,
+		}}},
+	}
+
+	cursor, err := database.ReviewsCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var reviews []ReviewWithDetails
+	if err := cursor.All(ctx, &reviews); err != nil {
+		return nil, 0, err
+	}
+	return reviews, total, nil
+}
+
 // GetReviewByID obtém uma avaliação por ID
 func GetReviewByID(ctx context.Context, reviewID string) (*models.Review, error) {
 	objID, err := primitive.ObjectIDFromHex(reviewID)

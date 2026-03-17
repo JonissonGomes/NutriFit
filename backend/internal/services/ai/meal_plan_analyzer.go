@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"arck-design/backend/internal/models"
+	"arck-design/backend/internal/services/food"
 )
 
 // MealPlanAnalysisResult resultado da análise de um plano alimentar
@@ -56,7 +57,6 @@ func AnalyzeMealPlanVariety(ctx context.Context, mealPlan models.MealPlan) (*Mea
 
 // SuggestSubstitutions sugere substituições para um alimento
 func SuggestSubstitutions(ctx context.Context, foodID string, mealPlan models.MealPlan) ([]models.Food, error) {
-	// Esta função pode usar a função GetSubstitutions do serviço food
-	// Por enquanto retorna vazio
-	return []models.Food{}, nil
+	_ = mealPlan
+	return food.GetSubstitutions(ctx, foodID, "")
 }

@@ -21,7 +21,7 @@ import BarChartIcon from '@mui/icons-material/BarChart'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
 import LoadingButton from '../common/LoadingButton'
-import arkLogo from '../../assets/ark-logo.png'
+import RestaurantIcon from '@mui/icons-material/Restaurant'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -42,15 +42,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isActive = (path: string) => location.pathname === path
 
   const navItems = [
-    { path: '/architect/dashboard', icon: DashboardIcon, label: 'Dashboard' },
-    { path: '/architect/projects', icon: FolderIcon, label: 'Projetos' },
-    { path: '/architect/profile', icon: PersonIcon, label: 'Perfil Público' },
-    { path: '/architect/messages', icon: ChatIcon, label: 'Mensagens' },
-    { path: '/architect/services', icon: WorkIcon, label: 'Serviços' },
-    { path: '/architect/calendar', icon: CalendarTodayIcon, label: 'Agenda' },
-    { path: '/architect/models', icon: ViewInArIcon, label: 'Modelos 3D' },
-    { path: '/architect/analytics', icon: BarChartIcon, label: 'Estatísticas' },
-    { path: '/architect/settings', icon: SettingsIcon, label: 'Configurações' },
+    { path: '/nutritionist/dashboard', icon: DashboardIcon, label: 'Dashboard' },
+    { path: '/nutritionist/meal-plans', icon: FolderIcon, label: 'Planos Alimentares' },
+    { path: '/nutritionist/profile', icon: PersonIcon, label: 'Perfil Público' },
+    { path: '/nutritionist/messages', icon: ChatIcon, label: 'Mensagens' },
+    { path: '/nutritionist/services', icon: WorkIcon, label: 'Serviços' },
+    { path: '/nutritionist/calendar', icon: CalendarTodayIcon, label: 'Agenda' },
+    { path: '/nutritionist/models', icon: ViewInArIcon, label: 'Modelos 3D' },
+    { path: '/nutritionist/analytics', icon: BarChartIcon, label: 'Estatísticas' },
+    { path: '/nutritionist/settings', icon: SettingsIcon, label: 'Configurações' },
   ]
 
   const handleLogout = () => {
@@ -83,16 +83,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (notification.relatedType && notification.relatedId) {
       switch (notification.relatedType) {
         case 'project':
-          navigate(`/architect/projects`)
+          navigate(`/nutritionist/meal-plans`)
           break
         case 'event':
-          navigate(`/architect/calendar`)
+          navigate(`/nutritionist/calendar`)
           break
         case 'message':
-          navigate(`/architect/messages`)
+          navigate(`/nutritionist/messages`)
           break
         case 'review':
-          navigate(`/architect/profile`)
+          navigate(`/nutritionist/profile`)
           break
       }
     }
@@ -162,7 +162,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               )}
             </button>
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <img src={arkLogo} alt="ArckDesign" className="h-8 w-auto" />
+              <RestaurantIcon sx={{ fontSize: 26, color: '#059669' }} />
+              <span className="font-bold text-primary-700">NutriFit</span>
             </Link>
           </div>
 

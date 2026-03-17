@@ -41,6 +41,13 @@ import ClientProjects from './pages/client/ClientProjects'
 import ClientFavorites from './pages/client/ClientFavorites'
 import ClientMessages from './pages/client/ClientMessages'
 import ClientBookings from './pages/client/ClientBookings'
+import PatientMealPlans from './pages/patient/MealPlans'
+import PatientMealPlan from './pages/patient/MealPlan'
+import PatientFoodDiary from './pages/patient/FoodDiary'
+import PatientGoals from './pages/patient/Goals'
+import PatientProgress from './pages/patient/Progress'
+import PatientShoppingList from './pages/patient/ShoppingList'
+import PatientAIAssistant from './pages/patient/AIAssistant'
 
 function App() {
   return (
@@ -109,6 +116,13 @@ function App() {
                         <ClientLayout>
                           <Routes>
                             <Route path="/dashboard" element={<ClientDashboard />} />
+                            <Route path="/meal-plans" element={<PatientMealPlans />} />
+                            <Route path="/meal-plans/:id" element={<PatientMealPlan />} />
+                            <Route path="/food-diary" element={<PatientFoodDiary />} />
+                            <Route path="/goals" element={<PatientGoals />} />
+                            <Route path="/progress" element={<PatientProgress />} />
+                            <Route path="/shopping-list" element={<PatientShoppingList />} />
+                            <Route path="/assistant" element={<PatientAIAssistant />} />
                             <Route path="/projects" element={<ClientProjects />} />
                             <Route path="/favorites" element={<ClientFavorites />} />
                             <Route path="/messages" element={<ClientMessages />} />

@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Nota: Este arquivo faz parte do pacote models do backend ArckDesign
+// Nota: Este arquivo faz parte do pacote models do backend NuFit
 
 // QuestionCategory representa a categoria de uma pergunta
 type QuestionCategory string

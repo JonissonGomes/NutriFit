@@ -189,11 +189,11 @@ const Dashboard = () => {
             </p>
           </div>
           <Link
-            to="/architect/projects"
+            to="/nutritionist/meal-plans"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all font-semibold text-base shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             <AddIcon sx={{ fontSize: 22 }} />
-            Novo Projeto
+            Novo Plano
           </Link>
         </div>
 
@@ -264,7 +264,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900">Projetos Recentes</h2>
                 <Link 
-                  to="/architect/projects" 
+                  to="/nutritionist/meal-plans" 
                   className="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   Ver todos
@@ -278,7 +278,7 @@ const Dashboard = () => {
                 recentProjects.map((project) => (
                   <Link
                     key={project.id}
-                    to={`/architect/projects/${project.id}`}
+                    to={`/nutritionist/meal-plans/${project.id}`}
                     className="block p-6 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200 group"
                   >
                     <div className="flex items-start gap-5">
@@ -336,11 +336,11 @@ const Dashboard = () => {
                   <FolderIcon sx={{ fontSize: 48, color: '#d1d5db' }} />
                   <p className="mt-4 text-gray-500">Nenhum projeto ainda</p>
                   <Link
-                    to="/architect/projects"
+                    to="/nutritionist/meal-plans"
                     className="mt-4 inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold"
                   >
                     <AddIcon sx={{ fontSize: 18 }} />
-                    Criar primeiro projeto
+                    Criar primeiro plano
                   </Link>
                 </div>
               )}
@@ -353,7 +353,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900">Próximos Eventos</h2>
                 <Link 
-                  to="/architect/calendar" 
+                  to="/nutritionist/calendar" 
                   className="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   Ver agenda
@@ -367,7 +367,7 @@ const Dashboard = () => {
                 upcomingEvents.map((event) => (
                   <Link
                     key={event.id}
-                    to="/architect/calendar"
+                    to="/nutritionist/calendar"
                     className="block p-6 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200 group"
                   >
                     <div className="space-y-3">
@@ -398,7 +398,7 @@ const Dashboard = () => {
                   <CalendarTodayIcon sx={{ fontSize: 48, color: '#d1d5db' }} />
                   <p className="mt-4 text-gray-500">Nenhum evento agendado</p>
                   <Link
-                    to="/architect/calendar"
+                    to="/nutritionist/calendar"
                     className="mt-4 inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold"
                   >
                     <AddIcon sx={{ fontSize: 18 }} />

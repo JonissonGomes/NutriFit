@@ -16,7 +16,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState('profile')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const isClient = user?.role === 'cliente'
+  const isClient = user?.role === 'paciente'
   
   // Profile data
   const [profile, setProfile] = useState<UserProfile>({

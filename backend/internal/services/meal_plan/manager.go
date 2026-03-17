@@ -164,6 +164,72 @@ func ListMealPlans(ctx context.Context, nutritionistID string, patientID *string
 	return mealPlans, total, nil
 }
 
+// ListMealPlansForPatient lista planos alimentares para um paciente autenticado.
+func ListMealPlansForPatient(ctx context.Context, patientID string, page, limit int) ([]models.MealPlan, int64, error) {
+	patientOID, err := primitive.ObjectIDFromHex(patientID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	filter := bson.M{"patientId": patientOID}
+
+	total, err := database.MealPlansCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 50 {
+		limit = 20
+	}
+
+	skip := int64((page - 1) * limit)
+	limitInt64 := int64(limit)
+	cursor, err := database.MealPlansCollection.Find(ctx, filter, &options.FindOptions{
+		Skip:  &skip,
+		Limit: &limitInt64,
+		Sort:  bson.M{"updatedAt": -1},
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var mealPlans []models.MealPlan
+	if err = cursor.All(ctx, &mealPlans); err != nil {
+		return nil, 0, err
+	}
+
+	return mealPlans, total, nil
+}
+
+// GetMealPlanForPatient busca um plano alimentar garantindo que ele pertence ao paciente.
+func GetMealPlanForPatient(ctx context.Context, mealPlanID string, patientID string) (*models.MealPlan, error) {
+	mealPlanOID, err := primitive.ObjectIDFromHex(mealPlanID)
+	if err != nil {
+		return nil, err
+	}
+	patientOID, err := primitive.ObjectIDFromHex(patientID)
+	if err != nil {
+		return nil, err
+	}
+
+	var mealPlan models.MealPlan
+	err = database.MealPlansCollection.FindOne(ctx, bson.M{
+		"_id":       mealPlanOID,
+		"patientId": patientOID,
+	}).Decode(&mealPlan)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrMealPlanNotFound
+		}
+		return nil, err
+	}
+	return &mealPlan, nil
+}
+
 // UpdateMealPlan atualiza um plano alimentar
 func UpdateMealPlan(ctx context.Context, mealPlanID string, nutritionistID string, updates bson.M) (*models.MealPlan, error) {
 	mealPlanOID, err := primitive.ObjectIDFromHex(mealPlanID)
