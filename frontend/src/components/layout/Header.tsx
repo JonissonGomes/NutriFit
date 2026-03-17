@@ -8,7 +8,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import { useAuth } from '../../contexts/AuthContext'
-import arkLogo from '../../assets/ark-logo.png'
+import RestaurantIcon from '@mui/icons-material/Restaurant'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -72,20 +72,20 @@ const Header = () => {
   const userRole = user?.role || user?.type
 
   const getDashboardPath = () => {
-    if (userRole === 'arquiteto') return '/architect/dashboard'
-    if (userRole === 'cliente') return '/client/dashboard'
+    if (userRole === 'nutricionista') return '/nutritionist/dashboard'
+    if (userRole === 'paciente') return '/patient/dashboard'
     return '/'
   }
 
   const getProfilePath = () => {
-    if (userRole === 'arquiteto') return '/architect/profile'
-    if (userRole === 'cliente') return '/client/dashboard'
+    if (userRole === 'nutricionista') return '/nutritionist/profile'
+    if (userRole === 'paciente') return '/patient/dashboard'
     return '/'
   }
 
   const getSettingsPath = () => {
-    if (userRole === 'arquiteto') return '/architect/settings'
-    if (userRole === 'cliente') return '/client/settings'
+    if (userRole === 'nutricionista') return '/nutritionist/settings'
+    if (userRole === 'paciente') return '/patient/settings'
     return '/'
   }
 
@@ -99,7 +99,8 @@ const Header = () => {
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <img src={arkLogo} alt="ArckDesign" className="h-8 w-auto" />
+            <RestaurantIcon sx={{ fontSize: 28, color: '#059669' }} className="text-primary-600" />
+            <span className="text-xl font-bold text-primary-600">NutriFit</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -198,7 +199,7 @@ const Header = () => {
                 </Link>
                 <Link
                   to="/signup"
-                  className="bg-gray-900 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+                  className="bg-primary-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   Começar
                 </Link>

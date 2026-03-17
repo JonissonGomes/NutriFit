@@ -12,7 +12,7 @@ const Login = () => {
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [userType, setUserType] = useState<UserRole>('arquiteto')
+  const [userType, setUserType] = useState<UserRole>('nutricionista')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
@@ -24,7 +24,7 @@ const Login = () => {
   // Redirecionar se já estiver autenticado (ao entrar na página)
   useEffect(() => {
     if (isAuthenticated && user) {
-      const redirectPath = user.role === 'arquiteto' ? '/architect/dashboard' : '/client/dashboard'
+      const redirectPath = user.role === 'nutricionista' ? '/nutritionist/dashboard' : '/patient/dashboard'
       navigate(redirectPath, { replace: true })
     }
   }, [isAuthenticated, user, navigate])
@@ -34,16 +34,16 @@ const Login = () => {
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname
     
     if (from) {
-      const isArchitectPath = from.startsWith('/architect')
-      const isClientPath = from.startsWith('/client')
+      const isNutritionistPath = from.startsWith('/nutritionist')
+      const isPatientPath = from.startsWith('/patient')
       
-      if ((userRole === 'arquiteto' && isArchitectPath) || 
-          (userRole === 'cliente' && isClientPath)) {
+      if ((userRole === 'nutricionista' && isNutritionistPath) ||
+          (userRole === 'paciente' && isPatientPath)) {
         return from
       }
     }
     
-    return userRole === 'arquiteto' ? '/architect/dashboard' : '/client/dashboard'
+    return userRole === 'nutricionista' ? '/nutritionist/dashboard' : '/patient/dashboard'
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -152,40 +152,40 @@ const Login = () => {
         <div className="mb-6 grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => setUserType('arquiteto')}
+            onClick={() => setUserType('nutricionista')}
             className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-              userType === 'arquiteto'
+              userType === 'nutricionista'
                 ? 'border-primary-500 bg-primary-600/20 shadow-lg shadow-primary-500/30'
                 : 'border-stone-700 hover:border-stone-600 bg-stone-800/50'
             }`}
           >
             <div className={`flex flex-col items-center ${
-              userType === 'arquiteto' ? 'text-white' : 'text-stone-400'
+              userType === 'nutricionista' ? 'text-white' : 'text-stone-400'
             }`}>
               <Ruler className={`h-7 w-7 mb-2 ${
-                userType === 'arquiteto' ? 'text-primary-400' : 'text-stone-500'
+                userType === 'nutricionista' ? 'text-primary-400' : 'text-stone-500'
               }`} />
-              <div className="text-sm font-semibold">Arquiteto</div>
+              <div className="text-sm font-semibold">Nutricionista</div>
               <div className="text-xs mt-1 opacity-75">Profissional</div>
             </div>
           </button>
           <button
             type="button"
-            onClick={() => setUserType('cliente')}
+            onClick={() => setUserType('paciente')}
             className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-              userType === 'cliente'
+              userType === 'paciente'
                 ? 'border-accent-500 bg-accent-600/20 shadow-lg shadow-accent-500/30'
                 : 'border-stone-700 hover:border-stone-600 bg-stone-800/50'
             }`}
           >
             <div className={`flex flex-col items-center ${
-              userType === 'cliente' ? 'text-white' : 'text-stone-400'
+              userType === 'paciente' ? 'text-white' : 'text-stone-400'
             }`}>
               <Briefcase className={`h-7 w-7 mb-2 ${
-                userType === 'cliente' ? 'text-accent-400' : 'text-stone-500'
+                userType === 'paciente' ? 'text-accent-400' : 'text-stone-500'
               }`} />
-              <div className="text-sm font-semibold">Cliente</div>
-              <div className="text-xs mt-1 opacity-75">Contratar</div>
+              <div className="text-sm font-semibold">Paciente</div>
+              <div className="text-xs mt-1 opacity-75">Buscar acompanhamento</div>
             </div>
           </button>
         </div>
@@ -271,11 +271,11 @@ const Login = () => {
             <LoadingButton
               type="submit"
               loading={isLoading}
-              variant={userType === 'arquiteto' ? 'primary' : 'secondary'}
+              variant={userType === 'nutricionista' ? 'primary' : 'secondary'}
               fullWidth
               size="lg"
               className={`w-full font-semibold shadow-lg hover:shadow-xl ${
-                userType === 'arquiteto'
+                userType === 'nutricionista'
                   ? 'bg-primary-600 hover:bg-primary-700'
                   : 'bg-accent-500 hover:bg-accent-600'
               }`}

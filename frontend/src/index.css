@@ -28,7 +28,7 @@
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
+    background: #10b981; /* primary-500 NutriFit */
     border-radius: 3px;
   }
   

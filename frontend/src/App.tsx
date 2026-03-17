@@ -24,7 +24,7 @@ import PublicProfile from './pages/PublicProfile'
 import Model3DView from './pages/Model3DView'
 import NotFound from './pages/NotFound'
 
-// Páginas do arquiteto
+// Páginas do nutricionista
 import Dashboard from './pages/dashboard/Dashboard'
 import Galleries from './pages/dashboard/Galleries'
 import PublicProfileEdit from './pages/dashboard/PublicProfile'
@@ -35,7 +35,7 @@ import Calendar from './pages/dashboard/Calendar'
 import Models3D from './pages/dashboard/Models3D'
 import Analytics from './pages/dashboard/Analytics'
 
-// Páginas do cliente
+// Páginas do paciente
 import ClientDashboard from './pages/client/ClientDashboard'
 import ClientProjects from './pages/client/ClientProjects'
 import ClientFavorites from './pages/client/ClientFavorites'
@@ -77,14 +77,15 @@ function App() {
                     }
                   />
 
-                  {/* Dashboard Routes - Architect */}
+                  {/* Dashboard Routes - Nutricionista */}
                   <Route
-                    path="/architect/*"
+                    path="/nutritionist/*"
                     element={
-                      <ProtectedRoute allowedRoles={['arquiteto']}>
+                      <ProtectedRoute allowedRoles={['nutricionista']}>
                         <DashboardLayout>
                           <Routes>
                             <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/meal-plans" element={<Galleries />} />
                             <Route path="/projects" element={<Galleries />} />
                             <Route path="/profile" element={<PublicProfileEdit />} />
                             <Route path="/messages" element={<Chat />} />
@@ -100,11 +101,11 @@ function App() {
                     }
                   />
 
-                  {/* Dashboard Routes - Client */}
+                  {/* Dashboard Routes - Paciente */}
                   <Route
-                    path="/client/*"
+                    path="/patient/*"
                     element={
-                      <ProtectedRoute allowedRoles={['cliente']}>
+                      <ProtectedRoute allowedRoles={['paciente']}>
                         <ClientLayout>
                           <Routes>
                             <Route path="/dashboard" element={<ClientDashboard />} />

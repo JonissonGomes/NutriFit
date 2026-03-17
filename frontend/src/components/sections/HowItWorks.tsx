@@ -1,4 +1,4 @@
-import { Upload, FileText, CheckCircle } from 'lucide-react'
+import { UserPlus, ClipboardList, TrendingUp } from 'lucide-react'
 
 interface Step {
   number: string
@@ -11,61 +11,55 @@ const HowItWorks = () => {
   const steps: Step[] = [
     {
       number: '01',
-      icon: <Upload className="h-8 w-8" />,
-      title: 'Organize seu projeto',
-      description: 'Uploads de plantas, renderizações e fotos organizados por projeto. Categorize por tipo: residencial, comercial ou interiores.',
+      icon: <UserPlus className="h-8 w-8" />,
+      title: 'Cadastre seus pacientes',
+      description: 'Adicione pacientes ao seu CRM, envie anamnese digital e questionários. Tenha o histórico e dados em um só lugar.',
     },
     {
       number: '02',
-      icon: <FileText className="h-8 w-8" />,
-      title: 'Aprove por etapas',
-      description: 'Sistema de aprovação customizado: estudo preliminar, anteprojeto, projeto executivo. Acompanhe o status em tempo real.',
+      icon: <ClipboardList className="h-8 w-8" />,
+      title: 'Prescreva planos alimentares',
+      description: 'Monte cardápios personalizados com macros, refeições e substituições. Use modelos prontos ou sugestões de IA (opcional).',
     },
     {
       number: '03',
-      icon: <CheckCircle className="h-8 w-8" />,
-      title: 'Entregue e apresente',
-      description: 'Compartilhe plantas e renders com clientes, gere orçamentos e contratos. Portfólio profissional sempre atualizado.',
+      icon: <TrendingUp className="h-8 w-8" />,
+      title: 'Acompanhe a evolução',
+      description: 'Diário alimentar, avaliações antropométricas e metas. Acompanhe a aderência e os resultados de cada paciente.',
     },
   ]
 
   return (
-    <section id="como-funciona" className="py-20 md:py-32 bg-gradient-to-b from-gray-50 to-white">
+    <section id="como-funciona" className="py-20 md:py-32 bg-gradient-to-b from-white to-primary-50/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Gestão de projetos em três passos simples
+            Prática nutricional em três passos
           </h2>
           <p className="text-xl text-gray-600">
-            ArckDesign centraliza seus projetos arquitetônicos para você focar na criação.
+            NutriFit centraliza pacientes, planos alimentares e acompanhamento para você focar no que importa: a saúde do paciente.
           </p>
         </div>
 
-        {/* Steps */}
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
             {steps.map((step, index) => (
               <div key={index} className="relative">
-                {/* Connector Line (Desktop) */}
                 {index < steps.length - 1 && (
                   <div className="hidden md:block absolute top-16 left-full w-full h-0.5 bg-gradient-to-r from-primary-200 to-primary-100 transform translate-x-6">
-                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full"></div>
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full" />
                   </div>
                 )}
 
-                <div className="relative bg-white p-8 rounded-2xl border border-gray-200 hover:border-primary-300 hover:shadow-xl transition-all duration-200 h-full">
-                  {/* Step Number */}
+                <div className="relative bg-white p-8 rounded-2xl border border-primary-100 hover:border-primary-300 hover:shadow-xl transition-all duration-200 h-full">
                   <div className="absolute -top-4 -left-4 w-12 h-12 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
                     {step.number}
                   </div>
 
-                  {/* Icon */}
                   <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-primary-100 text-primary-600 mb-6">
                     {step.icon}
                   </div>
 
-                  {/* Content */}
                   <h3 className="text-2xl font-bold text-gray-900 mb-4">
                     {step.title}
                   </h3>
@@ -83,4 +77,3 @@ const HowItWorks = () => {
 }
 
 export default HowItWorks
-

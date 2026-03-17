@@ -12,7 +12,7 @@ const Community = () => {
     const loadCreators = async () => {
       setLoading(true)
 
-      // Buscar arquitetos em destaque
+      // Buscar nutricionistas em destaque
       const response = await exploreService.searchArchitects({
         limit: 4,
         verified: true, // Priorizar verificados
@@ -62,10 +62,10 @@ const Community = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-              Comunidade de arquitetos
+              Comunidade de nutricionistas
             </h2>
             <p className="text-xl text-gray-600">
-              Carregando arquitetos...
+              Carregando nutricionistas...
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -102,10 +102,10 @@ const Community = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Comunidade de arquitetos
+            Comunidade de nutricionistas
           </h2>
           <p className="text-xl text-gray-600">
-            Encontre arquitetos e designers por região. Descubra escritórios e profissionais especializados em projetos residenciais, comerciais e interiores.
+            Encontre nutricionistas por região e especialidade. Emagrecimento, performance, saúde geral e outras áreas.
           </p>
         </div>
 
@@ -147,7 +147,7 @@ const Community = () => {
                   </span>
                 </div>
                 <div className="text-sm text-gray-600">
-                  {creator.projectsCount || 0} projetos
+                  {creator.projectsCount ?? 0} planos
                 </div>
               </div>
             </Link>
@@ -157,7 +157,7 @@ const Community = () => {
         {/* CTA */}
         <div className="text-center">
           <Link to="/explore" className="text-primary-600 hover:text-primary-700 font-semibold text-lg">
-            Ver todos os arquitetos →
+            Ver todos os nutricionistas →
           </Link>
         </div>
       </div>

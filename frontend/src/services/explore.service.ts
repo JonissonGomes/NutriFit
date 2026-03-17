@@ -61,7 +61,7 @@ export const exploreService = {
     }
 
     const queryString = params.toString()
-    const endpoint = queryString ? `/explore/architects?${queryString}` : '/explore/architects'
+    const endpoint = queryString ? `/explore/nutritionists?${queryString}` : '/explore/nutritionists'
 
     return api.get<PaginatedResponse<PublicProfile>>(endpoint, { requiresAuth: false })
   },
@@ -81,9 +81,9 @@ export const exploreService = {
     }
 
     const queryString = searchParams.toString()
-    const endpoint = queryString 
-      ? `/explore/architects/nearby?${queryString}` 
-      : '/explore/architects/nearby'
+    const endpoint = queryString
+      ? `/explore/nutritionists/nearby?${queryString}`
+      : '/explore/nutritionists/nearby'
 
     return api.get<PublicProfile[]>(endpoint, { requiresAuth: false })
   },
@@ -111,7 +111,7 @@ export const exploreService = {
     }
 
     return api.get<unknown[]>(
-      `/public/architects/${encodeURIComponent(architectId)}/services`,
+      `/public/nutritionists/${encodeURIComponent(architectId)}/services`,
       { requiresAuth: false }
     )
   },

@@ -18,7 +18,7 @@ const Signup = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    accountType: 'arquiteto' as UserRole,
+    accountType: 'nutricionista' as UserRole,
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -88,13 +88,12 @@ const Signup = () => {
     )
 
     if (result.success && result.user) {
-      showToast('Conta criada com sucesso! Bem-vindo ao ArckDesign.', 'success')
+      showToast('Conta criada com sucesso! Bem-vindo ao NutriFit.', 'success')
       console.log('[Signup] Sucesso! User:', result.user)
       
-      // Redirecionar com base na role do usuário retornado
-      const redirectPath = result.user.role === 'arquiteto' 
-        ? '/architect/dashboard' 
-        : '/client/dashboard'
+      const redirectPath = result.user.role === 'nutricionista'
+        ? '/nutritionist/dashboard'
+        : '/patient/dashboard'
       
       console.log('[Signup] Redirecionando para:', redirectPath)
       
@@ -162,40 +161,40 @@ const Signup = () => {
         <div className="mb-6 grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => setFormData({ ...formData, accountType: 'arquiteto' })}
+            onClick={() => setFormData({ ...formData, accountType: 'nutricionista' })}
             className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-              formData.accountType === 'arquiteto'
+              formData.accountType === 'nutricionista'
                 ? 'border-primary-500 bg-primary-600/20 shadow-lg shadow-primary-500/30'
                 : 'border-stone-700 hover:border-stone-600 bg-stone-800/50'
             }`}
           >
             <div className={`flex flex-col items-center ${
-              formData.accountType === 'arquiteto' ? 'text-white' : 'text-stone-400'
+              formData.accountType === 'nutricionista' ? 'text-white' : 'text-stone-400'
             }`}>
               <Ruler className={`h-7 w-7 mb-2 ${
-                formData.accountType === 'arquiteto' ? 'text-primary-400' : 'text-stone-500'
+                formData.accountType === 'nutricionista' ? 'text-primary-400' : 'text-stone-500'
               }`} />
-              <div className="text-sm font-semibold">Arquiteto</div>
+              <div className="text-sm font-semibold">Nutricionista</div>
               <div className="text-xs mt-1 opacity-75">Profissional</div>
             </div>
           </button>
           <button
             type="button"
-            onClick={() => setFormData({ ...formData, accountType: 'cliente' })}
+            onClick={() => setFormData({ ...formData, accountType: 'paciente' })}
             className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-              formData.accountType === 'cliente'
+              formData.accountType === 'paciente'
                 ? 'border-accent-500 bg-accent-600/20 shadow-lg shadow-accent-500/30'
                 : 'border-stone-700 hover:border-stone-600 bg-stone-800/50'
             }`}
           >
             <div className={`flex flex-col items-center ${
-              formData.accountType === 'cliente' ? 'text-white' : 'text-stone-400'
+              formData.accountType === 'paciente' ? 'text-white' : 'text-stone-400'
             }`}>
               <Briefcase className={`h-7 w-7 mb-2 ${
-                formData.accountType === 'cliente' ? 'text-accent-400' : 'text-stone-500'
+                formData.accountType === 'paciente' ? 'text-accent-400' : 'text-stone-500'
               }`} />
-              <div className="text-sm font-semibold">Cliente</div>
-              <div className="text-xs mt-1 opacity-75">Contratar</div>
+              <div className="text-sm font-semibold">Paciente</div>
+              <div className="text-xs mt-1 opacity-75">Buscar acompanhamento</div>
             </div>
           </button>
         </div>
@@ -370,12 +369,12 @@ const Signup = () => {
             <LoadingButton
               type="submit"
               loading={isLoading}
-              variant={formData.accountType === 'arquiteto' ? 'primary' : 'secondary'}
+              variant={formData.accountType === 'nutricionista' ? 'primary' : 'secondary'}
               fullWidth
               size="lg"
               disabled={!acceptTerms || !passwordValidation.valid || formData.password !== formData.confirmPassword}
               className={`w-full font-semibold shadow-lg hover:shadow-xl ${
-                formData.accountType === 'arquiteto'
+                formData.accountType === 'nutricionista'
                   ? 'bg-primary-600 hover:bg-primary-700'
                   : 'bg-accent-500 hover:bg-accent-600'
               }`}
