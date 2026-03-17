@@ -6,7 +6,7 @@ import { useToast } from '../contexts/ToastContext'
 import { isStrongPassword } from '../services'
 import type { ProfessionalRegistration, UserRole } from '../types/api'
 import LoadingButton from '../components/common/LoadingButton'
-import { sanitizeInput, validateEmail, INPUT_LIMITS, limitLength } from '../utils/inputUtils'
+import { sanitizeInput, sanitizeName, validateEmail, INPUT_LIMITS, limitLength, formatCrn, formatCrm } from '../utils/inputUtils'
 import { authService } from '../services'
 
 const Signup = () => {
@@ -164,8 +164,7 @@ const Signup = () => {
     // Sanitização e limites baseados no campo
     switch (name) {
       case 'name':
-        sanitizedValue = sanitizeInput(value)
-        sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.NAME)
+        sanitizedValue = limitLength(sanitizeName(value), INPUT_LIMITS.NAME)
         break
       case 'email':
         sanitizedValue = sanitizeInput(value.toLowerCase().trim())
@@ -367,12 +366,18 @@ const Signup = () => {
                     id="registration"
                     type="text"
                     value={registrationNumber}
-                    onChange={(e) => setRegistrationNumber(limitLength(sanitizeInput(e.target.value), 32))}
+                    onChange={(e) => {
+                      const raw = e.target.value
+                      const formatted = formData.accountType === 'nutricionista'
+                        ? formatCrn(raw)
+                        : formatCrm(raw)
+                      setRegistrationNumber(limitLength(formatted, 32))
+                    }}
                     onBlur={() => void checkRegistration()}
                     className={`w-full px-4 py-3 bg-stone-900/50 border text-white rounded-lg focus:ring-2 outline-none transition-all placeholder-stone-500 ${
                       registrationAvailable === false ? 'border-red-500 focus:ring-red-500' : 'border-stone-700 focus:ring-primary-500 focus:border-primary-500'
                     }`}
-                    placeholder={formData.accountType === 'nutricionista' ? 'Ex.: CRN-1 12345 (ou apenas o número)' : 'Ex.: CRM/SP 123456 (ou apenas o número)'}
+                    placeholder={formData.accountType === 'nutricionista' ? 'Ex.: CRN-1 12345 (digite o número)' : 'Ex.: CRM/SP 123456 (UF + número)'}
                   />
                 </div>
                 <div className="mt-2 space-y-1 text-xs">

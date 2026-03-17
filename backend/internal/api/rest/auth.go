@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/auth"
 	"nufit/backend/internal/services/cfm"
+	"nufit/backend/internal/utils"
 )
 
 func register(c *gin.Context) {
@@ -118,6 +119,7 @@ func validateCRM(c *gin.Context) {
 func checkRegistrationAvailable(c *gin.Context) {
 	regType := strings.TrimSpace(c.Query("type"))
 	number := strings.TrimSpace(c.Query("number"))
+	utils.Debug("[auth] check-registration: type=%q number=%q", regType, number)
 	if regType != "CRN" && regType != "CRM" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetro type deve ser CRN ou CRM"})
 		return

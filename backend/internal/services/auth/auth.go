@@ -1,4 +1,4 @@
-﻿package auth
+package auth
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/cfm"
+	"nufit/backend/internal/services/email"
 )
 
 var (
@@ -175,6 +176,9 @@ func Register(req *models.RegisterRequest) (*models.User, *TokenPair, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// E-mail de boas-vindas por perfil (assíncrono para não bloquear o registro)
+	go email.SendWelcome(user.Email, user.Name, string(user.Role))
 
 	// Remove password hash from response
 	user.PasswordHash = ""

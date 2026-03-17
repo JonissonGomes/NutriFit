@@ -310,10 +310,10 @@ export const authService = {
 if (typeof window !== 'undefined') {
   window.addEventListener('auth:logout', () => {
     clearUserData()
-    // Redirecionar para login se não estiver na página de login
-    if (!window.location.pathname.includes('/login')) {
-      window.location.href = '/login'
-    }
+    const path = window.location.pathname
+    // Não redirecionar se estiver em login ou cadastro (evita sair do fluxo de signup)
+    if (path.includes('/login') || path.includes('/signup')) return
+    window.location.href = '/login'
   })
 }
 

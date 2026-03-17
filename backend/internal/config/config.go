@@ -1,4 +1,4 @@
-﻿package config
+package config
 
 import (
 	"os"
@@ -64,6 +64,14 @@ type Config struct {
 
 	// AI / Gemini
 	GeminiAPIKey string
+
+	// E-mail (SMTP Gmail)
+	EmailUser       string
+	EmailPass       string
+	GmailFromName   string
+	AppLoginURL     string
+	GmailSMTPHost   string
+	GmailSMTPPort   int
 }
 
 var AppConfig *Config
@@ -116,6 +124,13 @@ func LoadConfig() (*Config, error) {
 		BoostHighlightMonthlyPrice: parseFloat(getEnv("BOOST_HIGHLIGHT_MONTHLY_PRICE", "599.90")),
 
 		GeminiAPIKey: getEnv("GEMINI_API_KEY", ""),
+
+		EmailUser:     getEnv("EMAIL_USER", ""),
+		EmailPass:     getEnv("EMAIL_PASS", ""),
+		GmailFromName: getEnv("GMAIL_FROM_NAME", "NuFit"),
+		AppLoginURL:   getEnv("APP_LOGIN_URL", "http://localhost:5173/login"),
+		GmailSMTPHost: getEnv("GMAIL_SMTP_HOST", "smtp.gmail.com"),
+		GmailSMTPPort: parseInt(getEnv("GMAIL_SMTP_PORT", "587")),
 	}
 
 	AppConfig = cfg

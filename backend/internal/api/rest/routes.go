@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"nufit/backend/internal/config"
@@ -409,6 +409,12 @@ func SetupRouter() *gin.Engine {
 		// Analytics tracking (public - for tracking anonymous visitors)
 		v1.POST("/analytics/track", trackAnalyticsEvent)
 	}
+
+	// Log 404 em desenvolvimento para debug de rotas
+	router.NoRoute(func(c *gin.Context) {
+		utils.Debug("[404] method=%s path=%s query=%s", c.Request.Method, c.Request.URL.Path, c.Request.URL.RawQuery)
+		c.JSON(404, gin.H{"error": "Rota não encontrada"})
+	})
 
 	return router
 }

@@ -66,6 +66,22 @@ export const sanitizeText = (input: string, allowSpecialChars: string[] = []): s
 }
 
 /**
+ * Sanitiza nome de pessoa: permite letras (incl. acentuadas), espaços, hífen e apóstrofo.
+ * Remove apenas caracteres perigosos (XSS/injection). Espaço (U+0020 e U+00A0) é mantido.
+ */
+export const sanitizeName = (input: string): string => {
+  if (!input || typeof input !== 'string') return ''
+  return input
+    .replace(/<[^>]*>/g, '')
+    .replace(/[\x00-\x1F\x7F]/g, '')
+    .replace(/[<>"&]/g, '')
+    // Permite letras, números, marcas, espaço normal, nbsp, hífen e apóstrofo
+    .replace(/[^\p{L}\p{N}\p{M} \u00A0\-']/gu, '')
+    .replace(/[\s\u00A0]+/g, ' ')
+    .trim()
+}
+
+/**
  * Sanitiza URL
  */
 export const sanitizeUrl = (url: string): string => {
@@ -153,6 +169,35 @@ export const maskCNPJ = (value: string): string => {
     .replace(/(\d{3})(\d)/, '$1/$2')
     .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
     .replace(/(-\d{2})\d+?$/, '$1')
+}
+
+/**
+ * Formata CRN durante a digitação (ex.: 4146 → CRN-4 146).
+ * Aceita apenas dígitos; região = primeiro dígito, resto = número.
+ */
+export const formatCrn = (value: string): string => {
+  if (!value) return ''
+  const digits = value.replace(/\D/g, '')
+  if (digits.length === 0) return ''
+  if (digits.length === 1) return `CRN-${digits}`
+  return `CRN-${digits[0]} ${digits.slice(1).replace(/\B(?=(\d{3})+(?!\d))/g, '')}`
+}
+
+/**
+ * Formata CRM durante a digitação (ex.: SP 123456 → CRM/SP 123456).
+ * Aceita 2 letras (UF) + dígitos; mantém prefixo CRM/.
+ */
+export const formatCrm = (value: string): string => {
+  if (!value) return ''
+  let work = value.toUpperCase().trim()
+  if (work.startsWith('CRM/')) work = work.slice(4).trim()
+  else if (work.startsWith('CRM')) work = work.slice(3).trim()
+  const ufMatch = work.match(/^[A-Z]{0,2}/)
+  const uf = (ufMatch && ufMatch[0]) ? ufMatch[0] : ''
+  const rest = work.slice(uf.length).replace(/\D/g, '')
+  if (uf.length === 0 && rest.length === 0) return ''
+  if (uf.length === 0) return rest ? `CRM/ ${rest}` : 'CRM/'
+  return `CRM/${uf}${rest ? ` ${rest}` : ''}`
 }
 
 /**
