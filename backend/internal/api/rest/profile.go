@@ -194,14 +194,27 @@ func uploadProfileAvatar(c *gin.Context) {
 	}
 	defer src.Close()
 
-	fileData, err := io.ReadAll(src)
+	if file.Size <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo inválido"})
+		return
+	}
+	if file.Size > image.MaxImageSize {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
+		return
+	}
+
+	fileData, err := image.ReadImageFromReader(src, image.MaxImageSize)
 	if err != nil {
+		if err == image.ErrImageTooLarge {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao ler arquivo"})
 		return
 	}
 
 	// Validar imagem
-	if err := image.ValidateImage(fileData, 10*1024*1024); err != nil {
+	if err := image.ValidateImage(fileData, image.MaxImageSize); err != nil {
 		errMsg := "Erro ao validar imagem"
 		switch err {
 		case image.ErrInvalidFormat, image.ErrUnsupportedFormat:

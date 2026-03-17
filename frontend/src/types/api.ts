@@ -611,7 +611,7 @@ export interface FoodDiaryEntry {
 }
 
 // ============================================
-// COMPATIBILIDADE (migração de ArckDesign → NutriFit)
+// COMPATIBILIDADE (migração de ArckDesign → NuFit)
 // ============================================
 
 // Algumas telas ainda usam o vocabulário antigo (Project/Arquitetura).

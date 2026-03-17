@@ -11,7 +11,7 @@ const Footer = () => {
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <Utensils className="h-6 w-6 text-primary-400" />
-              <span className="text-xl font-bold text-white">NutriFit</span>
+              <span className="text-xl font-bold text-white">NuFit</span>
             </div>
             <p className="text-primary-200 max-w-md">
               Plataforma completa para nutricionistas. Prescreva planos alimentares, acompanhe pacientes e gerencie sua prática com foco em saúde e nutrição.
@@ -63,7 +63,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-primary-800 mt-8 pt-8 text-center text-sm text-primary-300">
-          <p>© {currentYear} NutriFit. Todos os direitos reservados.</p>
+          <p>© {currentYear} NuFit. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>

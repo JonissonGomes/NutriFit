@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Paleta NutriFit: saúde, nutrição, natureza
+        // Paleta NuFit: saúde, nutrição, natureza
         primary: {
           50: '#ecfdf5',
           100: '#d1fae5',

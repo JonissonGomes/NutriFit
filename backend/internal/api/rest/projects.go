@@ -1,14 +1,21 @@
 package rest
 
 import (
+	"context"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"arck-design/backend/internal/api/dto"
+	"arck-design/backend/internal/database"
 	"arck-design/backend/internal/models"
+	"arck-design/backend/internal/services/cloudinary"
+	"arck-design/backend/internal/services/image"
 	"arck-design/backend/internal/services/project"
 	"arck-design/backend/internal/services/security"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -202,8 +209,101 @@ func uploadProjectCover(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement image upload
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "Funcionalidade em desenvolvimento"})
+	projectToken := c.Param("id")
+	projectID, err := security.DecodeProjectID(projectToken)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Projeto não encontrado"})
+		return
+	}
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo é obrigatório (campo: file)"})
+		return
+	}
+
+	if fileHeader.Size <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo inválido"})
+		return
+	}
+	if fileHeader.Size > image.MaxImageSize {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
+		return
+	}
+
+	src, err := fileHeader.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao abrir arquivo"})
+		return
+	}
+	defer src.Close()
+
+	data, err := image.ReadImageFromReader(src, image.MaxImageSize)
+	if err != nil {
+		if err == image.ErrImageTooLarge {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao ler arquivo"})
+		return
+	}
+
+	if err := image.ValidateImage(data, image.MaxImageSize); err != nil {
+		errMsg := "Erro ao validar imagem"
+		switch err {
+		case image.ErrInvalidFormat, image.ErrUnsupportedFormat:
+			errMsg = "Formato de imagem inválido. Use JPEG, PNG, GIF ou WebP."
+		case image.ErrImageTooLarge:
+			errMsg = "Arquivo muito grande. O tamanho máximo é 10MB."
+		default:
+			errMsg = "Erro ao validar imagem: " + err.Error()
+		}
+		status := http.StatusBadRequest
+		if err == image.ErrImageTooLarge {
+			status = http.StatusRequestEntityTooLarge
+		}
+		c.JSON(status, gin.H{"error": errMsg})
+		return
+	}
+
+	ext := filepath.Ext(fileHeader.Filename)
+	publicID := "nufit/projects/" + projectID + "/cover" + ext
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	up, err := cloudinary.UploadImage(ctx, data, publicID, "nufit/projects")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao fazer upload da imagem"})
+		return
+	}
+
+	projectObjID, err := primitive.ObjectIDFromHex(projectID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Projeto inválido"})
+		return
+	}
+	userObjID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Erro de autenticação"})
+		return
+	}
+
+	res, err := database.ProjectsCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": projectObjID, "userId": userObjID},
+		bson.M{"$set": bson.M{"coverImage": up.SecureURL, "updatedAt": time.Now()}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar projeto"})
+		return
+	}
+	if res.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Projeto não encontrado ou sem permissão"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": gin.H{"coverImage": up.SecureURL}})
 }
 
 func getProjectStats(c *gin.Context) {

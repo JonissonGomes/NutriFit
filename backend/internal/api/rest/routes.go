@@ -439,7 +439,7 @@ func SetupRouter() *gin.Engine {
 func healthCheck(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"status": "ok",
-		"service": "nutrifit-api",
+		"service": "nufit-api",
 	})
 }
 

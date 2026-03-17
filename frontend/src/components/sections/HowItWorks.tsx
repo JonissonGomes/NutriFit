@@ -37,7 +37,7 @@ const HowItWorks = () => {
             Prática nutricional em três passos
           </h2>
           <p className="text-xl text-gray-600">
-            NutriFit centraliza pacientes, planos alimentares e acompanhamento para você focar no que importa: a saúde do paciente.
+            NuFit centraliza pacientes, planos alimentares e acompanhamento para você focar no que importa: a saúde do paciente.
           </p>
         </div>
 

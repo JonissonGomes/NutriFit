@@ -169,7 +169,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </button>
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <RestaurantIcon sx={{ fontSize: 26, color: '#059669' }} />
-              <span className="font-bold text-primary-700">NutriFit</span>
+              <span className="font-bold text-primary-700">NuFit</span>
             </Link>
           </div>
 

@@ -88,7 +88,7 @@ const Signup = () => {
     )
 
     if (result.success && result.user) {
-      showToast('Conta criada com sucesso! Bem-vindo ao NutriFit.', 'success')
+      showToast('Conta criada com sucesso! Bem-vindo ao NuFit.', 'success')
       console.log('[Signup] Sucesso! User:', result.user)
       
       const redirectPath = result.user.role === 'nutricionista'

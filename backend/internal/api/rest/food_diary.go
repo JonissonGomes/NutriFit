@@ -12,6 +12,7 @@ import (
 	"arck-design/backend/internal/services/cloudinary"
 	"arck-design/backend/internal/services/security"
 	"arck-design/backend/internal/services/ai"
+	"arck-design/backend/internal/services/image"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -76,6 +77,15 @@ func uploadFoodDiaryPhoto(c *gin.Context) {
 		return
 	}
 
+	if fileHeader.Size <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo inválido"})
+		return
+	}
+	if fileHeader.Size > image.MaxImageSize {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
+		return
+	}
+
 	f, err := fileHeader.Open()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao abrir arquivo"})
@@ -83,17 +93,38 @@ func uploadFoodDiaryPhoto(c *gin.Context) {
 	}
 	defer f.Close()
 
-	buf := make([]byte, fileHeader.Size)
-	_, err = f.Read(buf)
+	buf, err := image.ReadImageFromReader(f, image.MaxImageSize)
 	if err != nil {
+		if err == image.ErrImageTooLarge {
+			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao ler arquivo"})
 		return
 	}
 
-	ext := filepath.Ext(fileHeader.Filename)
-	publicID := "nutrifit/food_diary/" + entryID + "/photo" + ext
+	if err := image.ValidateImage(buf, image.MaxImageSize); err != nil {
+		errMsg := "Erro ao validar imagem"
+		switch err {
+		case image.ErrInvalidFormat, image.ErrUnsupportedFormat:
+			errMsg = "Formato de imagem inválido. Use JPEG, PNG, GIF ou WebP."
+		case image.ErrImageTooLarge:
+			errMsg = "Arquivo muito grande. O tamanho máximo é 10MB."
+		default:
+			errMsg = "Erro ao validar imagem: " + err.Error()
+		}
+		status := http.StatusBadRequest
+		if err == image.ErrImageTooLarge {
+			status = http.StatusRequestEntityTooLarge
+		}
+		c.JSON(status, gin.H{"error": errMsg})
+		return
+	}
 
-	up, err := cloudinary.UploadImage(c.Request.Context(), buf, publicID, "nutrifit/food_diary")
+	ext := filepath.Ext(fileHeader.Filename)
+	publicID := "nufit/food_diary/" + entryID + "/photo" + ext
+
+	up, err := cloudinary.UploadImage(c.Request.Context(), buf, publicID, "nufit/food_diary")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao fazer upload da foto"})
 		return

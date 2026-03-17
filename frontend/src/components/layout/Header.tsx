@@ -100,7 +100,7 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <RestaurantIcon sx={{ fontSize: 28, color: '#059669' }} className="text-primary-600" />
-            <span className="text-xl font-bold text-primary-600">NutriFit</span>
+            <span className="text-xl font-bold text-primary-600">NuFit</span>
           </Link>
 
           {/* Desktop Navigation */}

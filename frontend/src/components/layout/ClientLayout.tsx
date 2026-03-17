@@ -163,7 +163,7 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
             </button>
             <Link to="/" className="flex items-center gap-2">
               <Utensils className="h-6 w-6 text-primary-600" />
-              <span className="font-bold text-primary-700">NutriFit</span>
+              <span className="font-bold text-primary-700">NuFit</span>
             </Link>
           </div>
 

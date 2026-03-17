@@ -38,7 +38,7 @@ var (
 	PlatformSettingsCollection *mongo.Collection
 	FeaturedContentCollection *mongo.Collection
 	BoostSubscriptionsCollection *mongo.Collection
-	// NutriFit collections
+	// NuFit collections
 	PatientsCollection *mongo.Collection
 	MealPlansCollection *mongo.Collection
 	AnamnesisCollection *mongo.Collection
@@ -99,7 +99,7 @@ func ConnectMongoDB() error {
 	PlatformSettingsCollection = MongoDB.Collection("platform_settings")
 	FeaturedContentCollection = MongoDB.Collection("featured_content")
 	BoostSubscriptionsCollection = MongoDB.Collection("boost_subscriptions")
-	// NutriFit collections
+	// NuFit collections
 	PatientsCollection = MongoDB.Collection("patients")
 	MealPlansCollection = MongoDB.Collection("meal_plans")
 	AnamnesisCollection = MongoDB.Collection("anamnesis")

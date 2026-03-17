@@ -10,7 +10,9 @@ var (
 )
 
 const (
-	MaxImageSize      = 50 * 1024 * 1024 // 50MB
+	// MaxImageSize limita uploads para evitar custos/abuso no Cloudinary.
+	// Mantido conservador por padrão (10MB).
+	MaxImageSize      = 10 * 1024 * 1024 // 10MB
 	MinWidth          = 200
 	MinHeight         = 200
 	MaxWidth          = 10000
