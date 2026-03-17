@@ -26,7 +26,12 @@ export interface ApiError {
 // AUTENTICAÇÃO
 // ============================================
 
-export type UserRole = 'nutricionista' | 'paciente' | 'admin' | 'super_admin'
+export type UserRole = 'nutricionista' | 'medico' | 'paciente' | 'admin' | 'super_admin'
+
+export interface ProfessionalRegistration {
+  type: 'CRN' | 'CRM'
+  number: string
+}
 
 export interface User {
   id: string // Token opaco (não é o ID real do banco)
@@ -54,7 +59,7 @@ export interface AuthPayload {
 export interface LoginRequest {
   email: string
   password: string
-  type: UserRole
+  type?: UserRole // Opcional: login único; redirecionamento por role retornado
 }
 
 export interface RegisterRequest {
@@ -62,6 +67,7 @@ export interface RegisterRequest {
   password: string
   name: string
   role: UserRole
+  professionalRegistration?: ProfessionalRegistration // Obrigatório para nutricionista e medico
 }
 
 export interface RefreshTokenRequest {

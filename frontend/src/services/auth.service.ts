@@ -58,15 +58,15 @@ const clearUserData = (): void => {
 
 export const authService = {
   /**
-   * Registrar novo usuário
+   * Registrar novo usuário. Para nutricionista/medico, professionalRegistration é obrigatório.
    */
   async register(
     email: string,
     password: string,
     name: string,
-    role: UserRole
+    role: UserRole,
+    professionalRegistration?: ProfessionalRegistration
   ): Promise<ApiResponse<AuthPayload>> {
-    // Validações de segurança no cliente
     if (!isValidEmail(email)) {
       return { error: 'Email inválido' }
     }
@@ -80,7 +80,10 @@ export const authService = {
       return { error: 'Nome deve ter pelo menos 2 caracteres' }
     }
 
-    // Rate limiting
+    if ((role === 'nutricionista' || role === 'medico') && !professionalRegistration?.number?.trim()) {
+      return { error: role === 'nutricionista' ? 'CRN é obrigatório' : 'CRM é obrigatório' }
+    }
+
     if (!checkRateLimit('register', 3, 60000)) {
       return { error: 'Muitas tentativas. Aguarde um minuto.' }
     }
@@ -90,6 +93,7 @@ export const authService = {
       password,
       name: name.trim(),
       role,
+      ...(professionalRegistration && { professionalRegistration }),
     }
 
     console.log('[authService.register] Enviando request:', { ...request, password: '***' })
@@ -110,14 +114,12 @@ export const authService = {
   },
 
   /**
-   * Login de usuário
+   * Login único: email + senha; redirecionamento conforme role retornado
    */
   async login(
     email: string,
-    password: string,
-    type: UserRole
+    password: string
   ): Promise<ApiResponse<AuthPayload>> {
-    // Validações básicas
     if (!isValidEmail(email)) {
       return { error: 'Email inválido' }
     }
@@ -126,7 +128,6 @@ export const authService = {
       return { error: 'Senha é obrigatória' }
     }
 
-    // Rate limiting
     if (!checkRateLimit(`login:${email}`, 5, 60000)) {
       return { error: 'Muitas tentativas de login. Aguarde um minuto.' }
     }
@@ -134,7 +135,6 @@ export const authService = {
     const request: LoginRequest = {
       email: email.toLowerCase().trim(),
       password,
-      type,
     }
 
     const response = await api.post<AuthPayload>('/auth/login', request, {
@@ -270,12 +270,23 @@ export const authService = {
    * Reenviar email de verificação
    */
   async resendVerificationEmail(): Promise<ApiResponse<{ message: string }>> {
-    // Rate limiting
     if (!checkRateLimit('resend-verification', 3, 300000)) {
       return { error: 'Muitas tentativas. Aguarde 5 minutos.' }
     }
-
     return api.post('/auth/resend-verification')
+  },
+
+  /**
+   * Verificar se CRN/CRM está disponível (não cadastrado)
+   */
+  async checkRegistrationAvailable(
+    type: 'CRN' | 'CRM',
+    number: string
+  ): Promise<ApiResponse<{ available: boolean }>> {
+    return api.get<{ available: boolean }>(
+      `/auth/check-registration?type=${encodeURIComponent(type)}&number=${encodeURIComponent(number.trim())}`,
+      { requiresAuth: false }
+    )
   },
 }
 

@@ -24,14 +24,16 @@ type AuthPayload struct {
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
-	Type     string `json:"type" binding:"required,oneof=nutricionista paciente super_admin admin"`
+	// Type opcional: login único; se informado, valida correspondência com o role do usuário.
+	Type string `json:"type,omitempty"`
 }
 
 type RegisterRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-	Name     string `json:"name" binding:"required,min=2"`
-	Role     string `json:"role" binding:"required,oneof=nutricionista paciente"`
+	Email                    string                           `json:"email" binding:"required,email"`
+	Password                 string                           `json:"password" binding:"required,min=6"`
+	Name                     string                           `json:"name" binding:"required,min=2"`
+	Role                     string                           `json:"role" binding:"required,oneof=nutricionista medico paciente"`
+	ProfessionalRegistration *ProfessionalRegistration `json:"professionalRegistration,omitempty"`
 }
 
 type OAuthGoogleRequest struct {

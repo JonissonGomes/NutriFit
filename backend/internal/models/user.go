@@ -10,6 +10,7 @@ type UserRole string
 
 const (
 	RoleNutricionista UserRole = "nutricionista"
+	RoleMedico        UserRole = "medico"
 	RolePaciente      UserRole = "paciente"
 	RoleSuperAdmin    UserRole = "super_admin"
 	RoleAdmin         UserRole = "admin" // legado (evitar quebra); preferir super_admin
@@ -17,6 +18,12 @@ const (
 	RoleCurator       UserRole = "curator"
 	RoleSupport       UserRole = "support"
 )
+
+// ProfessionalRegistration identifica CRN (nutricionista) ou CRM (médico). Deve ser único na plataforma.
+type ProfessionalRegistration struct {
+	Type   string `bson:"type" json:"type"`     // "CRN" ou "CRM"
+	Number string `bson:"number" json:"number"` // número do conselho (ex.: CRN-3 12345, CRM/SP 123456)
+}
 
 type PlanType string
 
@@ -91,23 +98,24 @@ type ResourcePermissions struct {
 }
 
 type User struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Email         string             `bson:"email" json:"email"`
-	Name          string             `bson:"name" json:"name"`
-	PasswordHash  string             `bson:"passwordHash,omitempty" json:"-"`
-	Role          UserRole           `bson:"role" json:"role"`
-	OAuth         *OAuth             `bson:"oauth,omitempty" json:"oauth,omitempty"`
-	Avatar        string             `bson:"avatar,omitempty" json:"avatar,omitempty"`
-	Phone         string             `bson:"phone,omitempty" json:"phone,omitempty"`
-	Bio           string             `bson:"bio,omitempty" json:"bio,omitempty"`
-	StorageUsed   int64              `bson:"storageUsed" json:"storageUsed"`
-	StorageLimit  int64              `bson:"storageLimit" json:"storageLimit"`
-	Plan          PlanType           `bson:"plan" json:"plan"`
-	Location      *Location          `bson:"location,omitempty" json:"location,omitempty"`
-	Permissions   *Permissions       `bson:"permissions,omitempty" json:"permissions,omitempty"`
-	AdminMetadata *AdminMetadata     `bson:"adminMetadata,omitempty" json:"adminMetadata,omitempty"`
-	CreatedAt     time.Time          `bson:"createdAt" json:"createdAt"`
-	UpdatedAt     time.Time          `bson:"updatedAt" json:"updatedAt"`
+	ID                        primitive.ObjectID       `bson:"_id,omitempty" json:"id"`
+	Email                     string                   `bson:"email" json:"email"`
+	Name                      string                   `bson:"name" json:"name"`
+	PasswordHash              string                   `bson:"passwordHash,omitempty" json:"-"`
+	Role                      UserRole                 `bson:"role" json:"role"`
+	ProfessionalRegistration  *ProfessionalRegistration `bson:"professionalRegistration,omitempty" json:"professionalRegistration,omitempty"`
+	OAuth                     *OAuth                   `bson:"oauth,omitempty" json:"oauth,omitempty"`
+	Avatar                    string                   `bson:"avatar,omitempty" json:"avatar,omitempty"`
+	Phone                     string                   `bson:"phone,omitempty" json:"phone,omitempty"`
+	Bio                       string                   `bson:"bio,omitempty" json:"bio,omitempty"`
+	StorageUsed                int64                    `bson:"storageUsed" json:"storageUsed"`
+	StorageLimit               int64                    `bson:"storageLimit" json:"storageLimit"`
+	Plan                       PlanType                 `bson:"plan" json:"plan"`
+	Location                   *Location                `bson:"location,omitempty" json:"location,omitempty"`
+	Permissions                *Permissions             `bson:"permissions,omitempty" json:"permissions,omitempty"`
+	AdminMetadata              *AdminMetadata           `bson:"adminMetadata,omitempty" json:"adminMetadata,omitempty"`
+	CreatedAt                  time.Time                `bson:"createdAt" json:"createdAt"`
+	UpdatedAt                  time.Time                `bson:"updatedAt" json:"updatedAt"`
 }
 
 

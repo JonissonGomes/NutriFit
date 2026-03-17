@@ -21,6 +21,7 @@ func CreateIndexes() error {
 		{Keys: bson.D{{Key: "location.coordinates", Value: "2dsphere"}}},
 		{Keys: bson.D{{Key: "location.address.city", Value: 1}, {Key: "location.address.state", Value: 1}}},
 		{Keys: bson.D{{Key: "adminMetadata.status", Value: 1}}},
+		{Keys: bson.D{{Key: "professionalRegistration.type", Value: 1}, {Key: "professionalRegistration.number", Value: 1}}, Options: indexOptions().SetUnique(true).SetSparse(true)},
 	}
 	_, err := UsersCollection.Indexes().CreateMany(ctx, usersIndexes)
 	if err != nil {

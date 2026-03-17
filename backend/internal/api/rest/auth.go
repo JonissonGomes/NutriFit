@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"arck-design/backend/internal/api/dto"
@@ -16,12 +17,18 @@ func register(c *gin.Context) {
 		return
 	}
 
-	user, tokens, err := auth.Register(req.Email, req.Password, req.Name, models.UserRole(req.Role))
+	user, tokens, err := auth.Register(&req)
 	if err != nil {
-		// Mensagens de erro em português
 		errMsg := "Erro ao criar conta"
-		if err.Error() == "user already exists" {
+		switch err.Error() {
+		case "user already exists":
 			errMsg = "Este e-mail já está cadastrado"
+		case "este CRN/CRM já está cadastrado na plataforma":
+			errMsg = err.Error()
+		default:
+			if strings.HasPrefix(err.Error(), "CRN") || strings.HasPrefix(err.Error(), "CRM") || strings.Contains(err.Error(), "obrigatório") || strings.Contains(err.Error(), "formato") {
+				errMsg = err.Error()
+			}
 		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
 		return
@@ -39,12 +46,11 @@ func login(c *gin.Context) {
 		return
 	}
 
-	user, tokens, err := auth.Login(req.Email, req.Password, models.UserRole(req.Type))
+	user, tokens, err := auth.Login(req.Email, req.Password)
 	if err != nil {
-		// Mensagens de erro em português
 		errMsg := "E-mail ou senha incorretos"
-		if err.Error() == "invalid user role" {
-			errMsg = "Tipo de conta não corresponde ao cadastro. Verifique se selecionou o tipo correto."
+		if err.Error() == "password login not available for this user" {
+			errMsg = "Faça login com a opção utilizada no cadastro (ex.: Google)."
 		}
 		c.JSON(http.StatusUnauthorized, gin.H{"error": errMsg})
 		return
@@ -105,6 +111,25 @@ func logout(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Sessão encerrada com sucesso"})
+}
+
+func checkRegistrationAvailable(c *gin.Context) {
+	regType := strings.TrimSpace(c.Query("type"))
+	number := strings.TrimSpace(c.Query("number"))
+	if regType != "CRN" && regType != "CRM" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetro type deve ser CRN ou CRM"})
+		return
+	}
+	if number == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetro number é obrigatório"})
+		return
+	}
+	available, err := auth.CheckProfessionalRegistrationAvailable(regType, number)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao verificar disponibilidade"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"available": available})
 }
 
 func getMe(c *gin.Context) {

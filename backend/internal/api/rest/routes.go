@@ -40,6 +40,7 @@ func SetupRouter() *gin.Engine {
 		{
 			auth.POST("/register", register)
 			auth.POST("/login", login)
+			auth.GET("/check-registration", checkRegistrationAvailable)
 			// OAuth Google - Temporariamente desabilitado
 			// auth.POST("/oauth/google", oauthGoogle)
 			auth.POST("/refresh", refreshToken)

@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"errors"
+	"regexp"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,48 +15,129 @@ import (
 	"arck-design/backend/internal/models"
 )
 
+var (
+	// CRN: número (4-10 dígitos) ou formato CRN-N 12345
+	crnNumRegex = regexp.MustCompile(`(?i)^(?:CRN[-]?\s*\d{1,2}\s*)?(\d{4,10})$`)
+	// CRM: número (4-8 dígitos) ou formato CRM/UF 123456
+	crmNumRegex = regexp.MustCompile(`(?i)^(?:CRM[/-]?\s*[A-Z]{2}\s*)?(\d{4,8})$`)
+)
 
-func Register(email, password, name string, role models.UserRole) (*models.User, *TokenPair, error) {
-	// Check if user already exists
+func validateProfessionalRegistration(reg *models.ProfessionalRegistration, role models.UserRole) error {
+	if reg == nil || reg.Type == "" || strings.TrimSpace(reg.Number) == "" {
+		if role == models.RoleNutricionista {
+			return errors.New("CRN é obrigatório para nutricionistas")
+		}
+		if role == models.RoleMedico {
+			return errors.New("CRM é obrigatório para médicos")
+		}
+		return nil
+	}
+	num := strings.TrimSpace(reg.Number)
+	switch role {
+	case models.RoleNutricionista:
+		if reg.Type != "CRN" {
+			return errors.New("nutricionista deve informar um CRN válido")
+		}
+		if !crnNumRegex.MatchString(num) {
+			return errors.New("formato de CRN inválido. Ex.: CRN-1 12345 ou apenas o número")
+		}
+	case models.RoleMedico:
+		if reg.Type != "CRM" {
+			return errors.New("médico deve informar um CRM válido")
+		}
+		if !crmNumRegex.MatchString(num) {
+			return errors.New("formato de CRM inválido. Ex.: CRM/SP 123456 ou apenas o número")
+		}
+	default:
+		if reg.Type != "" || num != "" {
+			return errors.New("registro profissional não permitido para este tipo de conta")
+		}
+	}
+	return nil
+}
+
+// CheckProfessionalRegistrationAvailable verifica se o CRN/CRM está disponível (não cadastrado). Retorna true se disponível.
+func CheckProfessionalRegistrationAvailable(regType, number string) (bool, error) {
+	taken, err := isProfessionalRegistrationTaken(regType, number)
+	return !taken, err
+}
+
+func isProfessionalRegistrationTaken(regType, number string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var u models.User
+	err := database.UsersCollection.FindOne(ctx, bson.M{
+		"professionalRegistration.type":   regType,
+		"professionalRegistration.number": strings.TrimSpace(number),
+	}).Decode(&u)
+	if err == mongo.ErrNoDocuments {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func Register(req *models.RegisterRequest) (*models.User, *TokenPair, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	role := models.UserRole(req.Role)
+
+	if err := validateProfessionalRegistration(req.ProfessionalRegistration, role); err != nil {
+		return nil, nil, err
+	}
+
+	var reg *models.ProfessionalRegistration
+	if req.ProfessionalRegistration != nil && req.ProfessionalRegistration.Type != "" {
+		reg = &models.ProfessionalRegistration{
+			Type:   req.ProfessionalRegistration.Type,
+			Number: strings.TrimSpace(req.ProfessionalRegistration.Number),
+		}
+		taken, err := isProfessionalRegistrationTaken(reg.Type, reg.Number)
+		if err != nil {
+			return nil, nil, err
+		}
+		if taken {
+			return nil, nil, errors.New("este CRN/CRM já está cadastrado na plataforma")
+		}
+	}
+
 	var existingUser models.User
-	err := database.UsersCollection.FindOne(ctx, bson.M{"email": email}).Decode(&existingUser)
+	err := database.UsersCollection.FindOne(ctx, bson.M{"email": req.Email}).Decode(&existingUser)
 	if err == nil {
 		return nil, nil, errors.New("user already exists")
 	} else if err != mongo.ErrNoDocuments {
 		return nil, nil, err
 	}
 
-	// Hash password
-	hashedPassword, err := hashPassword(password)
+	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Determine storage limit based on plan
 	storageLimit := config.AppConfig.StorageLimitFree
-	if role == models.RoleNutricionista {
-		storageLimit = config.AppConfig.StorageLimitFree
-	}
 
-	// Create user
 	user := &models.User{
-		ID:           primitive.NewObjectID(),
-		Email:        email,
-		Name:         name,
-		PasswordHash: hashedPassword,
-		Role:         role,
-		StorageUsed:  0,
-		StorageLimit: storageLimit,
-		Plan:         models.PlanFree,
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		ID:                        primitive.NewObjectID(),
+		Email:                     req.Email,
+		Name:                      req.Name,
+		PasswordHash:              hashedPassword,
+		Role:                      role,
+		ProfessionalRegistration:  reg,
+		StorageUsed:                0,
+		StorageLimit:               storageLimit,
+		Plan:                      models.PlanFree,
+		CreatedAt:                 time.Now(),
+		UpdatedAt:                 time.Now(),
 	}
 
 	_, err = database.UsersCollection.InsertOne(ctx, user)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, nil, errors.New("este CRN/CRM já está cadastrado na plataforma")
+		}
 		return nil, nil, err
 	}
 
@@ -85,7 +168,7 @@ func Register(email, password, name string, role models.UserRole) (*models.User,
 	return user, tokens, nil
 }
 
-func Login(email, password string, expectedRole models.UserRole) (*models.User, *TokenPair, error) {
+func Login(email, password string) (*models.User, *TokenPair, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -98,18 +181,12 @@ func Login(email, password string, expectedRole models.UserRole) (*models.User, 
 		return nil, nil, err
 	}
 
-	// Check password
 	if user.PasswordHash == "" {
 		return nil, nil, errors.New("password login not available for this user")
 	}
 
 	if !checkPasswordHash(password, user.PasswordHash) {
 		return nil, nil, errors.New("invalid credentials")
-	}
-
-	// Check role
-	if user.Role != expectedRole {
-		return nil, nil, errors.New("invalid user role")
 	}
 
 	// Generate tokens

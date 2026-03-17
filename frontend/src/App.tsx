@@ -89,7 +89,32 @@ function App() {
                     path="/nutritionist/*"
                     element={
                       <ProtectedRoute allowedRoles={['nutricionista']}>
-                        <DashboardLayout>
+                        <DashboardLayout basePath="/nutritionist">
+                          <Routes>
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/meal-plans" element={<NutritionistMealPlans />} />
+                            <Route path="/patients" element={<Patients />} />
+                            <Route path="/food-diary" element={<FoodDiaryPatients />} />
+                            <Route path="/lab-exams" element={<LabExams />} />
+                            <Route path="/profile" element={<PublicProfileEdit />} />
+                            <Route path="/messages" element={<Chat />} />
+                            <Route path="/services" element={<Services />} />
+                            <Route path="/calendar" element={<Calendar />} />
+                            <Route path="/analytics" element={<Analytics />} />
+                            <Route path="/settings" element={<Settings />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </DashboardLayout>
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Dashboard Routes - Médico (mesmas telas do nutricionista, basePath /medico) */}
+                  <Route
+                    path="/medico/*"
+                    element={
+                      <ProtectedRoute allowedRoles={['medico']}>
+                        <DashboardLayout basePath="/medico">
                           <Routes>
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/meal-plans" element={<NutritionistMealPlans />} />

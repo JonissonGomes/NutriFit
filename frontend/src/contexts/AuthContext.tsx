@@ -1,15 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { authService, tokenManager } from '../services'
-import type { User, UserRole } from '../types/api'
-
-// ============================================
-// TIPOS
-// ============================================
+import type { User, UserRole, ProfessionalRegistration } from '../types/api'
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string, type: UserRole) => Promise<{ success: boolean; error?: string; user?: User }>
-  register: (email: string, password: string, name: string, role: UserRole) => Promise<{ success: boolean; error?: string; user?: User }>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>
+  register: (email: string, password: string, name: string, role: UserRole, professionalRegistration?: ProfessionalRegistration) => Promise<{ success: boolean; error?: string; user?: User }>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   isAuthenticated: boolean
@@ -90,22 +86,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => window.removeEventListener('auth:logout', handleLogout)
   }, [])
 
-  // Login
+  // Login único: redirecionamento por role retornado
   const login = useCallback(async (
     email: string,
-    password: string,
-    type: UserRole
+    password: string
   ): Promise<{ success: boolean; error?: string; user?: User }> => {
     setIsLoading(true)
-
     try {
-      const response = await authService.login(email, password, type)
-
+      const response = await authService.login(email, password)
       if (response.data) {
         setUser(response.data.user)
         return { success: true, user: response.data.user }
       }
-
       return { success: false, error: response.error || 'Erro ao fazer login' }
     } catch (error) {
       console.error('Erro no login:', error)
@@ -115,23 +107,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [])
 
-  // Registro
+  // Registro: professionalRegistration obrigatório para nutricionista e medico
   const register = useCallback(async (
     email: string,
     password: string,
     name: string,
-    role: UserRole
+    role: UserRole,
+    professionalRegistration?: ProfessionalRegistration
   ): Promise<{ success: boolean; error?: string; user?: User }> => {
     setIsLoading(true)
-
     try {
-      const response = await authService.register(email, password, name, role)
-
+      const response = await authService.register(email, password, name, role, professionalRegistration)
       if (response.data) {
         setUser(response.data.user)
         return { success: true, user: response.data.user }
       }
-
       return { success: false, error: response.error || 'Erro ao criar conta' }
     } catch (error) {
       console.error('Erro no registro:', error)

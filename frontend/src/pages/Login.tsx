@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Mail, Lock, Building2, Eye, EyeOff, Briefcase, Ruler, AlertCircle } from 'lucide-react'
+import { Mail, Lock, Building2, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import type { UserRole } from '../types/api'
 import LoadingButton from '../components/common/LoadingButton'
 import { sanitizeInput, validateEmail, INPUT_LIMITS, limitLength } from '../utils/inputUtils'
 
 const Login = () => {
-  // DEBUG: Log quando o componente renderiza
-  console.log('=== LOGIN PAGE LOADED ===')
-  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [userType, setUserType] = useState<UserRole>('nutricionista')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
@@ -21,110 +16,72 @@ const Login = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Redirecionar se já estiver autenticado (ao entrar na página)
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      const redirectPath =
-        user.role === 'nutricionista'
-          ? '/nutritionist/dashboard'
-          : user.role === 'paciente'
-            ? '/patient/dashboard'
-            : '/admin/dashboard'
-      navigate(redirectPath, { replace: true })
-    }
-  }, [isAuthenticated, user, navigate])
-
-  // Função para obter o caminho de redirecionamento
   const getRedirectPath = (userRole: string) => {
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname
-    
     if (from) {
       const isNutritionistPath = from.startsWith('/nutritionist')
+      const isMedicoPath = from.startsWith('/medico')
       const isPatientPath = from.startsWith('/patient')
-      
       if ((userRole === 'nutricionista' && isNutritionistPath) ||
+          (userRole === 'medico' && isMedicoPath) ||
           (userRole === 'paciente' && isPatientPath)) {
         return from
       }
     }
-    
     if (userRole === 'nutricionista') return '/nutritionist/dashboard'
+    if (userRole === 'medico') return '/medico/dashboard'
     if (userRole === 'paciente') return '/patient/dashboard'
-    return '/admin/dashboard'
+    if (userRole === 'super_admin' || userRole === 'admin') return '/admin/dashboard'
+    return '/nutritionist/dashboard'
   }
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(getRedirectPath(user.role), { replace: true })
+    }
+  }, [isAuthenticated, user, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('=== FORM SUBMITTED ===')
     setError('')
 
     const sanitizedEmail = sanitizeInput(email.toLowerCase().trim())
-    
     if (!sanitizedEmail) {
       setError('Digite seu e-mail')
       return
     }
-    
     if (!validateEmail(sanitizedEmail)) {
       setError('E-mail inválido')
       return
     }
-    
     if (sanitizedEmail.length > INPUT_LIMITS.EMAIL) {
       setError(`E-mail muito longo (máximo ${INPUT_LIMITS.EMAIL} caracteres)`)
       return
     }
-
     if (!password) {
       setError('Digite sua senha')
       return
     }
-    
     if (password.length > INPUT_LIMITS.PASSWORD_MAX) {
       setError(`Senha muito longa (máximo ${INPUT_LIMITS.PASSWORD_MAX} caracteres)`)
       return
     }
 
-    console.log('[Login] Iniciando login...', { email, userType })
-    
     try {
-      const result = await login(email, password, userType)
-      
-      console.log('[Login] Resultado completo:', JSON.stringify(result, null, 2))
-      
+      const result = await login(email, password)
       if (result.success && result.user) {
-        console.log('[Login] Sucesso! User:', result.user)
-        console.log('[Login] User role:', result.user.role)
-        
-        // Redirecionar imediatamente com o user retornado
-        const redirectPath = getRedirectPath(result.user.role)
-        console.log('[Login] Redirecionando para:', redirectPath)
-        
-        // Usar navigate do React Router para manter o estado
-        navigate(redirectPath, { replace: true })
+        navigate(getRedirectPath(result.user.role), { replace: true })
       } else {
-        console.log('[Login] Falha:', result.error)
-        
-        // Mensagens de erro em português
         let errorMessage = result.error || 'Erro ao fazer login'
-        
-        // Traduzir erros comuns
-        if (errorMessage.toLowerCase().includes('invalid credentials') || 
-            errorMessage.toLowerCase().includes('wrong password')) {
+        if (errorMessage.toLowerCase().includes('invalid credentials') || errorMessage.toLowerCase().includes('wrong password')) {
           errorMessage = 'E-mail ou senha incorretos'
-        } else if (errorMessage.toLowerCase().includes('user not found')) {
-          errorMessage = 'Usuário não encontrado'
-        } else if (errorMessage.toLowerCase().includes('type mismatch') ||
-                   errorMessage.toLowerCase().includes('role mismatch')) {
-          errorMessage = 'Tipo de conta não corresponde ao cadastro'
         } else if (errorMessage.toLowerCase().includes('too many')) {
           errorMessage = 'Muitas tentativas. Aguarde um momento e tente novamente.'
         }
-        
         setError(errorMessage)
       }
     } catch (err) {
-      console.error('[Login] Erro catch:', err)
+      console.error('[Login] Erro:', err)
       setError('Erro de conexão. Tente novamente.')
     }
   }
@@ -153,67 +110,6 @@ const Login = () => {
           <p className="mt-2 text-stone-300">
             Entre na sua conta para continuar
           </p>
-        </div>
-
-        {/* User Type Selection */}
-        <div className="mb-6 grid grid-cols-3 gap-3">
-          <button
-            type="button"
-            onClick={() => setUserType('nutricionista')}
-            className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-              userType === 'nutricionista'
-                ? 'border-primary-500 bg-primary-600/20 shadow-lg shadow-primary-500/30'
-                : 'border-stone-700 hover:border-stone-600 bg-stone-800/50'
-            }`}
-          >
-            <div className={`flex flex-col items-center ${
-              userType === 'nutricionista' ? 'text-white' : 'text-stone-400'
-            }`}>
-              <Ruler className={`h-7 w-7 mb-2 ${
-                userType === 'nutricionista' ? 'text-primary-400' : 'text-stone-500'
-              }`} />
-              <div className="text-sm font-semibold">Nutricionista</div>
-              <div className="text-xs mt-1 opacity-75">Profissional</div>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setUserType('paciente')}
-            className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-              userType === 'paciente'
-                ? 'border-accent-500 bg-accent-600/20 shadow-lg shadow-accent-500/30'
-                : 'border-stone-700 hover:border-stone-600 bg-stone-800/50'
-            }`}
-          >
-            <div className={`flex flex-col items-center ${
-              userType === 'paciente' ? 'text-white' : 'text-stone-400'
-            }`}>
-              <Briefcase className={`h-7 w-7 mb-2 ${
-                userType === 'paciente' ? 'text-accent-400' : 'text-stone-500'
-              }`} />
-              <div className="text-sm font-semibold">Paciente</div>
-              <div className="text-xs mt-1 opacity-75">Buscar acompanhamento</div>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setUserType('super_admin')}
-            className={`p-4 rounded-xl border-2 transition-all hover:shadow-lg ${
-              userType === 'super_admin'
-                ? 'border-amber-500 bg-amber-600/20 shadow-lg shadow-amber-500/30'
-                : 'border-stone-700 hover:border-stone-600 bg-stone-800/50'
-            }`}
-          >
-            <div className={`flex flex-col items-center ${
-              userType === 'super_admin' ? 'text-white' : 'text-stone-400'
-            }`}>
-              <Building2 className={`h-7 w-7 mb-2 ${
-                userType === 'super_admin' ? 'text-amber-400' : 'text-stone-500'
-              }`} />
-              <div className="text-sm font-semibold">Super Admin</div>
-              <div className="text-xs mt-1 opacity-75">Plataforma</div>
-            </div>
-          </button>
         </div>
 
         {/* Login Form */}
@@ -297,14 +193,10 @@ const Login = () => {
             <LoadingButton
               type="submit"
               loading={isLoading}
-              variant={userType === 'nutricionista' ? 'primary' : 'secondary'}
+              variant="primary"
               fullWidth
               size="lg"
-              className={`w-full font-semibold shadow-lg hover:shadow-xl ${
-                userType === 'nutricionista'
-                  ? 'bg-primary-600 hover:bg-primary-700'
-                  : 'bg-accent-500 hover:bg-accent-600'
-              }`}
+              className="w-full font-semibold shadow-lg hover:shadow-xl bg-primary-600 hover:bg-primary-700"
             >
               Entrar
             </LoadingButton>
