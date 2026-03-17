@@ -66,8 +66,8 @@ export const sanitizeText = (input: string, allowSpecialChars: string[] = []): s
 }
 
 /**
- * Sanitiza nome de pessoa: permite letras (incl. acentuadas), espaços, hífen e apóstrofo.
- * Remove apenas caracteres perigosos (XSS/injection). Espaço (U+0020 e U+00A0) é mantido.
+ * Sanitiza nome de pessoa: remove apenas caracteres perigosos (XSS/injection).
+ * Mantém espaços, ç, acentos, hífen, apóstrofo e qualquer letra/número.
  */
 export const sanitizeName = (input: string): string => {
   if (!input || typeof input !== 'string') return ''
@@ -75,9 +75,7 @@ export const sanitizeName = (input: string): string => {
     .replace(/<[^>]*>/g, '')
     .replace(/[\x00-\x1F\x7F]/g, '')
     .replace(/[<>"&]/g, '')
-    // Permite letras, números, marcas, espaço normal, nbsp, hífen e apóstrofo
-    .replace(/[^\p{L}\p{N}\p{M} \u00A0\-']/gu, '')
-    .replace(/[\s\u00A0]+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
 }
 
