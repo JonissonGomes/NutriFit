@@ -9,6 +9,20 @@ const PLANS = ['free', 'starter', 'professional', 'business'] as const
 const ROLES = ['nutricionista', 'paciente', 'super_admin', 'admin'] as const
 const STATUSES = ['active', 'suspended'] as const
 
+const PLAN_LABELS: Record<string, string> = {
+  free: 'Grátis',
+  starter: 'Inicial',
+  professional: 'Profissional',
+  business: 'Empresarial',
+}
+const ROLE_LABELS: Record<string, string> = {
+  nutricionista: 'Nutricionista',
+  medico: 'Médico',
+  paciente: 'Paciente',
+  admin: 'Admin',
+  super_admin: 'Super Admin',
+}
+
 const UsersAdmin = () => {
   const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
@@ -181,10 +195,10 @@ const UsersAdmin = () => {
                       <td className="px-5 py-3 text-gray-700 truncate max-w-[200px]">{u.email}</td>
                       <td className="px-5 py-3">
                         <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
-                          {u.role}
+                          {ROLE_LABELS[u.role] ?? u.role}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-sm text-gray-700">{u.plan}</td>
+                      <td className="px-5 py-3 text-sm text-gray-700">{PLAN_LABELS[u.plan] ?? u.plan}</td>
                       <td className="px-5 py-3">
                         <span
                           className={`text-xs font-semibold px-2 py-1 rounded-full ${

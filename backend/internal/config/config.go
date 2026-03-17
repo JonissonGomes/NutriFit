@@ -22,7 +22,7 @@ type Config struct {
 	JWTAccessExpiry time.Duration
 	JWTRefreshExpiry time.Duration
 
-	// OAuth Google
+	// OAuth Google (não utilizado; mantido para compatibilidade com código legado)
 	GoogleClientID     string
 	GoogleClientSecret string
 	GoogleRedirectURI  string
@@ -33,11 +33,8 @@ type Config struct {
 	CloudinaryAPISecret string
 	CloudinaryBaseFolder string
 
-	// Storage Limits
-	StorageLimitFree      int64
-	StorageLimitStarter    int64
-	StorageLimitPro       int64
-	StorageLimitBusiness  int64
+	// Storage limit (bytes) for new users / free plan
+	StorageLimitFree int64
 
 	// CORS
 	CORSAllowedOrigins []string
@@ -95,10 +92,7 @@ func LoadConfig() (*Config, error) {
 		CloudinaryAPISecret:   getEnv("CLOUDINARY_API_SECRET", ""),
 		CloudinaryBaseFolder:  getEnv("CLOUDINARY_BASE_FOLDER", "arck-design"),
 
-		StorageLimitFree:     parseInt64(getEnv("STORAGE_LIMIT_FREE", "5368709120")),
-		StorageLimitStarter:  parseInt64(getEnv("STORAGE_LIMIT_STARTER", "10737418240")),
-		StorageLimitPro:      parseInt64(getEnv("STORAGE_LIMIT_PRO", "53687091200")),
-		StorageLimitBusiness: parseInt64(getEnv("STORAGE_LIMIT_BUSINESS", "214748364800")),
+		StorageLimitFree: parseInt64(getEnv("STORAGE_LIMIT_FREE", "5368709120")),
 
 		CORSAllowedOrigins: parseStringSlice(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")),
 

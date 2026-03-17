@@ -53,7 +53,7 @@ func login(c *gin.Context) {
 	if err != nil {
 		errMsg := "E-mail ou senha incorretos"
 		if err.Error() == "password login not available for this user" {
-			errMsg = "Faça login com a opção utilizada no cadastro (ex.: Google)."
+			errMsg = "Faça login com o mesmo método utilizado no cadastro (e-mail e senha)."
 		}
 		c.JSON(http.StatusUnauthorized, gin.H{"error": errMsg})
 		return
@@ -63,24 +63,6 @@ func login(c *gin.Context) {
 	response := dto.NewAuthPayloadResponse(user, tokens.AccessToken, tokens.RefreshToken)
 	c.JSON(http.StatusOK, response)
 }
-
-// OAuth Google - Temporariamente desabilitado
-// func oauthGoogle(c *gin.Context) {
-// 	var req models.OAuthGoogleRequest
-// 	if err := c.ShouldBindJSON(&req); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-//
-// 	user, tokens, err := auth.OAuthGoogle(req.Code)
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-//
-// 	response := dto.NewAuthPayloadResponse(user, tokens.AccessToken, tokens.RefreshToken)
-// 	c.JSON(http.StatusOK, response)
-// }
 
 func refreshToken(c *gin.Context) {
 	var req models.RefreshTokenRequest

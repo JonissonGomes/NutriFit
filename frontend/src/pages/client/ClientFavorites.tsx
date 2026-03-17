@@ -84,7 +84,7 @@ const ClientFavorites: React.FC = () => {
     <div className="p-6 md:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Arquitetos Favoritos</h1>
-        <p className="text-gray-600">Seus arquitetos salvos para referência rápida</p>
+        <p className="text-gray-600">Seus nutricionistas salvos para referência rápida</p>
       </div>
 
       {favorites.length === 0 ? (
@@ -94,7 +94,7 @@ const ClientFavorites: React.FC = () => {
             Nenhum favorito ainda
           </h3>
           <p className="text-gray-500 mb-6 max-w-md mx-auto">
-            Explore nossos arquitetos e salve seus favoritos clicando no ícone de coração.
+            Explore nossos nutricionistas e salve seus favoritos clicando no ícone de coração.
           </p>
           <Link
             to="/explore"

@@ -43,7 +43,7 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
   const isActive = (path: string) => location.pathname === path
 
   const navItems = [
-    { path: '/patient/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/patient/dashboard', icon: LayoutDashboard, label: 'Painel' },
     { path: '/patient/meal-plans', icon: BookText, label: 'Plano Alimentar' },
     { path: '/patient/food-diary', icon: FolderTree, label: 'Diário Alimentar' },
     { path: '/patient/goals', icon: Target, label: 'Metas' },
@@ -270,7 +270,7 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
               {user?.avatar ? (
                 <img
                   src={user.avatar}
-                  alt="Profile"
+                  alt="Perfil"
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (

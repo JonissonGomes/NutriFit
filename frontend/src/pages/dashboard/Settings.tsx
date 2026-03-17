@@ -522,7 +522,7 @@ const Settings = () => {
                   <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">Mensagens de Arquitetos</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Respostas de arquitetos às suas mensagens</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Respostas dos nutricionistas às suas mensagens</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -623,7 +623,7 @@ const Settings = () => {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Plano Atual</p>
                     <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white capitalize">
-                      {user?.plan || 'Free'}
+                      {user?.plan === 'free' ? 'Grátis' : user?.plan === 'starter' ? 'Inicial' : user?.plan === 'professional' ? 'Profissional' : user?.plan === 'business' ? 'Empresarial' : (user?.plan ? String(user.plan) : 'Grátis')}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
                       {user?.plan === 'free' ? 'Gratuito' : 

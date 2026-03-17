@@ -49,12 +49,12 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
     (isAdminArea ? '/admin' : user?.role === 'medico' ? '/medico' : '/nutritionist')
 
   const adminNavItems = [
-    { path: '/admin/dashboard', icon: DashboardIcon, label: 'Dashboard' },
+    { path: '/admin/dashboard', icon: DashboardIcon, label: 'Painel' },
     { path: '/admin/users', icon: PeopleIcon, label: 'Usuários' },
     { path: '/admin/nutritionists', icon: WorkIcon, label: 'Nutricionistas' },
   ]
   const nutritionistNavItems = [
-    { path: `${effectiveBasePath}/dashboard`, icon: DashboardIcon, label: 'Dashboard' },
+    { path: `${effectiveBasePath}/dashboard`, icon: DashboardIcon, label: 'Painel' },
     { path: `${effectiveBasePath}/meal-plans`, icon: FolderIcon, label: 'Planos Alimentares' },
     { path: `${effectiveBasePath}/patients`, icon: PeopleIcon, label: 'Pacientes' },
     { path: `${effectiveBasePath}/food-diary`, icon: RestaurantMenuIcon, label: 'Diário' },
@@ -284,13 +284,13 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
 
             {/* User Profile */}
             <Link 
-              to="/architect/profile" 
+              to={`${effectiveBasePath}/profile`} 
               className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-lg transition-colors"
             >
               {user?.avatar ? (
                 <img
                   src={user.avatar}
-                  alt="Profile"
+                  alt="Perfil"
                   className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-200 object-cover"
                 />
               ) : (

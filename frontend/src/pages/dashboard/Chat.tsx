@@ -350,7 +350,7 @@ const Chat = () => {
                         handleDeleteConversation(conv.id, e)
                       }}
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-100 rounded transition-opacity z-10"
-                      title="Deletar conversa"
+                      title="Excluir conversa"
                       type="button"
                     >
                       {deletingConversation === conv.id ? (
@@ -409,7 +409,7 @@ const Chat = () => {
                     }
                   }}
                   className="p-1.5 md:p-2 hover:bg-red-100 rounded-lg transition-colors flex-shrink-0"
-                  title="Deletar conversa"
+                  title="Excluir conversa"
                   type="button"
                 >
                   <Trash2 className="h-4 w-4 md:h-5 md:w-5 text-red-600" />
@@ -521,7 +521,7 @@ const Chat = () => {
           setConversationToDelete(null)
         }}
         onConfirm={confirmDeleteConversation}
-        title="Deletar conversa?"
+        title="Excluir conversa?"
         message="Tem certeza que deseja deletar esta conversa? Esta ação não pode ser desfeita."
         confirmText="Deletar"
         cancelText="Cancelar"

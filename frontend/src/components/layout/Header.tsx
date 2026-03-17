@@ -158,7 +158,7 @@ const Header = () => {
                         className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         <DashboardIcon sx={{ fontSize: 18 }} />
-                        Dashboard
+                        Painel
                       </Link>
                       <Link
                         to={getProfilePath()}
@@ -211,7 +211,7 @@ const Header = () => {
           <button
             className="md:hidden p-1.5 text-gray-600 hover:text-gray-900"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
+            aria-label="Abrir menu"
           >
             {isMenuOpen ? (
               <CloseIcon sx={{ fontSize: 24 }} />
@@ -277,7 +277,7 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <DashboardIcon sx={{ fontSize: 18 }} />
-                  Dashboard
+                  Painel
                 </Link>
                 <Link
                   to={getProfilePath()}

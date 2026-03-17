@@ -156,7 +156,7 @@ const Explore = () => {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
-              placeholder="Buscar por nome, especialidade ou tipo de projeto..."
+              placeholder="Buscar por nome, especialidade ou área de atuação..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -217,14 +217,14 @@ const Explore = () => {
         <div className="mb-6">
           <p className="text-gray-600">
             <span className="font-semibold text-gray-900">{architects.length}</span>{' '}
-            {architects.length === 1 ? 'arquiteto encontrado' : 'arquitetos encontrados'}
+            {architects.length === 1 ? 'nutricionista encontrado' : 'nutricionistas encontrados'}
           </p>
         </div>
 
         {/* Loading State */}
         {loading ? (
           <div className="text-center py-20 text-gray-600">
-            Carregando arquitetos...
+            Carregando nutricionistas...
           </div>
         ) : architects.length > 0 ? (
           /* Architects Grid */

@@ -22,25 +22,48 @@ interface TourConfig {
 // ============================================
 
 const TOURS: Record<string, TourConfig> = {
-  '/architect/dashboard': {
-    id: 'architect-dashboard',
+  '/nutritionist/dashboard': {
+    id: 'nutritionist-dashboard',
     steps: [
       {
         target: '[data-tour="stats"]',
         title: 'Suas estatísticas',
-        content: 'Aqui você pode ver um resumo das visualizações do seu perfil, projetos e mensagens recebidas.',
+        content: 'Aqui você pode ver um resumo das visualizações do seu perfil, planos e mensagens recebidas.',
         position: 'bottom',
       },
       {
         target: '[data-tour="projects"]',
-        title: 'Seus projetos',
-        content: 'Gerencie seus projetos e portfólio. Adicione fotos, descrições e organize por categorias.',
+        title: 'Seus planos',
+        content: 'Gerencie seus planos alimentares e o acompanhamento dos pacientes.',
         position: 'top',
       },
       {
         target: '[data-tour="sidebar"]',
         title: 'Menu de navegação',
-        content: 'Use o menu lateral para acessar todas as funcionalidades: projetos, mensagens, serviços e configurações.',
+        content: 'Use o menu lateral para acessar todas as funcionalidades: planos, mensagens, serviços e configurações.',
+        position: 'right',
+      },
+    ],
+  },
+  '/medico/dashboard': {
+    id: 'medico-dashboard',
+    steps: [
+      {
+        target: '[data-tour="stats"]',
+        title: 'Suas estatísticas',
+        content: 'Aqui você pode ver um resumo das visualizações do seu perfil e mensagens recebidas.',
+        position: 'bottom',
+      },
+      {
+        target: '[data-tour="projects"]',
+        title: 'Painel',
+        content: 'Acesse agenda, pacientes, exames e mensagens.',
+        position: 'top',
+      },
+      {
+        target: '[data-tour="sidebar"]',
+        title: 'Menu de navegação',
+        content: 'Use o menu lateral para acessar agenda, mensagens, serviços e configurações.',
         position: 'right',
       },
     ],
@@ -50,14 +73,31 @@ const TOURS: Record<string, TourConfig> = {
     steps: [
       {
         target: '[data-tour="search"]',
-        title: 'Busque arquitetos',
-        content: 'Use a busca para encontrar arquitetos por especialidade, localização ou nome.',
+        title: 'Busque nutricionistas',
+        content: 'Use a busca para encontrar nutricionistas por especialidade, localização ou nome.',
         position: 'bottom',
       },
       {
         target: '[data-tour="favorites"]',
         title: 'Seus favoritos',
-        content: 'Salve os arquitetos que mais gostar para consultar depois.',
+        content: 'Salve os nutricionistas que mais gostar para consultar depois.',
+        position: 'top',
+      },
+    ],
+  },
+  '/patient/dashboard': {
+    id: 'patient-dashboard',
+    steps: [
+      {
+        target: '[data-tour="search"]',
+        title: 'Busque nutricionistas',
+        content: 'Use a busca para encontrar nutricionistas por especialidade, localização ou nome.',
+        position: 'bottom',
+      },
+      {
+        target: '[data-tour="favorites"]',
+        title: 'Seus favoritos',
+        content: 'Salve os nutricionistas que mais gostar para consultar depois.',
         position: 'top',
       },
     ],

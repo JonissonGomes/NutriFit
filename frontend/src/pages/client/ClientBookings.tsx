@@ -134,7 +134,7 @@ const ClientBookings: React.FC = () => {
     <div className="p-6 md:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Meus Agendamentos</h1>
-        <p className="text-gray-600">Gerencie suas consultas e reuniões com arquitetos</p>
+        <p className="text-gray-600">Gerencie suas consultas e reuniões com nutricionistas</p>
       </div>
 
       {/* Filtros */}
@@ -166,7 +166,7 @@ const ClientBookings: React.FC = () => {
           </h3>
           <p className="text-gray-500 mb-6 max-w-md mx-auto">
             {filter === 'upcoming' 
-              ? 'Você não tem agendamentos futuros. Explore arquitetos e agende uma consulta.'
+              ? 'Você não tem agendamentos futuros. Explore nutricionistas e agende uma consulta.'
               : filter === 'past'
               ? 'Você não tem agendamentos anteriores.'
               : 'Você ainda não tem agendamentos.'}

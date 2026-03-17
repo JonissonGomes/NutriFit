@@ -13,7 +13,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility'
 import ApartmentIcon from '@mui/icons-material/Apartment'
 import CloseIcon from '@mui/icons-material/Close'
 import AddIcon from '@mui/icons-material/Add'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { profileService, DEFAULT_CUSTOMIZATION } from '../../services'
@@ -27,8 +27,10 @@ import LayoutPreview from '../../components/profile/LayoutPreview'
 
 const PublicProfile = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { showToast } = useToast()
   const { user } = useAuth()
+  const dashboardPath = location.pathname.startsWith('/medico') ? '/medico/dashboard' : '/nutritionist/dashboard'
   
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -518,7 +520,7 @@ const PublicProfile = () => {
                   ) : formData.coverImage ? (
                     <img
                       src={formData.coverImage}
-                      alt="Cover"
+                      alt="Capa"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -553,7 +555,7 @@ const PublicProfile = () => {
                       ) : formData.avatar ? (
                         <img
                           src={formData.avatar}
-                          alt="Avatar"
+                          alt="Foto de perfil"
                           className="w-full h-full rounded-full object-cover border-4 border-white shadow-xl"
                         />
                       ) : (
@@ -652,7 +654,7 @@ const PublicProfile = () => {
                     onChange={handleChange}
                     maxLength={INPUT_LIMITS.SPECIALTY}
                     className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Ex: Arquitetura Residencial"
+                    placeholder="Ex: Nutrição Clínica, Esportiva"
                   />
                 </div>
 
@@ -934,7 +936,7 @@ const PublicProfile = () => {
             <div className="flex items-center justify-end gap-3 md:gap-4 bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
               <button
                 type="button"
-                onClick={() => navigate('/architect/dashboard')}
+                onClick={() => navigate(dashboardPath)}
                 className="px-4 md:px-6 py-2 md:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold text-sm"
               >
                 Cancelar

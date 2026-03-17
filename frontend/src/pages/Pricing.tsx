@@ -16,7 +16,7 @@ interface PricingPlan {
 const Pricing = () => {
   const nutritionistPlans: PricingPlan[] = [
     {
-      name: 'Free',
+      name: 'Grátis',
       price: 'R$ 0',
       period: '/mês',
       description: 'Comece agora e fidelize pacientes com o básico do NuFit',
@@ -36,7 +36,7 @@ const Pricing = () => {
       ],
     },
     {
-      name: 'Starter',
+      name: 'Inicial',
       price: 'R$ 59',
       period: '/mês',
       description: 'Para atendimentos regulares com mais recursos e organização',
@@ -55,7 +55,7 @@ const Pricing = () => {
       ],
     },
     {
-      name: 'Professional',
+      name: 'Profissional',
       price: 'R$ 129',
       period: '/mês',
       description: 'Para nutricionistas com alto volume e automações',
@@ -74,7 +74,7 @@ const Pricing = () => {
 
   const doctorPlans: PricingPlan[] = [
     {
-      name: 'Doctor Free',
+      name: 'Médico Grátis',
       price: 'R$ 0',
       period: '/mês',
       description: 'Para médicos acompanharem pacientes sem prescrição alimentar estruturada',
@@ -91,7 +91,7 @@ const Pricing = () => {
       ],
     },
     {
-      name: 'Doctor Pro',
+      name: 'Médico Pro',
       price: 'R$ 89',
       period: '/mês',
       description: 'Recursos clínicos e organização para rotina médica',
@@ -324,7 +324,7 @@ const Pricing = () => {
             Pronto para transformar seu negócio?
           </h2>
           <p className="text-sm md:text-base text-primary-100 mb-6 max-w-2xl mx-auto">
-            Junte-se a centenas de arquitetos que já usam nossa plataforma
+            Junte-se a centenas de profissionais que já usam nossa plataforma
           </p>
           <Link
             to="/signup"
