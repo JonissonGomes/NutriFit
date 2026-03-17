@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// requireAdmin verifica role admin; uso opcional pois o grupo /admin já usa RequireRole.
 func requireAdmin(c *gin.Context) bool {
 	role, _ := c.Get("userRole")
 	if roleStr, ok := role.(string); ok && (roleStr == string(models.RoleSuperAdmin) || roleStr == string(models.RoleAdmin)) {
@@ -59,16 +60,37 @@ func listUsersAdmin(c *gin.Context) {
 
 	search := c.Query("search")
 	role := c.Query("role")
+	plan := c.Query("plan")
+	status := c.Query("status")
 
-	filter := bson.M{}
+	var andConditions []bson.M
 	if role != "" {
-		filter["role"] = role
+		andConditions = append(andConditions, bson.M{"role": role})
+	}
+	if plan != "" {
+		andConditions = append(andConditions, bson.M{"plan": plan})
+	}
+	if status == "suspended" {
+		andConditions = append(andConditions, bson.M{"adminMetadata.status": "suspended"})
+	} else if status == "active" {
+		andConditions = append(andConditions, bson.M{
+			"$or": []bson.M{
+				{"adminMetadata.status": bson.M{"$in": []string{"", "active"}}},
+				{"adminMetadata": bson.M{"$exists": false}},
+			},
+		})
 	}
 	if search != "" {
-		filter["$or"] = []bson.M{
-			{"name": bson.M{"$regex": search, "$options": "i"}},
-			{"email": bson.M{"$regex": search, "$options": "i"}},
-		}
+		andConditions = append(andConditions, bson.M{
+			"$or": []bson.M{
+				{"name": bson.M{"$regex": search, "$options": "i"}},
+				{"email": bson.M{"$regex": search, "$options": "i"}},
+			},
+		})
+	}
+	filter := bson.M{}
+	if len(andConditions) > 0 {
+		filter["$and"] = andConditions
 	}
 
 	ctx := c.Request.Context()
@@ -124,6 +146,41 @@ func listUsersAdmin(c *gin.Context) {
 		"page":  page,
 		"limit": limit,
 	})
+}
+
+func updateUserStatusAdmin(c *gin.Context) {
+	if !requireAdmin(c) {
+		return
+	}
+	id := c.Param("id")
+	var req struct {
+		Status string `json:"status" binding:"required,oneof=active suspended"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status inválido. Use active ou suspended."})
+		return
+	}
+	ctx := c.Request.Context()
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+	res, err := database.UsersCollection.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{
+		"$set": bson.M{
+			"updatedAt":             time.Now(),
+			"adminMetadata.status":  req.Status,
+		},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar status"})
+		return
+	}
+	if res.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Usuário não encontrado"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Status atualizado", "status": req.Status})
 }
 
 func updateUserPlanAdmin(c *gin.Context) {

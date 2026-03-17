@@ -322,13 +322,15 @@ func SetupRouter() *gin.Engine {
 				badgesGroup.PUT("/:id/display", updateBadgeDisplay)
 			}
 
-			// Admin routes (TODO: adicionar middleware de verificação de admin)
+			// Admin routes (RBAC: apenas super_admin e admin)
 			admin := protected.Group("/admin")
+			admin.Use(RequireRole("super_admin", "admin"))
 			{
 				admin.GET("/overview", adminOverview)
 				admin.GET("/nutritionists", listNutritionistsAdmin)
 				admin.GET("/users", listUsersAdmin)
 				admin.PUT("/users/:id/plan", updateUserPlanAdmin)
+				admin.PUT("/users/:id/status", updateUserStatusAdmin)
 
 				// Verificações
 				verifications := admin.Group("/verifications")

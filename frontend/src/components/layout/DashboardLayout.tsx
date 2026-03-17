@@ -42,8 +42,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const notificationRef = useRef<HTMLDivElement>(null)
 
   const isActive = (path: string) => location.pathname === path
+  const isAdminArea = location.pathname.startsWith('/admin')
 
-  const navItems = [
+  const adminNavItems = [
+    { path: '/admin/dashboard', icon: DashboardIcon, label: 'Dashboard' },
+    { path: '/admin/users', icon: PeopleIcon, label: 'Usuários' },
+    { path: '/admin/nutritionists', icon: WorkIcon, label: 'Nutricionistas' },
+  ]
+  const nutritionistNavItems = [
     { path: '/nutritionist/dashboard', icon: DashboardIcon, label: 'Dashboard' },
     { path: '/nutritionist/meal-plans', icon: FolderIcon, label: 'Planos Alimentares' },
     { path: '/nutritionist/patients', icon: PeopleIcon, label: 'Pacientes' },
@@ -56,6 +62,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: '/nutritionist/analytics', icon: BarChartIcon, label: 'Estatísticas' },
     { path: '/nutritionist/settings', icon: SettingsIcon, label: 'Configurações' },
   ]
+  const navItems = isAdminArea ? adminNavItems : nutritionistNavItems
 
   const handleLogout = () => {
     logout()

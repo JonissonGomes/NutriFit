@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Loader2, Users, Stethoscope, User } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Loader2, Users, Stethoscope, User, ArrowRight } from 'lucide-react'
 import { adminService } from '../../services'
 
 const AdminDashboard = () => {
@@ -32,17 +33,23 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-gray-200 rounded-2xl p-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary-50">
-              <Users className="h-5 w-5 text-primary-700" />
+        <Link
+          to="/admin/users"
+          className="bg-white border border-gray-200 rounded-2xl p-5 hover:border-primary-300 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary-50">
+                <Users className="h-5 w-5 text-primary-700" />
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Usuários</div>
+                <div className="text-xl font-bold text-gray-900">{data?.totalUsers ?? 0}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-xs text-gray-500">Usuários</div>
-              <div className="text-xl font-bold text-gray-900">{data?.totalUsers ?? 0}</div>
-            </div>
+            <ArrowRight className="h-5 w-5 text-gray-400" />
           </div>
-        </div>
+        </Link>
         <div className="bg-white border border-gray-200 rounded-2xl p-5">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-accent-50">

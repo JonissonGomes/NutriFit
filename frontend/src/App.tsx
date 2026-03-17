@@ -23,6 +23,7 @@ import PublicProfile from './pages/PublicProfile'
 import NotFound from './pages/NotFound'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminNutritionists from './pages/admin/Nutritionists'
+import AdminUsers from './pages/admin/Users'
 
 // Páginas do nutricionista
 import Dashboard from './pages/dashboard/Dashboard'
@@ -142,6 +143,7 @@ function App() {
                         <DashboardLayout>
                           <Routes>
                             <Route path="/dashboard" element={<AdminDashboard />} />
+                            <Route path="/users" element={<AdminUsers />} />
                             <Route path="/nutritionists" element={<AdminNutritionists />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
