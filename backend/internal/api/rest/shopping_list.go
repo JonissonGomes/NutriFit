@@ -1,10 +1,10 @@
-package rest
+﻿package rest
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"arck-design/backend/internal/services/shopping_list"
+	"nufit/backend/internal/services/shopping_list"
 )
 
 func getShoppingList(c *gin.Context) {

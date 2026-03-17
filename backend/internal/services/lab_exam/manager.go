@@ -1,12 +1,12 @@
-package lab_exam
+﻿package lab_exam
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

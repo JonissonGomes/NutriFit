@@ -1,13 +1,13 @@
-package settings
+﻿package settings
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/auth"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/auth"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

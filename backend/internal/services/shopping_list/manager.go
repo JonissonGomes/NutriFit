@@ -1,4 +1,4 @@
-package shopping_list
+﻿package shopping_list
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

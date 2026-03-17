@@ -1,4 +1,4 @@
-package rest
+﻿package rest
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/analytics"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/analytics"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -280,7 +280,7 @@ func detectSource(source models.AnalyticsSource, referrer string) models.Analyti
 	}
 
 	// Tráfego interno
-	if strings.Contains(referrerLower, "arckdesign") || strings.Contains(referrerLower, "localhost") {
+	if strings.Contains(referrerLower, "nufit") || strings.Contains(referrerLower, "localhost") {
 		return models.AnalyticsSourceInternal
 	}
 

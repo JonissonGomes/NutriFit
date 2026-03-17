@@ -1,4 +1,4 @@
-package utils
+﻿package utils
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"arck-design/backend/internal/config"
+	"nufit/backend/internal/config"
 )
 
 // LogLevel representa o nível de log

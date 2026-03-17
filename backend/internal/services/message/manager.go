@@ -1,13 +1,13 @@
-package message
+﻿package message
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/websocket"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/websocket"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

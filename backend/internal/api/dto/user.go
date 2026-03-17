@@ -1,10 +1,10 @@
-package dto
+﻿package dto
 
 import (
 	"time"
 
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/security"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/security"
 )
 
 // ============================================

@@ -1,4 +1,4 @@
-// Package cfm fornece validação opcional de CRM consultando o portal público do CFM.
+﻿// Package cfm fornece validação opcional de CRM consultando o portal público do CFM.
 // Uso não oficial: replica a consulta que um cidadão faria no site. Em caso de falha
 // (timeout, indisponibilidade), o caller deve tratar como "não validado" e não bloquear o registro.
 package cfm

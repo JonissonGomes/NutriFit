@@ -1,4 +1,4 @@
-package auth
+﻿package auth
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"arck-design/backend/internal/config"
+	"nufit/backend/internal/config"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

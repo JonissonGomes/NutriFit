@@ -1,12 +1,12 @@
-package food_diary
+﻿package food_diary
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

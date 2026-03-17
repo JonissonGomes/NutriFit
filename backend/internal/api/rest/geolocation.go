@@ -1,4 +1,4 @@
-package rest
+﻿package rest
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"arck-design/backend/internal/services/geolocation"
+	"nufit/backend/internal/services/geolocation"
 
 	"github.com/gin-gonic/gin"
 )

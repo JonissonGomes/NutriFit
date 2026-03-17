@@ -1,4 +1,4 @@
-package model3d
+﻿package model3d
 
 import (
 	"context"
@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/cloudinary"
-	"arck-design/backend/internal/utils"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -99,7 +99,7 @@ func Upload(ctx context.Context, userID string, file *multipart.FileHeader, req 
 	}
 
 	// Upload para Cloudinary
-	folder := fmt.Sprintf("arck-design/models/%s", userID)
+	folder := fmt.Sprintf("nufit/models/%s", userID)
 	uploadResult, err := cloudinary.UploadRaw(ctx, tempPath, folder)
 	if err != nil {
 		return nil, fmt.Errorf("erro no upload para Cloudinary: %w", err)

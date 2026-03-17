@@ -1,11 +1,11 @@
-package patient
+﻿package patient
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"arck-design/backend/internal/database"
+	"nufit/backend/internal/database"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

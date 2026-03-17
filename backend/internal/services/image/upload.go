@@ -1,4 +1,4 @@
-package image
+﻿package image
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/cloudinary"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/cloudinary"
 )
 
 func UploadImage(ctx context.Context, fileData []byte, filename, projectID, userID string) (*models.Image, error) {

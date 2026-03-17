@@ -1,12 +1,12 @@
-package dashboard
+﻿package dashboard
 
 import (
 	"context"
 	"time"
 
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/cache"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/cache"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"

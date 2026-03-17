@@ -1,4 +1,4 @@
-package database
+﻿package database
 
 import (
 	"context"
@@ -277,6 +277,114 @@ func CreateIndexes() error {
 		{Keys: bson.D{{Key: "status", Value: 1}, {Key: "endDate", Value: 1}}},
 	}
 	_, err = BoostSubscriptionsCollection.Indexes().CreateMany(ctx, boostSubscriptionsIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: meal_plans
+	mealPlansIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "nutritionistId", Value: 1}, {Key: "createdAt", Value: -1}}},
+		{Keys: bson.D{{Key: "patientId", Value: 1}, {Key: "createdAt", Value: -1}}},
+		{Keys: bson.D{{Key: "nutritionistId", Value: 1}, {Key: "patientId", Value: 1}}},
+		{Keys: bson.D{{Key: "nutritionistId", Value: 1}, {Key: "status", Value: 1}}},
+	}
+	_, err = MealPlansCollection.Indexes().CreateMany(ctx, mealPlansIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: patients
+	patientsIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "nutritionistId", Value: 1}, {Key: "createdAt", Value: -1}}},
+		{Keys: bson.D{{Key: "nutritionistId", Value: 1}}},
+	}
+	_, err = PatientsCollection.Indexes().CreateMany(ctx, patientsIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: anamnesis
+	anamnesisIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "patientId", Value: 1}, {Key: "createdAt", Value: -1}}},
+		{Keys: bson.D{{Key: "nutritionistId", Value: 1}, {Key: "createdAt", Value: -1}}},
+	}
+	_, err = AnamnesisCollection.Indexes().CreateMany(ctx, anamnesisIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: anamnesis_templates
+	anamnesisTemplatesIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "nutritionistId", Value: 1}, {Key: "createdAt", Value: -1}}},
+		{Keys: bson.D{{Key: "nutritionistId", Value: 1}, {Key: "id", Value: 1}}},
+	}
+	_, err = AnamnesisTemplatesCollection.Indexes().CreateMany(ctx, anamnesisTemplatesIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: food_diary
+	foodDiaryIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "patientId", Value: 1}, {Key: "date", Value: -1}}},
+		{Keys: bson.D{{Key: "patientId", Value: 1}, {Key: "createdAt", Value: -1}}},
+	}
+	_, err = FoodDiaryCollection.Indexes().CreateMany(ctx, foodDiaryIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: anthropometric
+	anthropometricIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "patientId", Value: 1}, {Key: "date", Value: -1}}},
+	}
+	_, err = AnthropometricCollection.Indexes().CreateMany(ctx, anthropometricIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: goals
+	goalsIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "patientId", Value: 1}, {Key: "createdAt", Value: -1}}},
+		{Keys: bson.D{{Key: "patientId", Value: 1}, {Key: "status", Value: 1}}},
+	}
+	_, err = GoalsCollection.Indexes().CreateMany(ctx, goalsIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: lab_exams
+	labExamsIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "patientId", Value: 1}, {Key: "createdAt", Value: -1}}},
+	}
+	_, err = LabExamsCollection.Indexes().CreateMany(ctx, labExamsIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: questionnaires
+	questionnairesIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "patientId", Value: 1}, {Key: "createdAt", Value: -1}}},
+	}
+	_, err = QuestionnairesCollection.Indexes().CreateMany(ctx, questionnairesIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: shopping_lists
+	shoppingListsIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "mealPlanId", Value: 1}}, Options: indexOptions().SetUnique(true)},
+	}
+	_, err = ShoppingListsCollection.Indexes().CreateMany(ctx, shoppingListsIndexes)
+	if err != nil {
+		return err
+	}
+
+	// NuFit: foods (busca por nome/categoria)
+	foodsIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "name", Value: 1}}},
+		{Keys: bson.D{{Key: "name", Value: "text"}, {Key: "description", Value: "text"}, {Key: "category", Value: "text"}}},
+	}
+	_, err = FoodsCollection.Indexes().CreateMany(ctx, foodsIndexes)
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package rest
+﻿package rest
 
 import (
 	"context"
@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"arck-design/backend/internal/services/cloudinary"
-	"arck-design/backend/internal/services/image"
-	"arck-design/backend/internal/services/profile"
-	"arck-design/backend/internal/utils"
+	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/image"
+	"nufit/backend/internal/services/profile"
+	"nufit/backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )

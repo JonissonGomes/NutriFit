@@ -1,10 +1,10 @@
-package websocket
+﻿package websocket
 
 import (
 	"log"
 	"net/http"
 
-	"arck-design/backend/internal/services/auth"
+	"nufit/backend/internal/services/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )

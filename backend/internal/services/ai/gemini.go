@@ -1,4 +1,4 @@
-package ai
+﻿package ai
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"arck-design/backend/internal/config"
+	"nufit/backend/internal/config"
 )
 
 var (

@@ -1,4 +1,4 @@
-package ai
+﻿package ai
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"arck-design/backend/internal/models"
+	"nufit/backend/internal/models"
 )
 
 // MealPlanParams parâmetros para geração de plano alimentar

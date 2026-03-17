@@ -1,4 +1,4 @@
-package rest
+﻿package rest
 
 import (
 	"context"
@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"arck-design/backend/internal/api/dto"
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/cloudinary"
-	"arck-design/backend/internal/services/image"
-	"arck-design/backend/internal/services/project"
-	"arck-design/backend/internal/services/security"
+	"nufit/backend/internal/api/dto"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/image"
+	"nufit/backend/internal/services/project"
+	"nufit/backend/internal/services/security"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

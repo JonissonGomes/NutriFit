@@ -1,10 +1,10 @@
-package database
+﻿package database
 
 import (
 	"context"
 	"time"
 
-	"arck-design/backend/internal/config"
+	"nufit/backend/internal/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

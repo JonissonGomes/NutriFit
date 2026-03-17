@@ -1,4 +1,4 @@
-package cache
+﻿package cache
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"arck-design/backend/internal/config"
-	"arck-design/backend/internal/utils"
+	"nufit/backend/internal/config"
+	"nufit/backend/internal/utils"
 	"github.com/redis/go-redis/v9"
 )
 

@@ -1,4 +1,4 @@
-package rest
+﻿package rest
 
 import (
 	"encoding/csv"
@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"arck-design/backend/internal/services/patient"
+	"nufit/backend/internal/services/patient"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

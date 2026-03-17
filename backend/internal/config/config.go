@@ -1,4 +1,4 @@
-package config
+﻿package config
 
 import (
 	"os"
@@ -77,7 +77,7 @@ func LoadConfig() (*Config, error) {
 		Env:   getEnv("ENV", "development"),
 
 		MongoDBURI: getEnv("MONGODB_URI", ""),
-		MongoDBDB:  getEnv("MONGODB_DB", "arckdesign"),
+		MongoDBDB:  getEnv("MONGODB_DB", "nufit"),
 
 		JWTSecret:        getEnv("JWT_SECRET", "change-me-in-production"),
 		JWTAccessExpiry:  parseDuration(getEnv("JWT_ACCESS_EXPIRY", "1h")),
@@ -90,7 +90,7 @@ func LoadConfig() (*Config, error) {
 		CloudinaryCloudName:   getEnv("CLOUDINARY_CLOUD_NAME", ""),
 		CloudinaryAPIKey:     getEnv("CLOUDINARY_API_KEY", ""),
 		CloudinaryAPISecret:   getEnv("CLOUDINARY_API_SECRET", ""),
-		CloudinaryBaseFolder:  getEnv("CLOUDINARY_BASE_FOLDER", "arck-design"),
+		CloudinaryBaseFolder:  getEnv("CLOUDINARY_BASE_FOLDER", "nufit"),
 
 		StorageLimitFree: parseInt64(getEnv("STORAGE_LIMIT_FREE", "5368709120")),
 

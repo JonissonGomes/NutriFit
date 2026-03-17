@@ -1,11 +1,11 @@
-package rest
+﻿package rest
 
 import (
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"arck-design/backend/internal/services/auth"
+	"nufit/backend/internal/services/auth"
 )
 
 func corsMiddleware() gin.HandlerFunc {

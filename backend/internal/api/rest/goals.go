@@ -1,12 +1,12 @@
-package rest
+﻿package rest
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/goal"
-	"arck-design/backend/internal/services/security"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/goal"
+	"nufit/backend/internal/services/security"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

@@ -1,4 +1,4 @@
-package rest
+﻿package rest
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"arck-design/backend/internal/services/compare"
+	"nufit/backend/internal/services/compare"
 
 	"github.com/gin-gonic/gin"
 )

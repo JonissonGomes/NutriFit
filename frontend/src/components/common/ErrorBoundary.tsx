@@ -97,10 +97,10 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="mt-8 text-stone-500 text-sm">
               <p>Se o problema persistir, entre em contato conosco:</p>
               <a
-                href="mailto:suporte@arckdesign.com"
+                href="mailto:suporte@nufit.com.br"
                 className="text-primary-400 hover:text-primary-300 transition"
               >
-                suporte@arckdesign.com
+                suporte@nufit.com.br
               </a>
             </div>
           </div>

@@ -1,4 +1,4 @@
-package rest
+﻿package rest
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"arck-design/backend/internal/services/badge"
+	"nufit/backend/internal/services/badge"
 
 	"github.com/gin-gonic/gin"
 )

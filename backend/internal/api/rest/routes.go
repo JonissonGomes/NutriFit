@@ -1,9 +1,9 @@
-package rest
+﻿package rest
 
 import (
-	"arck-design/backend/internal/config"
-	"arck-design/backend/internal/services/websocket"
-	"arck-design/backend/internal/utils"
+	"nufit/backend/internal/config"
+	"nufit/backend/internal/services/websocket"
+	"nufit/backend/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 

@@ -1,4 +1,4 @@
-package cloudinary
+﻿package cloudinary
 
 // Transformations for different image sizes
 const (

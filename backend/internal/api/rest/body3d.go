@@ -1,9 +1,9 @@
-package rest
+﻿package rest
 
 import (
 	"net/http"
 
-	"arck-design/backend/internal/services/body3d"
+	"nufit/backend/internal/services/body3d"
 	"github.com/gin-gonic/gin"
 )
 

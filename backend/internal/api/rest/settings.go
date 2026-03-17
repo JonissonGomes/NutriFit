@@ -1,12 +1,12 @@
-package rest
+﻿package rest
 
 import (
 	"context"
 	"net/http"
 	"time"
 
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/settings"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/settings"
 	"github.com/gin-gonic/gin"
 )
 

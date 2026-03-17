@@ -622,7 +622,7 @@ const PublicProfile = () => {
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Seu perfil será: arckdesign.com/profile/{formData.username || 'usuario'}
+                    Seu perfil será: nufit.com.br/profile/{formData.username || 'usuario'}
                   </p>
                 </div>
 

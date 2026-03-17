@@ -1,4 +1,4 @@
-package security
+﻿package security
 
 import (
 	"crypto/aes"
@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"arck-design/backend/internal/config"
+	"nufit/backend/internal/config"
 )
 
 // ============================================

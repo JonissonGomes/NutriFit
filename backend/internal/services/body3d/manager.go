@@ -1,11 +1,11 @@
-package body3d
+﻿package body3d
 
 import (
 	"context"
 	"errors"
 	"time"
 
-	"arck-design/backend/internal/models"
+	"nufit/backend/internal/models"
 )
 
 var (

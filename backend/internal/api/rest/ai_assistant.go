@@ -1,10 +1,10 @@
-package rest
+﻿package rest
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"arck-design/backend/internal/services/ai"
+	"nufit/backend/internal/services/ai"
 )
 
 func chatWithAIAssistant(c *gin.Context) {

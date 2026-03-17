@@ -1,4 +1,4 @@
-package cloudinary
+﻿package cloudinary
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
-	"arck-design/backend/internal/config"
+	"nufit/backend/internal/config"
 )
 
 var cld *cloudinary.Cloudinary

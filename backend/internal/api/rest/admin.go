@@ -1,12 +1,12 @@
-package rest
+﻿package rest
 
 import (
 	"net/http"
 	"strconv"
 	"time"
 
-	"arck-design/backend/internal/database"
-	"arck-design/backend/internal/models"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"

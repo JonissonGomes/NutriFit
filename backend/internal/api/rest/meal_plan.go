@@ -1,14 +1,14 @@
-package rest
+﻿package rest
 
 import (
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/meal_plan"
-	"arck-design/backend/internal/services/food"
-	"arck-design/backend/internal/services/ai"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/meal_plan"
+	"nufit/backend/internal/services/food"
+	"nufit/backend/internal/services/ai"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

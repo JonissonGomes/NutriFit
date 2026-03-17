@@ -1,4 +1,4 @@
-package rest
+﻿package rest
 
 import (
 	"net/http"
@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/lab_exam"
-	"arck-design/backend/internal/services/security"
-	"arck-design/backend/internal/services/cloudinary"
-	"arck-design/backend/internal/services/ai"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/lab_exam"
+	"nufit/backend/internal/services/security"
+	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/ai"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 )

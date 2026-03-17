@@ -1,10 +1,10 @@
-package ai
+﻿package ai
 
 import (
 	"context"
 
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/food"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/food"
 )
 
 // MealPlanAnalysisResult resultado da análise de um plano alimentar

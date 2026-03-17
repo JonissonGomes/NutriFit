@@ -1,4 +1,4 @@
-package rest
+﻿package rest
 
 import (
 	"context"
@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"arck-design/backend/internal/api/dto"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/auth"
-	"arck-design/backend/internal/services/cfm"
+	"nufit/backend/internal/api/dto"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/auth"
+	"nufit/backend/internal/services/cfm"
 )
 
 func register(c *gin.Context) {

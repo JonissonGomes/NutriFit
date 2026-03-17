@@ -1,11 +1,11 @@
-package auth
+﻿package auth
 
 import (
 	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"arck-design/backend/internal/config"
+	"nufit/backend/internal/config"
 )
 
 type JWTClaims struct {

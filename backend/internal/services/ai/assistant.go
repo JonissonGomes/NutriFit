@@ -1,11 +1,11 @@
-package ai
+﻿package ai
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
-	"arck-design/backend/internal/services/meal_plan"
+	"nufit/backend/internal/services/meal_plan"
 )
 
 // AnswerPatientQuestion responde uma pergunta do paciente usando IA

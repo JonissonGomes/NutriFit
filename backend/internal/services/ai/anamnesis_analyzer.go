@@ -1,11 +1,11 @@
-package ai
+﻿package ai
 
 import (
 	"context"
 	"fmt"
 	"strings"
 
-	"arck-design/backend/internal/services/anamnesis"
+	"nufit/backend/internal/services/anamnesis"
 )
 
 // GenerateAnamnesisSummary gera um resumo inteligente de uma anamnese

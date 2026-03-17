@@ -18,7 +18,7 @@ import type {
 // ============================================
 
 const USER_STORAGE_KEY = 'nufit_user'
-const LEGACY_USER_STORAGE_KEY = 'arckdesign_user'
+const LEGACY_USER_STORAGE_KEY = 'nufit_user'
 
 // ============================================
 // FUNÇÕES AUXILIARES

@@ -1,12 +1,12 @@
-package rest
+﻿package rest
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"arck-design/backend/internal/models"
-	"arck-design/backend/internal/services/anamnesis"
-	"arck-design/backend/internal/services/ai"
+	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/anamnesis"
+	"nufit/backend/internal/services/ai"
 )
 
 func listAnamnesisTemplates(c *gin.Context) {
