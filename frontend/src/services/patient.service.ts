@@ -41,5 +41,11 @@ export const patientService = {
   async remove(id: string): Promise<ApiResponse<{ message: string }>> {
     return api.delete(`/patients/${encodeURIComponent(id)}`)
   },
+
+  async importCSV(file: File): Promise<ApiResponse<{ message: string; created: number; skipped: number; errors: string[] }>> {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post(`/patients/import`, form)
+  },
 }
 

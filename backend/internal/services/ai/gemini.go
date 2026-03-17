@@ -3,11 +3,13 @@ package ai
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"arck-design/backend/internal/config"
@@ -116,9 +118,87 @@ func (c *GeminiClient) AnalyzeImage(ctx context.Context, imageURL string, prompt
 		return "", ErrAIUnavailable
 	}
 
-	// TODO: Implementar análise de imagem com Gemini Vision
-	// Por enquanto retorna erro
-	return "", errors.New("análise de imagem ainda não implementada")
+	// Baixar imagem e enviar inline_data para o Gemini (Vision)
+	req, err := http.NewRequestWithContext(ctx, "GET", imageURL, nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("falha ao baixar imagem: status %d", resp.StatusCode)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "image/jpeg"
+	}
+	if strings.HasPrefix(contentType, "image/") == false {
+		return "", fmt.Errorf("tipo de conteúdo inválido para imagem: %s", contentType)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	encoded := base64.StdEncoding.EncodeToString(data)
+
+	url := fmt.Sprintf("%s/models/gemini-1.5-flash:generateContent?key=%s", c.BaseURL, c.APIKey)
+
+	payload := map[string]interface{}{
+		"contents": []map[string]interface{}{
+			{
+				"parts": []map[string]interface{}{
+					{"text": prompt},
+					{"inline_data": map[string]interface{}{
+						"mime_type": contentType,
+						"data":      encoded,
+					}},
+				},
+			},
+		},
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+
+	gReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", err
+	}
+	gReq.Header.Set("Content-Type", "application/json")
+	gResp, err := c.HTTPClient.Do(gReq)
+	if err != nil {
+		return "", err
+	}
+	defer gResp.Body.Close()
+
+	if gResp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(gResp.Body)
+		return "", fmt.Errorf("erro na API Gemini Vision: %s", string(body))
+	}
+
+	var result struct {
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text string `json:"text"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+	}
+	if err := json.NewDecoder(gResp.Body).Decode(&result); err != nil {
+		return "", err
+	}
+	if len(result.Candidates) == 0 || len(result.Candidates[0].Content.Parts) == 0 {
+		return "", errors.New("resposta vazia da API (vision)")
+	}
+	return result.Candidates[0].Content.Parts[0].Text, nil
 }
 
 // CheckAIAvailable verifica se a IA está disponível

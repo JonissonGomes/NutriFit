@@ -11,6 +11,7 @@ import (
 	"arck-design/backend/internal/services/food_diary"
 	"arck-design/backend/internal/services/cloudinary"
 	"arck-design/backend/internal/services/security"
+	"arck-design/backend/internal/services/ai"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -108,8 +109,50 @@ func uploadFoodDiaryPhoto(c *gin.Context) {
 }
 
 func analyzeFoodDiaryPhoto(c *gin.Context) {
-	// TODO: Implementar com integração Gemini Vision
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "Análise por IA em desenvolvimento"})
+	entryID := c.Param("id")
+
+	entry, err := food_diary.GetEntry(c.Request.Context(), entryID)
+	if err != nil {
+		if err == food_diary.ErrEntryNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Registro não encontrado"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar registro"})
+		return
+	}
+	if entry.PhotoURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Registro não possui foto"})
+		return
+	}
+
+	client := ai.NewGeminiClient()
+	if client == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "IA não disponível"})
+		return
+	}
+
+	prompt := "Analise a foto da refeição e responda em português com: (1) lista de alimentos prováveis, (2) estimativa aproximada de calorias, (3) observações nutricionais rápidas. Seja conservador e diga quando não tiver certeza."
+	text, err := client.AnalyzeImage(c.Request.Context(), entry.PhotoURL, prompt)
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
+		return
+	}
+
+	analysis := models.AIAnalysis{
+		Classification: models.AIClassificationAttention,
+		Foods:          []string{},
+		Calories:       0,
+		Confidence:     0.35,
+		Notes:          text,
+		AnalyzedAt:     time.Now(),
+	}
+
+	if err := food_diary.UpdateAIAnalysis(c.Request.Context(), entryID, analysis); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao salvar análise"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": analysis})
 }
 
 func addNutritionistComment(c *gin.Context) {

@@ -18,6 +18,22 @@ var (
 	ErrLabExamNotFound = errors.New("exame não encontrado")
 )
 
+func GetByID(ctx context.Context, id string) (*models.LabExam, error) {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	var out models.LabExam
+	err = database.LabExamsCollection.FindOne(ctx, bson.M{"_id": oid}).Decode(&out)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrLabExamNotFound
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
 func ListByPatient(ctx context.Context, patientID string, limit int) ([]models.LabExam, error) {
 	patientOID, err := primitive.ObjectIDFromHex(patientID)
 	if err != nil {

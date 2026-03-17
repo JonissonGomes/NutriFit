@@ -228,6 +228,7 @@ func SetupRouter() *gin.Engine {
 				labExams.POST("", createLabExam)
 				labExams.PUT("/:id", updateLabExam)
 				labExams.DELETE("/:id", deleteLabExam)
+				labExams.POST("/:id/upload", uploadLabExamFile)
 				labExams.POST("/:id/ai-analyze", analyzeLabExamWithAI)
 			}
 
