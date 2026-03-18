@@ -46,7 +46,7 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
       <div className="p-4 md:p-6 border-b border-gray-100">
         <h2 className="text-base md:text-lg font-semibold text-gray-900">Personalização do Perfil</h2>
         <p className="text-xs md:text-sm text-gray-500 mt-1">
-          Escolha como seus projetos serão exibidos para os visitantes
+          Escolha como seus conteúdos e portfólio serão exibidos para os visitantes
         </p>
       </div>
 
@@ -78,7 +78,7 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
             {/* Layout Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Estilo de Exibição dos Projetos
+                Estilo de Exibição do Portfólio
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {LAYOUT_OPTIONS.map((option) => (
@@ -150,11 +150,10 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
             </p>
             
             {[
-              { key: 'showStats', label: 'Mostrar Estatísticas', description: 'Exibe número de projetos, visualizações e avaliações' },
+              { key: 'showStats', label: 'Mostrar Estatísticas', description: 'Exibe visualizações, avaliações e outros indicadores do perfil' },
               { key: 'showServices', label: 'Mostrar Serviços', description: 'Lista os serviços que você oferece' },
               { key: 'showReviews', label: 'Mostrar Avaliações', description: 'Exibe avaliações de clientes anteriores' },
               { key: 'showContact', label: 'Mostrar Contato', description: 'Exibe informações de contato (email, telefone, etc)' },
-              { key: 'show3DModels', label: 'Mostrar Projetos 3D', description: 'Exibe seus modelos 3D no perfil público' },
             ].map((item) => (
               <label
                 key={item.key}

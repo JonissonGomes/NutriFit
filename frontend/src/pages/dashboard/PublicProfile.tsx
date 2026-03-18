@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import WorkIcon from '@mui/icons-material/Work'
@@ -19,7 +19,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { profileService, DEFAULT_CUSTOMIZATION } from '../../services'
 import type { ProfileCustomization, PublicProfile as ProfileServicePublicProfile } from '../../services/profile.service'
 import LoadingButton from '../../components/common/LoadingButton'
-import { sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, maskCAU, validateUsername, validateUrl, validatePhone, unmask, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
+import { sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, validateUsername, validateUrl, validatePhone, unmask, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
 
 type PublicProfileType = ProfileServicePublicProfile
 import LayoutCustomizer from '../../components/profile/LayoutCustomizer'
@@ -31,6 +31,12 @@ const PublicProfile = () => {
   const { showToast } = useToast()
   const { user } = useAuth()
   const dashboardPath = location.pathname.startsWith('/medico') ? '/medico/dashboard' : '/nutritionist/dashboard'
+
+  const professionalRegistrationLabel = useMemo(() => {
+    const reg = (user as any)?.professionalRegistration
+    if (!reg?.type || !reg?.number) return ''
+    return `${String(reg.type).toUpperCase()} ${String(reg.number).trim()}`
+  }, [user])
   
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -43,7 +49,7 @@ const PublicProfile = () => {
     location: '',
     specialty: '',
     experience: '',
-    cau: '',
+    // CAU era do sistema legado (arquitetura). No NuFit, o registro profissional vem do cadastro (CRN/CRM).
     website: '',
     email: '',
     phone: '',
@@ -87,7 +93,6 @@ const PublicProfile = () => {
             : '',
           specialty: profile.specialty || '',
           experience: profile.experience || '',
-          cau: profile.cau ? (profile.cau.startsWith('CAU/') ? profile.cau : `CAU/${profile.cau}`) : '',
           website: profile.website || '',
           email: profile.email || '',
           phone: profile.phone || '',
@@ -181,10 +186,6 @@ const PublicProfile = () => {
       case 'experience':
         sanitizedValue = sanitizeText(value, ['+', ' ', 'a', 'n', 'o', 's', 'A', 'N', 'O', 'S'])
         sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.EXPERIENCE)
-        break
-      case 'cau':
-        sanitizedValue = maskCAU(value)
-        sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.CAU)
         break
       case 'website':
         sanitizedValue = sanitizeUrl(value)
@@ -374,7 +375,6 @@ const PublicProfile = () => {
         bio: sanitizeText(formData.bio, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';', '(', ')', '[', ']', '{', '}', '/', '\\', '@', '#', '$', '%', '*', '+', '=', '_', '|', '~', '`', '^', '´', '°', 'ª', 'º']),
         specialty: sanitizeInput(formData.specialty),
         experience: sanitizeText(formData.experience, ['+', ' ', 'a', 'n', 'o', 's', 'A', 'N', 'O', 'S']),
-        cau: formData.cau ? formData.cau.replace(/^CAU\//i, '').replace(/\s+/g, ' ').trim() : undefined, // Remove "CAU/" e normaliza espaços, salva como "UF A00000-0"
         website: formData.website ? sanitizeUrl(formData.website) : undefined,
         email: sanitizeInput(formData.email.toLowerCase().trim()),
         phone: formData.phone ? unmask(formData.phone) : undefined,
@@ -673,20 +673,22 @@ const PublicProfile = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                    CAU (Registro Profissional)
-                  </label>
-                  <input
-                    type="text"
-                    name="cau"
-                    value={formData.cau}
-                    onChange={handleChange}
-                    maxLength={INPUT_LIMITS.CAU}
-                    className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Ex: CAU/SP A12345-6"
-                  />
-                </div>
+                {(user?.role === 'nutricionista' || user?.role === 'medico') && (
+                  <div>
+                    <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
+                      Registro Profissional
+                    </label>
+                    <input
+                      type="text"
+                      value={professionalRegistrationLabel || '—'}
+                      disabled
+                      className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Este dado vem do seu cadastro (CRN/CRM) e não pode ser alterado aqui.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="mt-4">

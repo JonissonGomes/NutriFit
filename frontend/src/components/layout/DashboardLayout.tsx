@@ -20,6 +20,7 @@ import BarChartIcon from '@mui/icons-material/BarChart'
 import PeopleIcon from '@mui/icons-material/People'
 import ScienceIcon from '@mui/icons-material/Science'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
+import ArticleIcon from '@mui/icons-material/Article'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
 import LoadingButton from '../common/LoadingButton'
@@ -59,6 +60,9 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
     { path: `${effectiveBasePath}/patients`, icon: PeopleIcon, label: 'Pacientes' },
     { path: `${effectiveBasePath}/food-diary`, icon: RestaurantMenuIcon, label: 'Diário' },
     { path: `${effectiveBasePath}/lab-exams`, icon: ScienceIcon, label: 'Exames' },
+    ...(user?.role === 'nutricionista'
+      ? [{ path: `${effectiveBasePath}/contents`, icon: ArticleIcon, label: 'Conteúdos' }]
+      : []),
     { path: `${effectiveBasePath}/profile`, icon: PersonIcon, label: 'Perfil Público' },
     { path: `${effectiveBasePath}/messages`, icon: ChatIcon, label: 'Mensagens' },
     { path: `${effectiveBasePath}/services`, icon: WorkIcon, label: 'Serviços' },

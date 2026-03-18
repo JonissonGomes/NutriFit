@@ -20,6 +20,8 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Pricing from './pages/Pricing'
 import PublicProfile from './pages/PublicProfile'
+import Contents from './pages/Contents'
+import ContentPost from './pages/ContentPost'
 import NotFound from './pages/NotFound'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminNutritionists from './pages/admin/Nutritionists'
@@ -37,6 +39,7 @@ import Analytics from './pages/dashboard/Analytics'
 import Patients from './pages/dashboard/Patients'
 import LabExams from './pages/dashboard/LabExams'
 import FoodDiaryPatients from './pages/dashboard/FoodDiaryPatients'
+import MyContents from './pages/dashboard/MyContents'
 
 // Páginas do paciente
 import ClientDashboard from './pages/client/ClientDashboard'
@@ -75,6 +78,8 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<Signup />} />
                             <Route path="/pricing" element={<Pricing />} />
+                            <Route path="/conteudos" element={<Contents />} />
+                            <Route path="/conteudos/:slug" element={<ContentPost />} />
                             <Route path="/portfolio/:username" element={<PublicProfile />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
@@ -101,6 +106,7 @@ function App() {
                             <Route path="/services" element={<Services />} />
                             <Route path="/calendar" element={<Calendar />} />
                             <Route path="/analytics" element={<Analytics />} />
+                            <Route path="/contents" element={<MyContents />} />
                             <Route path="/settings" element={<Settings />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>

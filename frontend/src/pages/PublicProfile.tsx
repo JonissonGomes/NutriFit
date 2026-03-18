@@ -12,11 +12,13 @@ import LanguageIcon from '@mui/icons-material/Language'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import { favoritesService, profileService, reviewService } from '../services'
+import { blogService } from '../services/blog.service'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import type { PublicProfile as PublicProfileType } from '../services/profile.service'
 import type { ReviewWithDetails } from '../services/review.service'
 import ConfirmModal from '../components/common/ConfirmModal'
+import type { BlogPost } from '../services/blog.service'
 
 const PublicProfile = () => {
   const { username } = useParams<{ username: string }>()
@@ -26,6 +28,7 @@ const PublicProfile = () => {
 
   const [profile, setProfile] = useState<PublicProfileType | null>(null)
   const [reviews, setReviews] = useState<ReviewWithDetails[]>([])
+  const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [isFavorite, setIsFavorite] = useState(false)
   const [showRemoveFavoriteModal, setShowRemoveFavoriteModal] = useState(false)
@@ -57,6 +60,10 @@ const PublicProfile = () => {
         const r = await reviewService.getByArchitect(res.data.userId, 1, 10)
         if (r.data?.data) setReviews(r.data.data)
       }
+
+      // Conteúdos do autor (público)
+      const bp = await blogService.getByAuthor(res.data.userId, 6)
+      if (bp.data) setPosts(bp.data)
 
       // Favorito (somente paciente)
       if (isAuthenticated && user?.role === 'paciente') {
@@ -225,6 +232,30 @@ const PublicProfile = () => {
                     ))}
                   </div>
                 ) : null}
+
+                {/* Conteúdos */}
+                <div className="mt-6">
+                  <h2 className="text-lg font-bold text-gray-900">Conteúdos</h2>
+                  <p className="text-sm text-gray-600 mt-1">Artigos e materiais publicados no NuFit.</p>
+                  {posts.length === 0 ? (
+                    <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
+                      Este profissional ainda não publicou conteúdos.
+                    </div>
+                  ) : (
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {posts.map((p) => (
+                        <Link
+                          key={p.id}
+                          to={`/conteudos/${p.slug}`}
+                          className="block bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow"
+                        >
+                          <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
