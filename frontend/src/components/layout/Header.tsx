@@ -111,7 +111,7 @@ const Header = () => {
             <Link to="/pricing" className={navLinkClass('/pricing')}>
               Planos
             </Link>
-            <Link to="/conteudos" className={navLinkClass('/conteudos')}>
+            <Link to="/conteudos/public" className={navLinkClass('/conteudos/public')}>
               Conteúdos
             </Link>
             <a href="#como-funciona" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
@@ -242,7 +242,7 @@ const Header = () => {
               Planos
             </Link>
             <Link
-              to="/conteudos"
+              to="/conteudos/public"
               className="block text-sm text-gray-600 hover:text-gray-900 transition-colors py-2"
               onClick={() => setIsMenuOpen(false)}
             >

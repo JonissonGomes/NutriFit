@@ -22,6 +22,11 @@ export interface Favorite {
 // ============================================
 
 export const favoritesService = {
+  normalizeId: (id: unknown): string => {
+    if (typeof id !== 'string') return ''
+    return id.trim()
+  },
+
   /**
    * Listar arquitetos favoritos
    */
@@ -36,33 +41,36 @@ export const favoritesService = {
    * Adicionar arquiteto aos favoritos
    */
   async addFavorite(architectId: string): Promise<ApiResponse<Favorite>> {
-    if (!architectId || typeof architectId !== 'string') {
+    const id = this.normalizeId(architectId)
+    if (!id) {
       return { error: 'ID do arquiteto inválido' }
     }
 
-    return api.post<Favorite>(`/favorites/${encodeURIComponent(architectId)}`)
+    return api.post<Favorite>(`/favorites/${encodeURIComponent(id)}`)
   },
 
   /**
    * Remover arquiteto dos favoritos
    */
   async removeFavorite(architectId: string): Promise<ApiResponse<{ message: string }>> {
-    if (!architectId || typeof architectId !== 'string') {
+    const id = this.normalizeId(architectId)
+    if (!id) {
       return { error: 'ID do arquiteto inválido' }
     }
 
-    return api.delete<{ message: string }>(`/favorites/${encodeURIComponent(architectId)}`)
+    return api.delete<{ message: string }>(`/favorites/${encodeURIComponent(id)}`)
   },
 
   /**
    * Verificar se arquiteto está nos favoritos
    */
   async checkFavorite(architectId: string): Promise<ApiResponse<{ isFavorite: boolean }>> {
-    if (!architectId || typeof architectId !== 'string') {
+    const id = this.normalizeId(architectId)
+    if (!id) {
       return { error: 'ID do arquiteto inválido' }
     }
 
-    return api.get<{ isFavorite: boolean }>(`/favorites/check/${encodeURIComponent(architectId)}`)
+    return api.get<{ isFavorite: boolean }>(`/favorites/check/${encodeURIComponent(id)}`)
   },
 
   /**

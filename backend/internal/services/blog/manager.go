@@ -267,13 +267,31 @@ func AddAttachments(ctx context.Context, postID, userID string, isAdmin bool, at
 		return nil, ErrUnauthorized
 	}
 
+	// Se o post ainda não tem featuredImage, definimos a partir do primeiro upload de imagem.
+	featuredToSet := post.FeaturedImage
+	if featuredToSet == "" {
+		for _, a := range attachments {
+			if a.Type == models.BlogAttachmentTypeImage && a.URL != "" {
+				featuredToSet = a.URL
+				break
+			}
+		}
+	}
+
 	update := bson.M{
 		"$push": bson.M{
 			"attachments": bson.M{
 				"$each": attachments,
 			},
 		},
-		"$set": bson.M{"updatedAt": time.Now()},
+		"$set": func() bson.M {
+			// Mantém compatibilidade: sempre atualiza updatedAt, e opcionalmente featuredImage.
+			set := bson.M{"updatedAt": time.Now()}
+			if featuredToSet != "" && featuredToSet != post.FeaturedImage {
+				set["featuredImage"] = featuredToSet
+			}
+			return set
+		}(),
 	}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	var updated models.BlogPost

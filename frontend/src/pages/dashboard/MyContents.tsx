@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { blogService } from '../../services/blog.service'
 import type { BlogPost } from '../../services/blog.service'
 import LoadingButton from '../../components/common/LoadingButton'
@@ -14,7 +15,9 @@ const MyContents = () => {
   const [excerpt, setExcerpt] = useState('')
   const [content, setContent] = useState('')
   const [published, setPublished] = useState(true)
-  const [files, setFiles] = useState<File[]>([])
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [pptxFile, setPptxFile] = useState<File | null>(null)
 
   const canSave = useMemo(() => title.trim().length >= 5 && excerpt.trim().length >= 20 && content.trim().length >= 50, [title, excerpt, content])
 
@@ -30,6 +33,14 @@ const MyContents = () => {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    // Cleanup previews anteriores
+    imagePreviews.forEach((u) => URL.revokeObjectURL(u))
+    const next = imageFiles.map((f) => URL.createObjectURL(f))
+    setImagePreviews(next)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageFiles])
 
   const handleCreate = async () => {
     if (!canSave) return
@@ -48,8 +59,9 @@ const MyContents = () => {
         return
       }
 
-      if (files.length > 0 && res.data?.id) {
-        const uploadRes = await blogService.uploadAttachments(res.data.id, files)
+      if ((imageFiles.length > 0 || pptxFile) && res.data?.id) {
+        const filesToUpload: File[] = [...imageFiles, ...(pptxFile ? [pptxFile] : [])]
+        const uploadRes = await blogService.uploadAttachments(res.data.id, filesToUpload)
         if (uploadRes.error) {
           showToast(uploadRes.error, 'error')
         } else {
@@ -62,7 +74,8 @@ const MyContents = () => {
       setExcerpt('')
       setContent('')
       setPublished(true)
-      setFiles([])
+      setImageFiles([])
+      setPptxFile(null)
       await load()
     } finally {
       setSaving(false)
@@ -142,16 +155,36 @@ const MyContents = () => {
                   showToast('Máximo de 1 arquivo .pptx.', 'error')
                   return
                 }
-                setFiles([...images, ...pptx])
+                setImageFiles(images)
+                setPptxFile(pptx[0] || null)
               }}
               className="block w-full text-sm text-gray-700 dark:text-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-600 file:text-white hover:file:bg-primary-700"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">Você pode enviar até 5 imagens e 1 arquivo .pptx.</p>
+
+            {imagePreviews.length > 0 && (
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {imagePreviews.map((src, idx) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt={`Prévia ${idx + 1}`}
+                    className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-stone-700"
+                  />
+                ))}
+              </div>
+            )}
+
+            {pptxFile && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Arquivo .pptx selecionado: {pptxFile.name}
+              </p>
+            )}
           </div>
 
           <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
-            Publicar imediatamente
+            Público (visível para visitantes)
           </label>
 
           <LoadingButton
@@ -177,19 +210,35 @@ const MyContents = () => {
             {posts.map((p) => (
               <div key={p.id} className="flex items-start justify-between gap-3 border border-gray-200 dark:border-stone-700 rounded-xl p-4">
                 <div className="min-w-0">
+                  {(p.featuredImage ||
+                    p.attachments?.find((a) => a.type === 'image')?.url) && (
+                    <img
+                      src={p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url}
+                      alt={p.title}
+                      className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-stone-700 mb-3"
+                    />
+                  )}
                   <p className="font-semibold text-gray-900 dark:text-white truncate">{p.title}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mt-1">{p.excerpt}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {p.published ? 'Publicado' : 'Rascunho'} • slug: {p.slug}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void handleDelete(p.id)}
-                  className="text-sm font-semibold text-red-600 hover:text-red-700"
-                >
-                  Excluir
-                </button>
+                <div className="flex items-center gap-3">
+                  <Link
+                    to={`/conteudos/meus/${p.slug}`}
+                    className="text-sm font-semibold text-primary-700 hover:text-primary-800"
+                  >
+                    Ler
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete(p.id)}
+                    className="text-sm font-semibold text-red-600 hover:text-red-700"
+                  >
+                    Excluir
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -95,7 +95,8 @@ const PublicProfile = () => {
       return
     }
 
-    const res = await favoritesService.addFavorite(profile.userId)
+    const nutritionistId = profile.userId.trim()
+    const res = await favoritesService.addFavorite(nutritionistId)
     if (res.error) {
       showToast(res.error, 'error')
       return
@@ -108,7 +109,8 @@ const PublicProfile = () => {
     if (!profile?.userId) return
     setRemovingFavorite(true)
     try {
-      const res = await favoritesService.removeFavorite(profile.userId)
+      const nutritionistId = profile.userId.trim()
+      const res = await favoritesService.removeFavorite(nutritionistId)
       if (res.error) {
         showToast(res.error, 'error')
         return
@@ -160,7 +162,7 @@ const PublicProfile = () => {
         </Link>
 
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="h-40 md:h-56 bg-gradient-to-r from-primary-600 to-accent-600 relative">
+          <div className="h-40 md:h-56 bg-gradient-to-r from-primary-600 to-accent-600 relative z-0">
             {profile.coverImage && (
               <img src={profile.coverImage} className="w-full h-full object-cover opacity-90" alt="Capa" />
             )}
@@ -168,7 +170,7 @@ const PublicProfile = () => {
 
           <div className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row md:items-start gap-5">
-              <div className="-mt-16 md:-mt-20">
+              <div className="relative z-10 -mt-16 md:-mt-20">
                 <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-white p-1 shadow-md">
                   <div className="w-full h-full rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center">
                     {profile.avatar ? (
@@ -246,11 +248,23 @@ const PublicProfile = () => {
                       {posts.map((p) => (
                         <Link
                           key={p.id}
-                          to={`/conteudos/${p.slug}`}
+                          to={`/conteudos/public/${p.slug}`}
                           className="block bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow"
                         >
-                          <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
+                          <div className="flex gap-3 items-start">
+                            {(p.featuredImage ||
+                              p.attachments?.find((a) => a.type === 'image')?.url) && (
+                              <img
+                                src={p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url}
+                                alt={p.title}
+                                className="w-20 h-20 rounded-lg object-cover border border-gray-100 flex-shrink-0"
+                              />
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
+                            </div>
+                          </div>
                         </Link>
                       ))}
                     </div>

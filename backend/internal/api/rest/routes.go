@@ -302,6 +302,7 @@ func SetupRouter() *gin.Engine {
 				blogAuth.POST("/posts/:id/attachments", uploadBlogAttachments)
 				blogAuth.POST("/posts/:id/like", likeBlogPost)
 				blogAuth.DELETE("/posts/:id/like", unlikeBlogPost)
+				blogAuth.GET("/posts/by-slug/:slug", getMyBlogPostBySlug)
 				blogAuth.GET("/posts/my", getMyBlogPosts)
 				blogAuth.GET("/stats", getBlogStats)
 			}

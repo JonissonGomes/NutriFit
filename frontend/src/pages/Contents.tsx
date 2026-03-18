@@ -54,11 +54,15 @@ const Contents = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {featured && (
               <Link
-                to={`/conteudos/${featured.slug}`}
+                to={`/conteudos/public/${featured.slug}`}
                 className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow"
               >
-                {featured.featuredImage ? (
-                  <img src={featured.featuredImage} alt={featured.title} className="w-full h-48 object-cover" />
+                {featured.featuredImage || featured.attachments?.find((a) => a.type === 'image')?.url ? (
+                  <img
+                    src={featured.featuredImage || featured.attachments?.find((a) => a.type === 'image')?.url}
+                    alt={featured.title}
+                    className="w-full h-48 object-cover"
+                  />
                 ) : (
                   <div className="w-full h-48 bg-gradient-to-r from-primary-600 to-accent-600" />
                 )}
@@ -76,7 +80,7 @@ const Contents = () => {
               {rest.slice(0, 8).map((p) => (
                 <Link
                   key={p.id}
-                  to={`/conteudos/${p.slug}`}
+                  to={`/conteudos/public/${p.slug}`}
                   className="block bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow"
                 >
                   <p className="text-sm font-semibold text-gray-900 line-clamp-2">{p.title}</p>

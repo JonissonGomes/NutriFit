@@ -153,6 +153,13 @@ export const blogService = {
   },
 
   /**
+   * Busca um post pelo slug (para o autor/admin, incluindo rascunhos)
+   */
+  getBySlugMine: async (slug: string): Promise<ApiResponse<BlogPost>> => {
+    return api.get<BlogPost>(`/blog/posts/by-slug/${slug}`)
+  },
+
+  /**
    * Cria um novo post
    */
   create: async (data: CreateBlogPostRequest): Promise<ApiResponse<BlogPost>> => {

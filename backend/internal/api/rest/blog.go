@@ -11,10 +11,15 @@ import (
 	"strings"
 	"time"
 
+	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/blog"
 	"nufit/backend/internal/services/cloudinary"
 	"nufit/backend/internal/services/image"
+	"nufit/backend/internal/services/profile"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,6 +27,47 @@ import (
 // ============================================
 // HANDLERS DE BLOG
 // ============================================
+
+// ensureAuthor populates Author fields for older posts (created before author backfill existed).
+// It is a best-effort enrichment: if profile/user is not found, it leaves the author as-is.
+func ensureAuthor(ctx context.Context, post *models.BlogPost) {
+	if post == nil {
+		return
+	}
+	if post.Author != nil && post.Author.Name != "" {
+		return
+	}
+
+	authorIDHex := post.AuthorID.Hex()
+	authorNameStr := ""
+	authorAvatarStr := ""
+	authorUsernameStr := ""
+	authorSpecialtyStr := ""
+
+	if p, err := profile.GetProfileByUserID(ctx, authorIDHex); err == nil && p != nil {
+		authorNameStr = p.DisplayName
+		authorAvatarStr = p.Avatar
+		authorUsernameStr = p.Username
+		authorSpecialtyStr = p.Specialty
+	} else {
+		// fallback: user in DB
+		if oid, err := primitive.ObjectIDFromHex(authorIDHex); err == nil {
+			var u models.User
+			if err := database.UsersCollection.FindOne(ctx, bson.M{"_id": oid}).Decode(&u); err == nil {
+				authorNameStr = u.Name
+				authorAvatarStr = u.Avatar
+			}
+		}
+	}
+
+	post.Author = &models.BlogPostAuthor{
+		ID:         post.AuthorID,
+		Name:       authorNameStr,
+		Avatar:     authorAvatarStr,
+		Specialty:  authorSpecialtyStr,
+		Username:   authorUsernameStr,
+	}
+}
 
 // listBlogPosts lista posts do blog com filtros
 func listBlogPosts(c *gin.Context) {
@@ -44,6 +90,13 @@ func listBlogPosts(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar posts"})
 		return
+	}
+
+	// Enriquecimento best-effort do autor para posts antigos.
+	if result != nil {
+		for i := range result.Data {
+			ensureAuthor(ctx, &result.Data[i])
+		}
 	}
 
 	c.JSON(http.StatusOK, result)
@@ -73,6 +126,46 @@ func getBlogPostBySlug(c *gin.Context) {
 		return
 	}
 
+	// Enriquecimento best-effort do autor para posts antigos.
+	ensureAuthor(ctx, post)
+
+	c.JSON(http.StatusOK, post)
+}
+
+// getMyBlogPostBySlug retorna um post pelo slug para o autor/admin (incluindo rascunhos).
+func getMyBlogPostBySlug(c *gin.Context) {
+	slug := c.Param("slug")
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	post, err := blog.GetPostBySlug(ctx, slug, true)
+	if err != nil {
+		if err == blog.ErrPostNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Post não encontrado"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar post"})
+		return
+	}
+
+	userID, _ := c.Get("userID")
+	userRole, _ := c.Get("userRole")
+
+	// Permite autor (nutricionista) e admin/super_admin.
+	roleStr, _ := userRole.(string)
+	isAdmin := roleStr == "admin" || roleStr == "super_admin"
+
+	// Se não for admin, precisa ser o autor
+	if !isAdmin {
+		if userID == nil || userID.(string) != post.AuthorID.Hex() {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Post não encontrado"})
+			return
+		}
+	}
+
+	// Mesmo se estiver publicado/rascunho, o autor/admin consegue ver.
+	ensureAuthor(ctx, post)
 	c.JSON(http.StatusOK, post)
 }
 
@@ -91,29 +184,12 @@ func createBlogPost(c *gin.Context) {
 		return
 	}
 
-	userName, _ := c.Get("userName")
-	userNameStr := ""
-	if userName != nil {
-		userNameStr = userName.(string)
-	}
-
-	userAvatar, _ := c.Get("userAvatar")
-	userAvatarStr := ""
-	if userAvatar != nil {
-		userAvatarStr = userAvatar.(string)
-	}
-
-	userUsername, _ := c.Get("userUsername")
-	userUsernameStr := ""
-	if userUsername != nil {
-		userUsernameStr = userUsername.(string)
-	}
-
-	userSpecialty, _ := c.Get("userSpecialty")
-	userSpecialtyStr := ""
-	if userSpecialty != nil {
-		userSpecialtyStr = userSpecialty.(string)
-	}
+	// O JWT atual só traz: sub/email/role. Para preencher autor (nome/avatar/username/specialty),
+	// consultamos o perfil público (e fazemos fallback para o usuário no DB).
+	authorNameStr := ""
+	authorAvatarStr := ""
+	authorUsernameStr := ""
+	authorSpecialtyStr := ""
 
 	var req models.CreateBlogPostRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -124,7 +200,25 @@ func createBlogPost(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	post, err := blog.CreatePost(ctx, userID.(string), userNameStr, userAvatarStr, userUsernameStr, userSpecialtyStr, req)
+	// Tentar buscar perfil público para autor do post
+	if p, err := profile.GetProfileByUserID(ctx, userID.(string)); err == nil && p != nil {
+		authorNameStr = p.DisplayName
+		authorAvatarStr = p.Avatar
+		authorUsernameStr = p.Username
+		authorSpecialtyStr = p.Specialty
+	} else {
+		// Fallback: usuário no DB (garante pelo menos o nome)
+		oid, err := primitive.ObjectIDFromHex(userID.(string))
+		if err == nil {
+			var u models.User
+			if err := database.UsersCollection.FindOne(ctx, bson.M{"_id": oid}).Decode(&u); err == nil {
+				authorNameStr = u.Name
+				authorAvatarStr = u.Avatar
+			}
+		}
+	}
+
+	post, err := blog.CreatePost(ctx, userID.(string), authorNameStr, authorAvatarStr, authorUsernameStr, authorSpecialtyStr, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criar post"})
 		return

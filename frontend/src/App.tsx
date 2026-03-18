@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -78,7 +78,18 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<Signup />} />
                             <Route path="/pricing" element={<Pricing />} />
-                            <Route path="/conteudos" element={<Contents />} />
+                            <Route path="/conteudos" element={<Navigate to="/conteudos/public" replace />} />
+                            <Route path="/conteudos/public" element={<Contents />} />
+                            <Route path="/conteudos/public/:slug" element={<ContentPost />} />
+                            <Route
+                              path="/conteudos/meus/:slug"
+                              element={
+                                <ProtectedRoute allowedRoles={['nutricionista', 'admin', 'super_admin']}>
+                                  <ContentPost />
+                                </ProtectedRoute>
+                              }
+                            />
+                            {/* Compatibilidade: se alguém acessar a rota antiga, renderiza como conteúdo público */}
                             <Route path="/conteudos/:slug" element={<ContentPost />} />
                             <Route path="/portfolio/:username" element={<PublicProfile />} />
                             <Route path="*" element={<NotFound />} />
