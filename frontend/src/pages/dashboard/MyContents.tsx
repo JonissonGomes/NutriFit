@@ -14,6 +14,7 @@ const MyContents = () => {
   const [excerpt, setExcerpt] = useState('')
   const [content, setContent] = useState('')
   const [published, setPublished] = useState(true)
+  const [files, setFiles] = useState<File[]>([])
 
   const canSave = useMemo(() => title.trim().length >= 5 && excerpt.trim().length >= 20 && content.trim().length >= 50, [title, excerpt, content])
 
@@ -46,11 +47,22 @@ const MyContents = () => {
         showToast(res.error, 'error')
         return
       }
+
+      if (files.length > 0 && res.data?.id) {
+        const uploadRes = await blogService.uploadAttachments(res.data.id, files)
+        if (uploadRes.error) {
+          showToast(uploadRes.error, 'error')
+        } else {
+          showToast('Anexos enviados com sucesso.', 'success')
+        }
+      }
+
       showToast(published ? 'Conteúdo publicado!' : 'Rascunho salvo!', 'success')
       setTitle('')
       setExcerpt('')
       setContent('')
       setPublished(true)
+      setFiles([])
       await load()
     } finally {
       setSaving(false)
@@ -71,48 +83,73 @@ const MyContents = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Conteúdos</h1>
-        <p className="text-gray-600 mt-1">Publique materiais para seus pacientes e visitantes do seu perfil.</p>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Conteúdos</h1>
+        <p className="text-gray-600 dark:text-gray-300 mt-1">Publique materiais para seus pacientes e visitantes do seu perfil.</p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
-        <h2 className="font-semibold text-gray-900">Novo conteúdo</h2>
+      <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-700 rounded-2xl p-6 space-y-4">
+        <h2 className="font-semibold text-gray-900 dark:text-white">Novo conteúdo</h2>
 
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Título</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Título</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-stone-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-stone-950 text-gray-900 dark:text-white"
               placeholder="Ex.: Como montar um prato equilibrado"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Resumo</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resumo</label>
             <textarea
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
               rows={2}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-stone-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-stone-950 text-gray-900 dark:text-white"
               placeholder="Um resumo curto (20+ caracteres) que aparece na listagem."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Conteúdo</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Conteúdo</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={8}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-stone-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-stone-950 text-gray-900 dark:text-white"
               placeholder="Escreva o conteúdo do post..."
             />
-            <p className="text-xs text-gray-500 mt-1">MVP: texto simples. Depois podemos suportar Markdown.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">MVP: texto simples. Depois podemos suportar Markdown.</p>
           </div>
 
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Anexos</label>
+            <input
+              type="file"
+              multiple
+              accept="image/*,.pptx"
+              onChange={(e) => {
+                const list = Array.from(e.target.files || [])
+                const images = list.filter((f) => f.type.startsWith('image/'))
+                const pptx = list.filter((f) => f.name.toLowerCase().endsWith('.pptx'))
+                if (images.length > 5) {
+                  showToast('Máximo de 5 imagens.', 'error')
+                  return
+                }
+                if (pptx.length > 1) {
+                  showToast('Máximo de 1 arquivo .pptx.', 'error')
+                  return
+                }
+                setFiles([...images, ...pptx])
+              }}
+              className="block w-full text-sm text-gray-700 dark:text-gray-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary-600 file:text-white hover:file:bg-primary-700"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">Você pode enviar até 5 imagens e 1 arquivo .pptx.</p>
+          </div>
+
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
             Publicar imediatamente
           </label>
@@ -129,20 +166,20 @@ const MyContents = () => {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-2xl p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Meus conteúdos</h2>
+      <div className="bg-white dark:bg-stone-900 border border-gray-200 dark:border-stone-700 rounded-2xl p-6">
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Meus conteúdos</h2>
         {loading ? (
-          <p className="text-sm text-gray-600">Carregando...</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Carregando...</p>
         ) : posts.length === 0 ? (
-          <p className="text-sm text-gray-600">Você ainda não publicou nenhum conteúdo.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Você ainda não publicou nenhum conteúdo.</p>
         ) : (
           <div className="space-y-3">
             {posts.map((p) => (
-              <div key={p.id} className="flex items-start justify-between gap-3 border border-gray-200 rounded-xl p-4">
+              <div key={p.id} className="flex items-start justify-between gap-3 border border-gray-200 dark:border-stone-700 rounded-xl p-4">
                 <div className="min-w-0">
-                  <p className="font-semibold text-gray-900 truncate">{p.title}</p>
-                  <p className="text-sm text-gray-600 line-clamp-2 mt-1">{p.excerpt}</p>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="font-semibold text-gray-900 dark:text-white truncate">{p.title}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mt-1">{p.excerpt}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {p.published ? 'Publicado' : 'Rascunho'} • slug: {p.slug}
                   </p>
                 </div>

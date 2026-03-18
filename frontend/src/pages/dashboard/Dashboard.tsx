@@ -89,9 +89,9 @@ const Dashboard = () => {
       bgGradient: 'from-blue-50 to-blue-100/50',
     },
     {
-      title: 'Projetos Ativos',
+      title: 'Planos Ativos',
       value: stats.activeProjects.toString(),
-      change: `+${stats.totalProjects - stats.activeProjects} arquivados`,
+      change: `+${stats.totalProjects - stats.activeProjects} concluídos`,
       icon: <FolderIcon sx={{ fontSize: 20 }} />,
       trend: 'neutral',
       color: 'from-primary-500 to-primary-600',
@@ -258,11 +258,11 @@ const Dashboard = () => {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Projects */}
+          {/* Recent Plans */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900">Projetos Recentes</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900">Planos Recentes</h2>
                 <Link 
                   to="/nutritionist/meal-plans" 
                   className="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1.5 transition-colors"

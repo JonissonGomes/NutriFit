@@ -1,4 +1,4 @@
-﻿package websocket
+package websocket
 
 import (
 	"log"
@@ -17,7 +17,7 @@ var upgrader = websocket.Upgrader{
 		origin := r.Header.Get("Origin")
 		allowedOrigins := []string{
 			"http://localhost:5173",
-			"https://arckdesign.com",
+			"https://nufit.com.br",
 		}
 		for _, allowed := range allowedOrigins {
 			if origin == allowed {

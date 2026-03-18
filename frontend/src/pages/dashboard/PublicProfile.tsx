@@ -18,6 +18,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { profileService, DEFAULT_CUSTOMIZATION } from '../../services'
 import type { ProfileCustomization, PublicProfile as ProfileServicePublicProfile } from '../../services/profile.service'
+import { geolocationService } from '../../services/geolocation.service'
 import LoadingButton from '../../components/common/LoadingButton'
 import { sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, validateUsername, validateUrl, validatePhone, unmask, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
 
@@ -33,9 +34,9 @@ const PublicProfile = () => {
   const dashboardPath = location.pathname.startsWith('/medico') ? '/medico/dashboard' : '/nutritionist/dashboard'
 
   const professionalRegistrationLabel = useMemo(() => {
-    const reg = (user as any)?.professionalRegistration
-    if (!reg?.type || !reg?.number) return ''
-    return `${String(reg.type).toUpperCase()} ${String(reg.number).trim()}`
+    const reg = user?.professionalRegistration
+    if (!reg?.type || !reg?.number) return 'CRN/CRM não informado'
+    return `${reg.type} ${reg.number.trim()}`
   }, [user])
   
   const [isLoading, setIsLoading] = useState(true)
@@ -63,6 +64,11 @@ const PublicProfile = () => {
     avatar: '',
     coverImage: '',
   })
+
+  const [locationQuery, setLocationQuery] = useState('')
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false)
+  const locationSearchTimeout = useRef<number | null>(null)
   
   const [customization, setCustomization] = useState<ProfileCustomization>(DEFAULT_CUSTOMIZATION)
   const [newSpecialty, setNewSpecialty] = useState('')
@@ -75,6 +81,54 @@ const PublicProfile = () => {
   useEffect(() => {
     loadProfile()
   }, [])
+
+  useEffect(() => {
+    if (locationSearchTimeout.current) {
+      window.clearTimeout(locationSearchTimeout.current)
+    }
+
+    const q = locationQuery.trim()
+    if (!q || q.length < 2) {
+      setLocationSuggestions([])
+      setIsSearchingLocation(false)
+      return
+    }
+
+    setIsSearchingLocation(true)
+    locationSearchTimeout.current = window.setTimeout(async () => {
+      try {
+        // Heurística simples: se tiver vírgula, tratar como "cidade, UF"
+        const [cityRaw, stateRaw] = q.split(',').map((s) => s.trim())
+        const city = cityRaw || undefined
+        const state = stateRaw || undefined
+
+        const resp = await geolocationService.searchByLocation({
+          city,
+          state,
+          limit: 8,
+          page: 1,
+        })
+
+        const suggestions = new Set<string>()
+        for (const r of resp.data?.results || []) {
+          const addr = r.profile.location?.address
+          if (!addr?.city) continue
+          suggestions.add(`${addr.city}${addr.state ? `, ${addr.state}` : ''}`)
+        }
+
+        // Se não vier nada (ex: cidade sem profissionais), ainda manter o texto sem travar UI
+        setLocationSuggestions(Array.from(suggestions).slice(0, 8))
+      } finally {
+        setIsSearchingLocation(false)
+      }
+    }, 350)
+
+    return () => {
+      if (locationSearchTimeout.current) {
+        window.clearTimeout(locationSearchTimeout.current)
+      }
+    }
+  }, [locationQuery])
 
   const loadProfile = async () => {
     setIsLoading(true)
@@ -106,6 +160,11 @@ const PublicProfile = () => {
           avatar: profile.avatar || '',
           coverImage: profile.coverImage || '',
         })
+        setLocationQuery(
+          profile.location?.address?.city
+            ? `${profile.location.address.city}, ${profile.location.address.state}`
+            : ''
+        )
         
         if (profile.customization) {
           // Garantir que show3DModels esteja presente (compatibilidade com perfis antigos)
@@ -130,6 +189,7 @@ const PublicProfile = () => {
             email: user.email || '',
             username: user.name?.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '') || '',
           }))
+          setLocationQuery(prev => prev || '')
         }
         
         // Log para debug - perfil não encontrado é esperado para novos usuários
@@ -176,8 +236,8 @@ const PublicProfile = () => {
         sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.BIO)
         break
       case 'location':
-        sanitizedValue = sanitizeText(value, [',', ' ', '-'])
-        sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.LOCATION)
+        // Será preenchido via autocomplete (evitar digitação livre desalinhada)
+        sanitizedValue = limitLength(value, INPUT_LIMITS.LOCATION)
         break
       case 'specialty':
         sanitizedValue = sanitizeInput(value)
@@ -631,15 +691,45 @@ const PublicProfile = () => {
                     <LocationOnIcon sx={{ fontSize: 16 }} />
                     Localização
                   </label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    maxLength={INPUT_LIMITS.LOCATION}
-                    className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Cidade, Estado"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={locationQuery}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/<[^>]*>/g, '').replace(/[<>"&]/g, '')
+                        const limited = limitLength(value, INPUT_LIMITS.LOCATION)
+                        setLocationQuery(limited)
+                        setFormData((prev) => ({ ...prev, location: limited }))
+                      }}
+                      maxLength={INPUT_LIMITS.LOCATION}
+                      className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="Cidade, Estado"
+                      autoComplete="off"
+                    />
+
+                    {(isSearchingLocation || locationSuggestions.length > 0) && (
+                      <div className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden">
+                        {isSearchingLocation && (
+                          <div className="px-3 py-2 text-sm text-gray-500">Buscando...</div>
+                        )}
+                        {!isSearchingLocation &&
+                          locationSuggestions.map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                              onClick={() => {
+                                setLocationQuery(s)
+                                setFormData((prev) => ({ ...prev, location: s }))
+                                setLocationSuggestions([])
+                              }}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -680,13 +770,10 @@ const PublicProfile = () => {
                     </label>
                     <input
                       type="text"
-                      value={professionalRegistrationLabel || '—'}
+                      value={professionalRegistrationLabel}
                       disabled
                       className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Este dado vem do seu cadastro (CRN/CRM) e não pode ser alterado aqui.
-                    </p>
                   </div>
                 )}
               </div>
@@ -740,8 +827,9 @@ const PublicProfile = () => {
                     type="text"
                     value={newSpecialty}
                     onChange={(e) => {
-                      const sanitized = sanitizeInput(e.target.value)
-                      setNewSpecialty(limitLength(sanitized, INPUT_LIMITS.SPECIALTY))
+                      // Mesmo comportamento do nome: permitir espaços e acentos (sem sanitização agressiva)
+                      const value = e.target.value.replace(/<[^>]*>/g, '').replace(/[<>"&]/g, '')
+                      setNewSpecialty(limitLength(value, INPUT_LIMITS.SPECIALTY))
                     }}
                     onKeyPress={handleSpecialtyKeyPress}
                     maxLength={INPUT_LIMITS.SPECIALTY}

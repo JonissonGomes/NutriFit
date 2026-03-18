@@ -31,7 +31,8 @@ const Hero = () => {
             backgroundPosition: 'center',
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-primary-900/90 via-primary-900/80 to-primary-900/95" />
+        {/* Overlay verde mais transparente para deixar a imagem aparecer */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary-900/70 via-primary-900/55 to-primary-900/75" />
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -126,7 +127,7 @@ const Hero = () => {
                       className="flex-1 px-4 md:px-6 py-3 md:py-4 rounded-lg md:rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center justify-center gap-2 bg-primary-600 text-white shadow-lg shadow-primary-600/50 hover:bg-primary-700"
                     >
                       <DashboardIcon sx={{ fontSize: 20 }} />
-                      Acessar Dashboard
+                      Meu espaço
                     </button>
                     <button
                       onClick={() => navigate('/nutritionist/meal-plans')}
@@ -143,7 +144,7 @@ const Hero = () => {
                       className="flex-1 px-4 md:px-6 py-3 md:py-4 rounded-lg md:rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center justify-center gap-2 bg-primary-600 text-white shadow-lg shadow-primary-600/50 hover:bg-primary-700"
                     >
                       <DashboardIcon sx={{ fontSize: 20 }} />
-                      Acessar Dashboard
+                      Meu espaço
                     </button>
                     <button
                       onClick={() => navigate('/explore')}

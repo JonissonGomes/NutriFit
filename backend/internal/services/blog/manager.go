@@ -1,4 +1,4 @@
-﻿package blog
+package blog
 
 import (
 	"context"
@@ -208,6 +208,7 @@ func CreatePost(ctx context.Context, authorID, authorName, authorAvatar, authorU
 		Excerpt:       req.Excerpt,
 		Content:       req.Content,
 		FeaturedImage: req.FeaturedImage,
+		Attachments:   []models.BlogAttachment{},
 		Category:      req.Category,
 		Tags:          req.Tags,
 		Published:     req.Published,
@@ -240,6 +241,49 @@ func CreatePost(ctx context.Context, authorID, authorName, authorAvatar, authorU
 	}
 
 	return post, nil
+}
+
+func AddAttachments(ctx context.Context, postID, userID string, isAdmin bool, attachments []models.BlogAttachment) (*models.BlogPost, error) {
+	oid, err := primitive.ObjectIDFromHex(postID)
+	if err != nil {
+		return nil, ErrPostNotFound
+	}
+
+	authorOID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, ErrUnauthorized
+	}
+
+	// Apenas autor (ou admin) pode anexar
+	var post models.BlogPost
+	err = database.BlogPostsCollection.FindOne(ctx, bson.M{"_id": oid}).Decode(&post)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrPostNotFound
+		}
+		return nil, err
+	}
+	if !isAdmin && post.AuthorID != authorOID {
+		return nil, ErrUnauthorized
+	}
+
+	update := bson.M{
+		"$push": bson.M{
+			"attachments": bson.M{
+				"$each": attachments,
+			},
+		},
+		"$set": bson.M{"updatedAt": time.Now()},
+	}
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	var updated models.BlogPost
+	if err := database.BlogPostsCollection.FindOneAndUpdate(ctx, bson.M{"_id": oid}, update, opts).Decode(&updated); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrPostNotFound
+		}
+		return nil, err
+	}
+	return &updated, nil
 }
 
 // GetPostBySlug busca um post pelo slug
@@ -494,14 +538,14 @@ func UnlikePost(ctx context.Context, postID, userID string) (*models.BlogPost, e
 // GetCategories retorna as categorias disponíveis com contagem de posts
 func GetCategories(ctx context.Context) ([]models.BlogCategoryInfo, error) {
 	categories := []models.BlogCategoryInfo{
-		{Value: models.BlogCategorySustentabilidade, Label: "Sustentabilidade", Description: "Posts sobre arquitetura sustentável"},
-		{Value: models.BlogCategoryTendencias, Label: "Tendências", Description: "Tendências do mercado de arquitetura"},
-		{Value: models.BlogCategoryDicas, Label: "Dicas", Description: "Dicas e truques de arquitetura"},
-		{Value: models.BlogCategoryProjetos, Label: "Projetos", Description: "Apresentação de projetos"},
-		{Value: models.BlogCategoryMateriais, Label: "Materiais", Description: "Materiais e acabamentos"},
-		{Value: models.BlogCategoryInteriores, Label: "Interiores", Description: "Design de interiores"},
-		{Value: models.BlogCategoryReforma, Label: "Reforma", Description: "Reformas e renovações"},
-		{Value: models.BlogCategoryNoticias, Label: "Notícias", Description: "Notícias do setor"},
+		{Value: models.BlogCategorySustentabilidade, Label: "Sustentabilidade", Description: "Alimentação consciente e sustentabilidade"},
+		{Value: models.BlogCategoryTendencias, Label: "Tendências", Description: "Tendências e novidades em nutrição"},
+		{Value: models.BlogCategoryDicas, Label: "Dicas", Description: "Dicas práticas para o dia a dia"},
+		{Value: models.BlogCategoryProjetos, Label: "Conteúdos", Description: "Materiais e conteúdos do profissional"},
+		{Value: models.BlogCategoryMateriais, Label: "Materiais", Description: "Materiais educativos e guias"},
+		{Value: models.BlogCategoryInteriores, Label: "Receitas", Description: "Receitas e ideias de preparo"},
+		{Value: models.BlogCategoryReforma, Label: "Emagrecimento", Description: "Educação alimentar e estratégias de emagrecimento"},
+		{Value: models.BlogCategoryNoticias, Label: "Notícias", Description: "Notícias e atualizações relevantes"},
 	}
 
 	// Contar posts por categoria

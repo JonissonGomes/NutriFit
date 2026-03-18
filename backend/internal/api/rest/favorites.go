@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"context"
@@ -61,8 +61,8 @@ func addFavorite(c *gin.Context) {
 		return
 	}
 
-	architectID := c.Param("architectId")
-	if architectID == "" {
+	nutritionistID := c.Param("nutritionistId")
+	if nutritionistID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do nutricionista é obrigatório"})
 		return
 	}
@@ -70,11 +70,11 @@ func addFavorite(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	fav, err := favorite.AddFavorite(ctx, userID.(string), architectID)
+	fav, err := favorite.AddFavorite(ctx, userID.(string), nutritionistID)
 	if err != nil {
 		switch err {
 		case favorite.ErrAlreadyFavorited:
-			c.JSON(http.StatusConflict, gin.H{"error": "Arquiteto já está nos favoritos"})
+			c.JSON(http.StatusConflict, gin.H{"error": "Nutricionista já está nos favoritos"})
 		case favorite.ErrSelfFavorite:
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Não é possível favoritar a si mesmo"})
 		case favorite.ErrInvalidData:
@@ -86,7 +86,7 @@ func addFavorite(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":  "Arquiteto adicionado aos favoritos",
+		"message":  "Nutricionista adicionado aos favoritos",
 		"favorite": fav,
 	})
 }
@@ -99,8 +99,8 @@ func removeFavorite(c *gin.Context) {
 		return
 	}
 
-	architectID := c.Param("architectId")
-	if architectID == "" {
+	nutritionistID := c.Param("nutritionistId")
+	if nutritionistID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do nutricionista é obrigatório"})
 		return
 	}
@@ -108,11 +108,11 @@ func removeFavorite(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	err := favorite.RemoveFavorite(ctx, userID.(string), architectID)
+	err := favorite.RemoveFavorite(ctx, userID.(string), nutritionistID)
 	if err != nil {
 		switch err {
 		case favorite.ErrNotFavorited:
-			c.JSON(http.StatusNotFound, gin.H{"error": "Arquiteto não está nos favoritos"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Nutricionista não está nos favoritos"})
 		case favorite.ErrInvalidData:
 			c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
 		default:
@@ -121,7 +121,7 @@ func removeFavorite(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Arquiteto removido dos favoritos"})
+	c.JSON(http.StatusOK, gin.H{"message": "Nutricionista removido dos favoritos"})
 }
 
 // checkFavorite verifica se um nutricionista está nos favoritos
@@ -132,8 +132,8 @@ func checkFavorite(c *gin.Context) {
 		return
 	}
 
-	architectID := c.Param("architectId")
-	if architectID == "" {
+	nutritionistID := c.Param("nutritionistId")
+	if nutritionistID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID do nutricionista é obrigatório"})
 		return
 	}
@@ -141,7 +141,7 @@ func checkFavorite(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	isFavorited, err := favorite.IsFavorited(ctx, userID.(string), architectID)
+	isFavorited, err := favorite.IsFavorited(ctx, userID.(string), nutritionistID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao verificar favorito"})
 		return

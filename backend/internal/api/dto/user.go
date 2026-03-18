@@ -1,4 +1,4 @@
-﻿package dto
+package dto
 
 import (
 	"time"
@@ -26,6 +26,7 @@ type UserResponse struct {
 	Role         string  `json:"role"`
 	Avatar       string  `json:"avatar,omitempty"`
 	Plan         string  `json:"plan"`
+	ProfessionalRegistration *models.ProfessionalRegistration `json:"professionalRegistration,omitempty"`
 	
 	// Estatísticas (sem valores exatos quando apropriado)
 	StorageUsedPercent float64 `json:"storageUsedPercent"`
@@ -58,6 +59,7 @@ func NewUserResponse(user *models.User) UserResponse {
 		Role:               string(user.Role),
 		Avatar:             user.Avatar,
 		Plan:               string(user.Plan),
+		ProfessionalRegistration: user.ProfessionalRegistration,
 		StorageUsedPercent: storagePercent,
 		CreatedAt:          user.CreatedAt,
 	}

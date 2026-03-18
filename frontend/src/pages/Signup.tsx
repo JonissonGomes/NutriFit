@@ -561,10 +561,14 @@ const Signup = () => {
               fullWidth
               size="lg"
               disabled={!acceptTerms || !passwordValidation.valid || formData.password !== formData.confirmPassword}
-              className={`w-full font-semibold shadow-lg hover:shadow-xl ${
+              className={`w-full font-semibold shadow-lg hover:shadow-xl transition-colors ${
                 formData.accountType === 'nutricionista'
-                  ? 'bg-primary-600 hover:bg-primary-700'
-                  : 'bg-accent-500 hover:bg-accent-600'
+                  ? (!acceptTerms || !passwordValidation.valid || formData.password !== formData.confirmPassword
+                      ? 'bg-primary-600 hover:bg-primary-700'
+                      : 'bg-primary-700')
+                  : (!acceptTerms || !passwordValidation.valid || formData.password !== formData.confirmPassword
+                      ? 'bg-accent-500 hover:bg-accent-600'
+                      : 'bg-accent-600')
               }`}
             >
               Criar conta gratuitamente

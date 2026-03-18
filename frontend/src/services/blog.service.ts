@@ -6,14 +6,20 @@ import type { ApiResponse, PaginatedResponse } from '../types/api'
 // ============================================
 
 export type BlogCategory = 
-  | 'sustentabilidade'
-  | 'tendencias'
   | 'dicas'
-  | 'projetos'
-  | 'materiais'
-  | 'interiores'
-  | 'reforma'
-  | 'noticias'
+  | 'receitas'
+  | 'saude'
+  | 'emagrecimento'
+  | 'performance'
+
+export type BlogAttachmentType = 'image' | 'pptx'
+
+export interface BlogAttachment {
+  type: BlogAttachmentType
+  url: string
+  filename?: string
+  createdAt: string
+}
 
 export interface BlogPostSEO {
   metaTitle?: string
@@ -39,6 +45,7 @@ export interface BlogPost {
   excerpt: string
   content: string
   featuredImage?: string
+  attachments?: BlogAttachment[]
   category: BlogCategory
   tags?: string[]
   published: boolean
@@ -108,14 +115,11 @@ export interface BlogStats {
 // ============================================
 
 export const BLOG_CATEGORIES: { value: BlogCategory; label: string; description: string }[] = [
-  { value: 'sustentabilidade', label: 'Sustentabilidade', description: 'Posts sobre arquitetura sustentável' },
-  { value: 'tendencias', label: 'Tendências', description: 'Tendências do mercado de arquitetura' },
-  { value: 'dicas', label: 'Dicas', description: 'Dicas e truques de arquitetura' },
-  { value: 'projetos', label: 'Projetos', description: 'Apresentação de projetos' },
-  { value: 'materiais', label: 'Materiais', description: 'Materiais e acabamentos' },
-  { value: 'interiores', label: 'Interiores', description: 'Design de interiores' },
-  { value: 'reforma', label: 'Reforma', description: 'Reformas e renovações' },
-  { value: 'noticias', label: 'Notícias', description: 'Notícias do setor' },
+  { value: 'dicas', label: 'Dicas', description: 'Dicas práticas para o dia a dia' },
+  { value: 'receitas', label: 'Receitas', description: 'Receitas e preparos simples' },
+  { value: 'saude', label: 'Saúde', description: 'Conteúdos de saúde e bem-estar' },
+  { value: 'emagrecimento', label: 'Emagrecimento', description: 'Estratégias e educação alimentar' },
+  { value: 'performance', label: 'Performance', description: 'Nutrição esportiva e performance' },
 ]
 
 // ============================================
@@ -153,6 +157,14 @@ export const blogService = {
    */
   create: async (data: CreateBlogPostRequest): Promise<ApiResponse<BlogPost>> => {
     return api.post<BlogPost>('/blog/posts', data)
+  },
+
+  uploadAttachments: async (id: string, files: File[]): Promise<ApiResponse<BlogPost>> => {
+    const form = new FormData()
+    for (const f of files) form.append('files', f)
+    return api.post<BlogPost>(`/blog/posts/${id}/attachments`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    } as any)
   },
 
   /**

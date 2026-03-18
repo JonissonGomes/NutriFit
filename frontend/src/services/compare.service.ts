@@ -99,7 +99,7 @@ export const compareService = {
       return currentList
     }
     const newList = [...currentList, architectId]
-    localStorage.setItem('arck_compare_list', JSON.stringify(newList))
+    localStorage.setItem('nufit_compare_list', JSON.stringify(newList))
     return newList
   },
 
@@ -109,7 +109,7 @@ export const compareService = {
   removeFromCompare: (architectId: string): string[] => {
     const currentList = compareService.getCompareList()
     const newList = currentList.filter(id => id !== architectId)
-    localStorage.setItem('arck_compare_list', JSON.stringify(newList))
+    localStorage.setItem('nufit_compare_list', JSON.stringify(newList))
     return newList
   },
 
@@ -118,7 +118,7 @@ export const compareService = {
    */
   getCompareList: (): string[] => {
     try {
-      const stored = localStorage.getItem('arck_compare_list')
+      const stored = localStorage.getItem('nufit_compare_list')
       if (stored) {
         return JSON.parse(stored) as string[]
       }
@@ -132,7 +132,7 @@ export const compareService = {
    * Limpa a lista de comparação local
    */
   clearCompareList: (): void => {
-    localStorage.removeItem('arck_compare_list')
+    localStorage.removeItem('nufit_compare_list')
   },
 
   /**

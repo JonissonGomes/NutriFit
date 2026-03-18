@@ -1,4 +1,4 @@
-﻿package models
+package models
 
 import (
 	"time"
@@ -37,6 +37,21 @@ type BlogPostAuthor struct {
 	Username    string             `bson:"username,omitempty" json:"username,omitempty"`
 }
 
+type BlogAttachmentType string
+
+const (
+	BlogAttachmentTypeImage BlogAttachmentType = "image"
+	BlogAttachmentTypePPTX  BlogAttachmentType = "pptx"
+)
+
+type BlogAttachment struct {
+	Type        BlogAttachmentType `bson:"type" json:"type"`
+	URL         string             `bson:"url" json:"url"`
+	Filename    string             `bson:"filename,omitempty" json:"filename,omitempty"`
+	CloudinaryID string            `bson:"cloudinaryId,omitempty" json:"cloudinaryId,omitempty"`
+	CreatedAt   time.Time          `bson:"createdAt" json:"createdAt"`
+}
+
 // BlogPost representa um post do blog
 type BlogPost struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
@@ -47,6 +62,7 @@ type BlogPost struct {
 	Excerpt       string             `bson:"excerpt" json:"excerpt"`
 	Content       string             `bson:"content" json:"content"`
 	FeaturedImage string             `bson:"featuredImage,omitempty" json:"featuredImage,omitempty"`
+	Attachments   []BlogAttachment   `bson:"attachments,omitempty" json:"attachments,omitempty"`
 	Category      BlogCategory       `bson:"category" json:"category"`
 	Tags          []string           `bson:"tags,omitempty" json:"tags,omitempty"`
 	Published     bool               `bson:"published" json:"published"`

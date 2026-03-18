@@ -1,13 +1,20 @@
-﻿package rest
+package rest
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/blog"
+	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/image"
 
 	"github.com/gin-gonic/gin"
 )
@@ -77,7 +84,7 @@ func createBlogPost(c *gin.Context) {
 		return
 	}
 
-	// Verificar se é arquiteto
+	// Verificar se é nutricionista
 	userRole, _ := c.Get("userRole")
 	if userRole != "nutricionista" && userRole != "admin" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Apenas nutricionistas podem criar posts"})
@@ -124,6 +131,151 @@ func createBlogPost(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, post)
+}
+
+func uploadBlogAttachments(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Não autorizado"})
+		return
+	}
+
+	userRole, _ := c.Get("userRole")
+	isAdmin := userRole == "admin"
+
+	postID := c.Param("id")
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Envie os arquivos via multipart/form-data"})
+		return
+	}
+
+	files := form.File["files"]
+	if len(files) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Nenhum arquivo enviado"})
+		return
+	}
+	if len(files) > 6 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Máximo de 6 arquivos (5 imagens e 1 .pptx)"})
+		return
+	}
+
+	imagesCount := 0
+	pptxCount := 0
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 60*time.Second)
+	defer cancel()
+
+	now := time.Now()
+	var attachments []models.BlogAttachment
+
+	for _, fh := range files {
+		ext := strings.ToLower(filepath.Ext(fh.Filename))
+		switch ext {
+		case ".pptx":
+			pptxCount++
+			if pptxCount > 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Máximo de 1 arquivo .pptx"})
+				return
+			}
+		case ".jpg", ".jpeg", ".png", ".gif", ".webp":
+			imagesCount++
+			if imagesCount > 5 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Máximo de 5 imagens"})
+				return
+			}
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Formato inválido. Aceito: imagens (jpg/png/gif/webp) e .pptx"})
+			return
+		}
+
+		file, err := fh.Open()
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao abrir arquivo"})
+			return
+		}
+
+		data, err := io.ReadAll(file)
+		_ = file.Close()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao ler arquivo"})
+			return
+		}
+
+		sanitizedFilename := sanitizeFilename(fh.Filename)
+		publicID := cloudinary.BuildPublicID(userID.(string), postID, sanitizedFilename)
+
+		if ext == ".pptx" {
+			// Limite simples (20MB)
+			if fh.Size > 20*1024*1024 {
+				c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. Máximo 20MB."})
+				return
+			}
+			tmp, err := os.CreateTemp("", "nufit-blog-*.pptx")
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao preparar upload"})
+				return
+			}
+			tmpPath := tmp.Name()
+			if _, err := tmp.Write(data); err != nil {
+				_ = tmp.Close()
+				_ = os.Remove(tmpPath)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao preparar upload"})
+				return
+			}
+			_ = tmp.Close()
+			defer os.Remove(tmpPath)
+
+			up, err := cloudinary.UploadRaw(ctx, tmpPath, "nufit/blog/pptx")
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Erro ao fazer upload do .pptx: %s", err.Error())})
+				return
+			}
+			attachments = append(attachments, models.BlogAttachment{
+				Type:         models.BlogAttachmentTypePPTX,
+				URL:          up.SecureURL,
+				Filename:     fh.Filename,
+				CloudinaryID: up.PublicID,
+				CreatedAt:    now,
+			})
+			continue
+		}
+
+		if err := image.ValidateImage(data, image.MaxImageSize); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Imagem inválida. Use JPEG, PNG, GIF ou WebP (até 10MB)."})
+			return
+		}
+
+		up, err := cloudinary.UploadImage(ctx, data, publicID, "nufit/blog/images")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Erro ao fazer upload da imagem: %s", err.Error())})
+			return
+		}
+		attachments = append(attachments, models.BlogAttachment{
+			Type:         models.BlogAttachmentTypeImage,
+			URL:          up.SecureURL,
+			Filename:     fh.Filename,
+			CloudinaryID: up.PublicID,
+			CreatedAt:    now,
+		})
+	}
+
+	updated, err := blog.AddAttachments(ctx, postID, userID.(string), isAdmin, attachments)
+	if err != nil {
+		if err == blog.ErrPostNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Post não encontrado"})
+			return
+		}
+		if err == blog.ErrUnauthorized {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Você não tem permissão para anexar arquivos neste post"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao anexar arquivos"})
+		return
+	}
+
+	c.JSON(http.StatusOK, updated)
 }
 
 // updateBlogPost atualiza um post

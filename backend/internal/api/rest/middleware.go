@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"net/http"
@@ -15,7 +15,7 @@ func corsMiddleware() gin.HandlerFunc {
 		// Allow specific origins (should come from config)
 		allowedOrigins := []string{
 			"http://localhost:5173",
-			"https://arckdesign.com",
+			"https://nufit.com.br",
 		}
 
 		for _, allowed := range allowedOrigins {

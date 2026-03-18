@@ -44,7 +44,7 @@ const NotFound: React.FC = () => {
           <p className="text-stone-500 mb-4">Ou acesse diretamente:</p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/explore" className="text-primary-400 hover:text-primary-300 transition">
-              Explorar Arquitetos
+              Explorar Nutricionistas
             </Link>
             <span className="text-stone-600">•</span>
             <Link to="/pricing" className="text-primary-400 hover:text-primary-300 transition">

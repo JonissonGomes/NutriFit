@@ -53,7 +53,7 @@ const Analytics: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Estatísticas</h1>
-          <p className="text-gray-600">Acompanhe o desempenho do seu perfil e projetos</p>
+          <p className="text-gray-600">Acompanhe o desempenho do seu perfil e conteúdos</p>
         </div>
 
         {/* Period filter */}
@@ -141,7 +141,7 @@ const Analytics: React.FC = () => {
 
             {/* Top Projects */}
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Projetos mais vistos</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Conteúdos mais vistos</h3>
               {overview.topProjects?.length ? (
                 <div className="space-y-3">
                   {overview.topProjects.slice(0, 5).map((project, idx) => (
@@ -203,7 +203,7 @@ const Analytics: React.FC = () => {
               <ul className="space-y-3 text-sm">
                 <li className="flex items-start gap-2">
                   <Check className="text-sm mt-0.5" />
-                  <span>Adicione mais projetos ao seu portfólio para atrair mais visitantes</span>
+                  <span>Adicione mais conteúdos ao seu perfil para atrair mais visitantes</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="text-sm mt-0.5" />
@@ -215,7 +215,7 @@ const Analytics: React.FC = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="text-sm mt-0.5" />
-                  <span>Adicione modelos 3D dos seus projetos para se destacar</span>
+                  <span>Adicione conteúdos (materiais e artigos) para se destacar</span>
                 </li>
               </ul>
             </div>

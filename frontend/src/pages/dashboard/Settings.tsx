@@ -484,10 +484,10 @@ const Settings = () => {
                 <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {isClient ? 'Atualizações de Projetos Contratados' : 'Atualizações de Projeto'}
+                      {isClient ? 'Atualizações de Consultas' : 'Atualizações'}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {isClient ? 'Quando houver mudanças nos projetos que você contratou' : 'Quando houver mudanças nos projetos'}
+                      {isClient ? 'Quando houver mudanças nas consultas/agendamentos' : 'Quando houver mudanças relevantes'}
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -521,7 +521,7 @@ const Settings = () => {
                 {isClient && (
                   <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Mensagens de Arquitetos</p>
+                      <p className="font-medium text-gray-900 dark:text-white">Mensagens de Nutricionistas</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">Respostas dos nutricionistas às suas mensagens</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -538,7 +538,7 @@ const Settings = () => {
 
                 <div className="flex items-center justify-between py-3">
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">Emails de Marketing</p>
+                    <p className="font-medium text-gray-900 dark:text-white">Novidades e promoções</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Novidades e promoções</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">

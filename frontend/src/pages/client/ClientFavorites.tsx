@@ -64,7 +64,7 @@ const ClientFavorites: React.FC = () => {
     try {
       await favoritesService.removeFavorite(architectId)
       setFavorites(prev => prev.filter(f => f.id !== architectId))
-      showToast('Arquiteto removido dos favoritos', 'success')
+      showToast('Nutricionista removido dos favoritos', 'success')
     } catch {
       showToast('Erro ao remover dos favoritos', 'error')
     } finally {
@@ -83,7 +83,7 @@ const ClientFavorites: React.FC = () => {
   return (
     <div className="p-6 md:p-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Arquitetos Favoritos</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Nutricionistas Favoritos</h1>
         <p className="text-gray-600">Seus nutricionistas salvos para referência rápida</p>
       </div>
 
@@ -100,7 +100,7 @@ const ClientFavorites: React.FC = () => {
             to="/explore"
             className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
           >
-            Descobrir Arquitetos
+            Descobrir Nutricionistas
           </Link>
         </div>
       ) : (

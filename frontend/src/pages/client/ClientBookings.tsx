@@ -175,7 +175,7 @@ const ClientBookings: React.FC = () => {
             to="/explore"
             className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
           >
-            Descobrir Arquitetos
+            Descobrir Nutricionistas
           </Link>
         </div>
       ) : (

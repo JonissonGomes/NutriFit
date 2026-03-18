@@ -38,7 +38,7 @@ const Explore = () => {
     { value: 'DF', label: 'Distrito Federal' },
   ]
 
-  // Carregar arquitetos
+  // Carregar nutricionistas
   useEffect(() => {
     const loadArchitects = async () => {
       setLoading(true)
@@ -96,12 +96,12 @@ const Explore = () => {
         <img
           src={profile.avatar}
           alt={profile.displayName}
-          className="w-12 h-12 rounded-full border-2 border-gray-200"
+          className="w-12 h-12 rounded-full border-2 border-white shadow-sm relative z-10 bg-white"
         />
       )
     }
     return (
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold">
+      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold relative z-10 shadow-sm border-2 border-white">
         {profile.displayName.charAt(0).toUpperCase()}
       </div>
     )
@@ -110,23 +110,8 @@ const Explore = () => {
   // Cover image fallback
   const getCoverImage = (profile: PublicProfile): string => {
     if (profile.coverImage) return profile.coverImage
-    // Placeholder baseado na especialidade
-    const placeholders: Record<string, string> = {
-      residencial: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=400&fit=crop',
-      comercial: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=400&fit=crop',
-      interiores: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&h=400&fit=crop',
-      sustentavel: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=400&fit=crop',
-      reforma: 'https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=800&h=400&fit=crop',
-      urbanismo: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=800&h=400&fit=crop',
-    }
-    
-    // Tentar encontrar placeholder baseado na especialidade
-    const specialty = profile.specialty?.toLowerCase() || ''
-    for (const [key, url] of Object.entries(placeholders)) {
-      if (specialty.includes(key)) return url
-    }
-    
-    return placeholders.residencial
+    // Placeholder neutro (sem arquitetura)
+    return 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=400&fit=crop'
   }
 
   return (
@@ -310,7 +295,7 @@ const Explore = () => {
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-1 text-gray-600 text-sm">
                       <Building2 className="h-4 w-4" />
-                      <span>{architect.projectsCount || 0} projetos</span>
+                    <span>{architect.projectsCount || 0} atendimentos</span>
                     </div>
                     {architect.experience && (
                       <span className="text-sm font-medium text-primary-600">
@@ -326,7 +311,7 @@ const Explore = () => {
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
             <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Nenhum arquiteto encontrado
+              Nenhum nutricionista encontrado
             </h3>
             <p className="text-gray-600">
               Tente ajustar os filtros ou termo de busca

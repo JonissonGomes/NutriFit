@@ -1,4 +1,4 @@
-﻿package model3d
+package model3d
 
 import (
 	"context"
@@ -47,7 +47,7 @@ const (
 
 // getTempDir retorna o diretório temporário para modelos 3D
 func getTempDir() string {
-	return filepath.Join(os.TempDir(), "arck-models")
+	return filepath.Join(os.TempDir(), "nufit-models")
 }
 
 // ============================================

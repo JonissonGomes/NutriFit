@@ -40,6 +40,7 @@ export interface User {
   role: UserRole
   type?: UserRole // Alias para role (compatibilidade)
   avatar?: string
+  professionalRegistration?: ProfessionalRegistration
   storageUsedPercent: number // Percentual de uso ao invés de valores exatos
   plan: 'free' | 'starter' | 'professional' | 'business'
   createdAt: string

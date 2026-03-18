@@ -13,9 +13,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 const TOKEN_KEY = 'nufit_access_token'
 const REFRESH_TOKEN_KEY = 'nufit_refresh_token'
 // Chaves legadas do projeto anterior (migração)
-const LEGACY_TOKEN_KEY = 'arckdesign_access_token'
-const LEGACY_REFRESH_TOKEN_KEY = 'arckdesign_refresh_token'
-const LEGACY_USER_KEY = 'arckdesign_user'
+const LEGACY_TOKEN_KEY = 'legacy_access_token'
+const LEGACY_REFRESH_TOKEN_KEY = 'legacy_refresh_token'
+const LEGACY_USER_KEY = 'legacy_user'
 const USER_KEY = 'nufit_user'
 
 export const tokenManager = {
