@@ -23,9 +23,11 @@ const Signup = () => {
     accountType: 'nutricionista' as UserRole,
   })
   const [registrationNumber, setRegistrationNumber] = useState('')
+  const [registrationBody, setRegistrationBody] = useState('')
   const [registrationAvailable, setRegistrationAvailable] = useState<boolean | null>(null)
   const [checkingReg, setCheckingReg] = useState(false)
   const [crmCfmStatus, setCrmCfmStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid' | 'unavailable'>('idle')
+  const [successMessage, setSuccessMessage] = useState('')
 
   // Preselect role from querystring (?role=nutricionista|medico|paciente)
   useEffect(() => {
@@ -33,6 +35,7 @@ const Signup = () => {
     if (qsRole && (qsRole === 'nutricionista' || qsRole === 'medico' || qsRole === 'paciente')) {
       setFormData((prev) => ({ ...prev, accountType: qsRole }))
       setRegistrationNumber('')
+      setRegistrationBody('')
       setRegistrationAvailable(null)
       setCrmCfmStatus('idle')
     }
@@ -57,9 +60,10 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccessMessage('')
 
     // Validações
-    const sanitizedName = sanitizeInput(formData.name.trim())
+    const sanitizedName = sanitizeName(formData.name).trim()
     if (sanitizedName.length < 2) {
       setError('O nome deve ter pelo menos 2 caracteres')
       return
@@ -102,7 +106,11 @@ const Signup = () => {
 
     let professionalRegistration: ProfessionalRegistration | undefined
     if (formData.accountType === 'nutricionista' || formData.accountType === 'medico') {
-      const clean = registrationNumber.trim()
+      const formatted =
+        formData.accountType === 'nutricionista'
+          ? formatCrn(registrationBody)
+          : formatCrm(registrationBody)
+      const clean = formatted.trim()
       if (!clean) {
         setError(formData.accountType === 'nutricionista' ? 'CRN é obrigatório' : 'CRM é obrigatório')
         return
@@ -131,13 +139,14 @@ const Signup = () => {
     const result = await register(
       formData.email,
       formData.password,
-      formData.name,
+      sanitizedName,
       formData.accountType,
       professionalRegistration
     )
 
     if (result.success && result.user) {
       showToast('Conta criada com sucesso! Bem-vindo ao NuFit.', 'success')
+      setSuccessMessage('Conta criada com sucesso! Redirecionando…')
       console.log('[Signup] Sucesso! User:', result.user)
       
       const redirectPath =
@@ -184,7 +193,10 @@ const Signup = () => {
 
   const checkRegistration = async () => {
     if (!(formData.accountType === 'nutricionista' || formData.accountType === 'medico')) return
-    const number = registrationNumber.trim()
+    const number =
+      formData.accountType === 'nutricionista'
+        ? formatCrn(registrationBody).trim()
+        : formatCrm(registrationBody).trim()
     if (!number) {
       setRegistrationAvailable(null)
       if (formData.accountType === 'medico') setCrmCfmStatus('idle')
@@ -305,6 +317,12 @@ const Signup = () => {
         {/* Signup Form */}
         <div className="bg-stone-800/80 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-stone-700/50">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Success Message */}
+            {successMessage && (
+              <div className="bg-green-500/15 border border-green-500/40 text-green-100 px-4 py-3 rounded-lg text-sm">
+                {successMessage}
+              </div>
+            )}
             {/* Error Message */}
             {error && (
               <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
@@ -361,23 +379,35 @@ const Signup = () => {
                 <label htmlFor="registration" className="block text-sm font-medium text-stone-300 mb-2">
                   {formData.accountType === 'nutricionista' ? 'CRN' : 'CRM'}
                 </label>
-                <div className="relative">
+                <div
+                  className={`flex items-stretch rounded-lg overflow-hidden bg-stone-900/50 border ${
+                    registrationAvailable === false ? 'border-red-500' : 'border-stone-700'
+                  }`}
+                >
+                  <div className="flex items-center px-3 text-sm font-semibold text-stone-200 border-r border-stone-700">
+                    {formData.accountType === 'nutricionista' ? 'CRN-' : 'CRM/'}
+                  </div>
                   <input
                     id="registration"
                     type="text"
-                    value={registrationNumber}
+                    value={registrationBody}
                     onChange={(e) => {
-                      const raw = e.target.value
-                      const formatted = formData.accountType === 'nutricionista'
-                        ? formatCrn(raw)
-                        : formatCrm(raw)
+                      const raw = sanitizeInput(e.target.value)
+                      setRegistrationBody(limitLength(raw, 32))
+                      // manter compatibilidade: registrationNumber contém o valor formatado completo
+                      const formatted =
+                        formData.accountType === 'nutricionista'
+                          ? formatCrn(raw)
+                          : formatCrm(raw)
                       setRegistrationNumber(limitLength(formatted, 32))
                     }}
                     onBlur={() => void checkRegistration()}
-                    className={`w-full px-4 py-3 bg-stone-900/50 border text-white rounded-lg focus:ring-2 outline-none transition-all placeholder-stone-500 ${
-                      registrationAvailable === false ? 'border-red-500 focus:ring-red-500' : 'border-stone-700 focus:ring-primary-500 focus:border-primary-500'
+                    className={`flex-1 px-4 py-3 bg-transparent text-white focus:ring-2 outline-none transition-all placeholder-stone-500 ${
+                      registrationAvailable === false ? 'focus:ring-red-500' : 'focus:ring-primary-500'
                     }`}
-                    placeholder={formData.accountType === 'nutricionista' ? 'Ex.: CRN-1 12345 (digite o número)' : 'Ex.: CRM/SP 123456 (UF + número)'}
+                    placeholder={formData.accountType === 'nutricionista' ? '1 12345 (região + número)' : 'SP 123456 (UF + número)'}
+                    inputMode={formData.accountType === 'nutricionista' ? 'numeric' : 'text'}
+                    autoCapitalize={formData.accountType === 'medico' ? 'characters' : 'none'}
                   />
                 </div>
                 <div className="mt-2 space-y-1 text-xs">

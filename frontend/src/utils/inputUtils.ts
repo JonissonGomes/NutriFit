@@ -75,8 +75,9 @@ export const sanitizeName = (input: string): string => {
     .replace(/<[^>]*>/g, '')
     .replace(/[\x00-\x1F\x7F]/g, '')
     .replace(/[<>"&]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+    // Mantém espaços durante a digitação; o trim deve ser feito no submit.
+    .replace(/[\u00A0]/g, ' ')
+    .replace(/\s{2,}/g, ' ')
 }
 
 /**
