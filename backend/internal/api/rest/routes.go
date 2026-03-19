@@ -275,6 +275,7 @@ func SetupRouter() *gin.Engine {
 				reviews.GET("/my", getMyReviews)
 				reviews.PUT("/:id", updateReview)
 				reviews.DELETE("/:id", deleteReview)
+				reviews.DELETE("/:id/as-nutritionist", RequireRole("nutricionista"), deleteReviewAsNutritionist)
 				reviews.POST("/:id/helpful", markReviewHelpful)
 			}
 

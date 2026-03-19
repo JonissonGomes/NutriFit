@@ -4,22 +4,27 @@ import type { ApiResponse } from '../types/api'
 export interface Patient {
   id: string
   nutritionistId: string
+  userId?: string
   name: string
   email?: string
   phone?: string
   notes?: string
+  isActive?: boolean
   createdAt?: string
   updatedAt?: string
 }
 
 export interface CreatePatientRequest {
+  userId?: string
   name: string
   email?: string
   phone?: string
   notes?: string
 }
 
-export interface UpdatePatientRequest extends Partial<CreatePatientRequest> {}
+export interface UpdatePatientRequest extends Partial<CreatePatientRequest> {
+  isActive?: boolean
+}
 
 export interface PlatformPatient {
   id: string

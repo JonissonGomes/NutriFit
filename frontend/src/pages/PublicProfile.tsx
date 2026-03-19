@@ -11,7 +11,7 @@ import PhoneIcon from '@mui/icons-material/Phone'
 import LanguageIcon from '@mui/icons-material/Language'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import FacebookIcon from '@mui/icons-material/Facebook'
-import { favoritesService, profileService, reviewService } from '../services'
+import { favoritesService, mealPlanService, profileService, reviewService } from '../services'
 import { blogService } from '../services/blog.service'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -34,6 +34,18 @@ const PublicProfile = () => {
   const [isFavorite, setIsFavorite] = useState(false)
   const [showRemoveFavoriteModal, setShowRemoveFavoriteModal] = useState(false)
   const [removingFavorite, setRemovingFavorite] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewMealPlanId, setReviewMealPlanId] = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
+  const [completedMealPlans, setCompletedMealPlans] = useState<any[]>([])
+  const [removingReviewId, setRemovingReviewId] = useState<string | null>(null)
+
+  const patientsCount = useMemo(() => {
+    const raw = (profile as any)?.patientsCount
+    const n = typeof raw === 'number' ? raw : Number(raw ?? 0)
+    return Number.isFinite(n) && n >= 0 ? n : 0
+  }, [profile])
 
   const rating = useMemo(() => {
     const avg = profile?.ratings?.average ?? 0
@@ -58,7 +70,7 @@ const PublicProfile = () => {
 
       // Reviews (se habilitado)
       if (res.data.customization?.showReviews !== false) {
-        const r = await reviewService.getByArchitect(res.data.userId, 1, 10)
+        const r = await reviewService.getByNutritionist(res.data.userId, 1, 10)
         if (r.data?.data) setReviews(r.data.data)
       }
 
@@ -70,8 +82,20 @@ const PublicProfile = () => {
       if (isAuthenticated && user?.role === 'paciente') {
         const fav = await favoritesService.checkFavorite(res.data.userId)
         setIsFavorite(Boolean((fav.data as any)?.isFavorite))
+
+        // Carregar planos concluídos do paciente para permitir avaliação (quando aplicável).
+        const mp = await mealPlanService.list({ status: 'completed', page: 1, limit: 50 })
+        const plans = (mp.data as any)?.data || (mp.data as any)?.data?.data || []
+        const filtered = Array.isArray(plans)
+          ? plans.filter((p: any) => String(p?.nutritionistId || '').trim() === String(res.data?.userId || '').trim())
+          : []
+        setCompletedMealPlans(filtered)
+        if (filtered.length > 0) {
+          setReviewMealPlanId(String(filtered[0].id))
+        }
       } else {
         setIsFavorite(false)
+        setCompletedMealPlans([])
       }
 
       setLoading(false)
@@ -121,6 +145,67 @@ const PublicProfile = () => {
     } finally {
       setRemovingFavorite(false)
       setShowRemoveFavoriteModal(false)
+    }
+  }
+
+  const onSubmitReview = async () => {
+    if (!profile?.userId) return
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+    if (user?.role !== 'paciente') {
+      showToast('Apenas pacientes podem avaliar.', 'warning')
+      return
+    }
+
+    const comment = reviewComment.trim()
+    if (comment.length < 20) {
+      showToast('Comentário obrigatório (mínimo de 20 caracteres).', 'warning')
+      return
+    }
+    if (!reviewMealPlanId) {
+      showToast('Para avaliar, selecione um plano alimentar concluído.', 'warning')
+      return
+    }
+
+    setSubmittingReview(true)
+    try {
+      const res = await reviewService.create({
+        nutritionistId: profile.userId,
+        mealPlanId: reviewMealPlanId,
+        rating: reviewRating,
+        comment,
+      })
+      if (res.error) {
+        showToast(res.error, 'error')
+        return
+      }
+      showToast('Avaliação enviada com sucesso.', 'success')
+      setReviewComment('')
+      const r = await reviewService.getByNutritionist(profile.userId, 1, 10)
+      if (r.data?.data) setReviews(r.data.data)
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
+
+  const onRemoveReviewAsNutritionist = async (reviewId: string) => {
+    if (user?.role !== 'nutricionista') return
+    setRemovingReviewId(reviewId)
+    try {
+      const res = await reviewService.deleteAsNutritionist(reviewId)
+      if (res.error) {
+        showToast(res.error, 'error')
+        return
+      }
+      showToast('Avaliação removida do perfil.', 'success')
+      if (profile?.userId) {
+        const r = await reviewService.getByNutritionist(profile.userId, 1, 10)
+        if (r.data?.data) setReviews(r.data.data)
+      }
+    } finally {
+      setRemovingReviewId(null)
     }
   }
 
@@ -244,6 +329,8 @@ const PublicProfile = () => {
                             </>
                           ) : null}
                       </span>
+                      {showStats ? <span className="text-gray-400">·</span> : null}
+                      {showStats ? <span>{patientsCount} paciente(s)</span> : null}
                       {profile.location?.address?.city && (
                         <span className="inline-flex items-center gap-1">
                           <LocationOnIcon sx={{ fontSize: 18 }} />
@@ -474,6 +561,69 @@ const PublicProfile = () => {
           {showReviews ? (
             <div className="md:col-span-2 bg-white border border-gray-200 rounded-2xl p-6">
               <h2 className="text-lg font-bold text-gray-900">Avaliações</h2>
+              {isAuthenticated && user?.role === 'paciente' ? (
+                <div className="mt-3 border border-gray-200 rounded-xl p-4 bg-gray-50">
+                  <div className="text-sm font-semibold text-gray-900">Deixe sua avaliação</div>
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-700">Estrelas</label>
+                      <select
+                        value={reviewRating}
+                        onChange={(e) => setReviewRating(Number(e.target.value))}
+                        className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        {[5, 4, 3, 2, 1].map((n) => (
+                          <option key={n} value={n}>
+                            {n} estrela(s)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-gray-700">Plano concluído (obrigatório)</label>
+                      <select
+                        value={reviewMealPlanId}
+                        onChange={(e) => setReviewMealPlanId(e.target.value)}
+                        className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        disabled={completedMealPlans.length === 0}
+                      >
+                        {completedMealPlans.length === 0 ? (
+                          <option value="">Nenhum plano concluído encontrado</option>
+                        ) : (
+                          completedMealPlans.map((p: any) => (
+                            <option key={p.id} value={p.id}>
+                              {p.title || 'Plano alimentar'} ({p.status})
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-xs font-semibold text-gray-700">Comentário (mínimo 20 caracteres)</label>
+                    <textarea
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      rows={3}
+                      className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Conte como foi sua experiência..."
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void onSubmitReview()}
+                    disabled={submittingReview || completedMealPlans.length === 0}
+                    className="mt-3 inline-flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-60"
+                  >
+                    {submittingReview ? 'Enviando...' : 'Enviar avaliação'}
+                  </button>
+                  {completedMealPlans.length === 0 ? (
+                    <p className="text-xs text-gray-600 mt-2">
+                      Para avaliar, você precisa ter um plano alimentar concluído com este profissional.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               {reviews.length === 0 ? (
                 <p className="text-sm text-gray-600 mt-2">Ainda não há avaliações.</p>
               ) : (
@@ -481,12 +631,26 @@ const PublicProfile = () => {
                   {reviews.map((r) => (
                     <div key={r.id} className="border border-gray-100 rounded-xl p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-sm font-semibold text-gray-900 truncate">{r.clientName || 'Paciente'}</div>
+                        <div className="text-sm font-semibold text-gray-900 truncate">{r.patientName || (r as any).clientName || 'Paciente'}</div>
                         <div className="text-sm text-gray-700 inline-flex items-center gap-1">
                           <StarIcon sx={{ fontSize: 18, color: primaryColorSolid ?? '#f59e0b' }} /> {r.rating}
                         </div>
                       </div>
+                      {r.mealPlanTitle ? <div className="text-xs text-gray-500 mt-1">Plano: {r.mealPlanTitle}</div> : null}
                       {r.comment && <p className="text-sm text-gray-700 mt-2">{r.comment}</p>}
+                      {isAuthenticated && user?.role === 'nutricionista' && r.rating <= 2 ? (
+                        <div className="mt-3">
+                          <button
+                            type="button"
+                            disabled={removingReviewId === r.id}
+                            onClick={() => void onRemoveReviewAsNutritionist(r.id)}
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 text-sm font-semibold text-red-700 disabled:opacity-60"
+                            title="Disponível apenas para avaliações com 1 ou 2 estrelas"
+                          >
+                            {removingReviewId === r.id ? 'Removendo...' : 'Remover do perfil'}
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                 </div>

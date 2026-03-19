@@ -1,4 +1,4 @@
-﻿package utils
+package utils
 
 import (
 	"fmt"
@@ -140,7 +140,7 @@ func LogStartupFooter(port string) {
 		fmt.Printf("  ✓ Ambiente: %s\n", strings.ToUpper(config.AppConfig.Env))
 		fmt.Println(strings.Repeat("=", 60))
 		fmt.Printf("\n  Servidor rodando em http://localhost:%s\n", port)
-		fmt.Println("  Pressione Ctrl+C para encerrar\n")
+		fmt.Println("  Pressione Ctrl+C para encerrar")
 	} else {
 		Info("=== Servidor iniciado com sucesso ===")
 		Info("Porta: %s", port)
@@ -156,7 +156,7 @@ func LogComponentStatus(component string, success bool, message string) {
 			Debug("%s: %s", component, message)
 		}
 	} else {
-		LogStatus(component, message, fmt.Errorf(message))
+		LogStatus(component, message, fmt.Errorf("%s", message))
 	}
 }
 

@@ -42,13 +42,34 @@ func createPatient(c *gin.Context) {
 	userID, _ := c.Get("userID")
 	userIDStr := userID.(string)
 
-	var req patient.Patient
+	var req struct {
+		UserID string `json:"userId,omitempty"`
+		Name   string `json:"name"`
+		Email  string `json:"email,omitempty"`
+		Phone  string `json:"phone,omitempty"`
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
 		return
 	}
 
-	createdPatient, err := patient.CreatePatient(c.Request.Context(), userIDStr, req)
+	p := patient.Patient{
+		Name:  strings.TrimSpace(req.Name),
+		Email: strings.TrimSpace(req.Email),
+		Phone: strings.TrimSpace(req.Phone),
+	}
+	if p.Name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Nome é obrigatório"})
+		return
+	}
+
+	if req.UserID != "" {
+		if oid, err := primitive.ObjectIDFromHex(req.UserID); err == nil {
+			p.PlatformUserID = &oid
+		}
+	}
+
+	createdPatient, err := patient.CreatePatient(c.Request.Context(), userIDStr, p)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criar paciente"})
 		return

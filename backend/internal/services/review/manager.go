@@ -1,4 +1,4 @@
-﻿package review
+package review
 
 import (
 	"context"
@@ -396,6 +396,38 @@ func DeleteReview(ctx context.Context, reviewID, patientID string) error {
 	// Atualizar média de avaliação do nutricionista
 	go updateNutritionistRating(context.Background(), review.NutritionistID.Hex())
 
+	return nil
+}
+
+// DeleteReviewAsNutritionist remove uma avaliação do próprio perfil,
+// mas a validação de rating (<=2) deve ser feita no handler.
+func DeleteReviewAsNutritionist(ctx context.Context, reviewID, nutritionistID string) error {
+	objID, err := primitive.ObjectIDFromHex(reviewID)
+	if err != nil {
+		return err
+	}
+	nutritionistObjID, err := primitive.ObjectIDFromHex(nutritionistID)
+	if err != nil {
+		return err
+	}
+
+	// Obter review para validar ownership e atualizar média depois
+	var r models.Review
+	if err := database.ReviewsCollection.FindOne(ctx, bson.M{
+		"_id":            objID,
+		"nutritionistId": nutritionistObjID,
+	}).Decode(&r); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return ErrUnauthorized
+		}
+		return err
+	}
+
+	_, err = database.ReviewsCollection.DeleteOne(ctx, bson.M{"_id": objID})
+	if err != nil {
+		return err
+	}
+	go updateNutritionistRating(context.Background(), r.NutritionistID.Hex())
 	return nil
 }
 

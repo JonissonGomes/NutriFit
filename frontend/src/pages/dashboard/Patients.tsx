@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Loader2, Search, Upload, UserPlus, Users } from 'lucide-react'
-import { patientService } from '../../services'
+import { Loader2, MessageCircle, Search, Upload, UserPlus, Users } from 'lucide-react'
+import { messageService, patientService } from '../../services'
+import { useNavigate } from 'react-router-dom'
 
 const Patients = () => {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [patients, setPatients] = useState<any[]>([])
   const [importing, setImporting] = useState(false)
@@ -12,6 +14,8 @@ const Patients = () => {
   const [createName, setCreateName] = useState('')
   const [createEmail, setCreateEmail] = useState('')
   const [createPhone, setCreatePhone] = useState('')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState('')
 
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -100,12 +104,58 @@ const Patients = () => {
     if (!name) return
     setCreating(true)
     try {
-      const res = await patientService.create({ name, email: email || undefined, phone: phone || undefined })
+      const res = await patientService.create({
+        userId: String(p?.id || '').trim() || undefined,
+        name,
+        email: email || undefined,
+        phone: phone || undefined,
+      })
       if (res.error) return
       await load()
     } finally {
       setCreating(false)
     }
+  }
+
+  const onToggleFollowUp = async (patientId: string, nextActive: boolean) => {
+    setActionError('')
+    setUpdatingId(patientId)
+    try {
+      const res = await patientService.update(patientId, { isActive: nextActive })
+      if (res.error) {
+        setActionError(res.error || 'Falha ao atualizar acompanhamento')
+        return
+      }
+      await load()
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const onRemovePatient = async (patientId: string) => {
+    setActionError('')
+    setUpdatingId(patientId)
+    try {
+      const res = await patientService.remove(patientId)
+      if (res.error) {
+        setActionError(res.error || 'Falha ao remover paciente')
+        return
+      }
+      await load()
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const onStartConversation = async (platformUserId: string) => {
+    setActionError('')
+    const res = await messageService.startConversation(platformUserId)
+    if (res.error) {
+      setActionError(res.error || 'Falha ao iniciar conversa')
+      return
+    }
+    // Redireciona para a página de conversas; a lista já deve carregar a conversa criada.
+    navigate('/messages')
   }
 
   if (loading) {
@@ -264,6 +314,7 @@ const Patients = () => {
           <div className="px-5 py-4 border-b border-gray-200 font-semibold text-gray-900">
             {patients.length} paciente(s)
           </div>
+          {actionError ? <div className="px-5 py-3 text-sm text-red-700 border-b border-gray-100">{actionError}</div> : null}
           <div className="divide-y divide-gray-100">
             {patients.map((p) => (
               <div key={p.id} className="px-5 py-4 flex items-center justify-between gap-3">
@@ -272,8 +323,61 @@ const Patients = () => {
                   <div className="text-sm text-gray-600 truncate">
                     {p.email || 'Sem email'} · {p.phone || 'Sem telefone'}
                   </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                        p.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-700 border-gray-200'
+                      }`}
+                    >
+                      {p.isActive ? 'Acompanhamento ativo' : 'Acompanhamento suspenso'}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500">ID: {p.id}</div>
+                <div className="flex items-center gap-2">
+                  {p.userId ? (
+                    <button
+                      type="button"
+                      onClick={() => void onStartConversation(String(p.userId))}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-semibold text-gray-900"
+                      title="Iniciar conversa"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Conversar
+                    </button>
+                  ) : null}
+
+                  {p.isActive ? (
+                    <button
+                      type="button"
+                      disabled={updatingId === p.id}
+                      onClick={() => void onToggleFollowUp(p.id, false)}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-semibold text-gray-900 disabled:opacity-60"
+                    >
+                      {updatingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      Suspender
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={updatingId === p.id}
+                      onClick={() => void onToggleFollowUp(p.id, true)}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 text-sm font-semibold disabled:opacity-60"
+                    >
+                      {updatingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      Iniciar acompanhamento
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={updatingId === p.id}
+                    onClick={() => void onRemovePatient(p.id)}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 text-sm font-semibold text-red-700 disabled:opacity-60"
+                    title="Remove o paciente da sua lista"
+                  >
+                    Encerrar/remover
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -1,4 +1,4 @@
-﻿package patient
+package patient
 
 import (
 	"context"
@@ -22,6 +22,9 @@ var (
 type Patient struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	NutritionistID primitive.ObjectID `bson:"nutritionistId" json:"nutritionistId"`
+	// PlatformUserID é o userId da plataforma (quando o paciente foi selecionado do cadastro do sistema).
+	// Pode ser nil para pacientes criados manualmente/importados.
+	PlatformUserID *primitive.ObjectID `bson:"userId,omitempty" json:"userId,omitempty"`
 	Name          string             `bson:"name" json:"name"`
 	Email         string             `bson:"email,omitempty" json:"email,omitempty"`
 	Phone         string             `bson:"phone,omitempty" json:"phone,omitempty"`

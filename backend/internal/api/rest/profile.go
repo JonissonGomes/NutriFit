@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"context"
@@ -10,12 +10,15 @@ import (
 	"strings"
 	"time"
 
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/cloudinary"
 	"nufit/backend/internal/services/image"
 	"nufit/backend/internal/services/profile"
 	"nufit/backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // ============================================
@@ -415,6 +418,17 @@ func getPublicProfile(c *gin.Context) {
 		return
 	}
 
+	// Best-effort: incluir quantidade de pacientes do profissional no payload do perfil público.
+	// Isso não altera o schema do documento (apenas enriquece a resposta).
+	type publicProfileWithPatientsCount struct {
+		*models.PublicProfile
+		PatientsCount int64 `json:"patientsCount"`
+	}
+	patientsCount, err := database.PatientsCollection.CountDocuments(ctx, bson.M{"nutritionistId": p.UserID})
+	if err != nil {
+		patientsCount = 0
+	}
+
 	// Incrementar contador de visualizações (assíncrono para não bloquear a resposta)
 	go func() {
 		ctx := context.Background()
@@ -424,7 +438,7 @@ func getPublicProfile(c *gin.Context) {
 		}
 	}()
 
-	c.JSON(http.StatusOK, p)
+	c.JSON(http.StatusOK, publicProfileWithPatientsCount{PublicProfile: p, PatientsCount: patientsCount})
 }
 
 // searchProfiles busca perfis públicos

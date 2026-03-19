@@ -11,31 +11,39 @@ import type { ApiResponse, PaginatedResponse } from '../types/api'
 
 export interface Review {
   id: string
-  architectId: string
-  clientId: string
-  projectId?: string
+  nutritionistId: string
+  patientId: string
+  mealPlanId?: string
   rating: number // 1-5
   comment?: string
   verified: boolean
   helpful: number
   createdAt: string
   updatedAt: string
+  patientName?: string
+  patientAvatar?: string
+  mealPlanTitle?: string
+
+  // Campos legados (para não quebrar telas antigas)
+  architectId?: string
+  clientId?: string
+  projectId?: string
   clientName?: string
   clientAvatar?: string
   projectTitle?: string
 }
 
 export interface ReviewWithDetails extends Review {
-  clientName: string
-  clientAvatar?: string
-  projectTitle?: string
+  patientName: string
+  patientAvatar?: string
+  mealPlanTitle?: string
 }
 
 export interface CreateReviewRequest {
-  architectId: string
-  projectId?: string
+  nutritionistId: string
+  mealPlanId: string
   rating: number
-  comment?: string
+  comment: string
 }
 
 export interface UpdateReviewRequest {
@@ -62,10 +70,10 @@ export const reviewService = {
   },
 
   /**
-   * Listar avaliações de um arquiteto
+   * Listar avaliações de um profissional (público)
    */
-  getByArchitect: async (
-    architectId: string,
+  getByNutritionist: async (
+    nutritionistId: string,
     page: number = 1,
     limit: number = 10
   ): Promise<ApiResponse<PaginatedResponse<ReviewWithDetails>>> => {
@@ -74,17 +82,19 @@ export const reviewService = {
       limit: limit.toString(),
     })
     return api.get<PaginatedResponse<ReviewWithDetails>>(
-      `/reviews/architect/${architectId}?${params}`
+      `/public/nutritionists/${encodeURIComponent(nutritionistId)}/reviews?${params}`
     )
   },
 
   /**
-   * Obter estatísticas de avaliação de um arquiteto
+   * Obter estatísticas de avaliação de um profissional (público)
    */
-  getArchitectStats: async (
-    architectId: string
+  getNutritionistStats: async (
+    nutritionistId: string
   ): Promise<ApiResponse<ArchitectRatingStats>> => {
-    return api.get<ArchitectRatingStats>(`/reviews/architect/${architectId}/stats`)
+    return api.get<ArchitectRatingStats>(
+      `/public/nutritionists/${encodeURIComponent(nutritionistId)}/rating`
+    )
   },
 
   /**
@@ -105,11 +115,23 @@ export const reviewService = {
   },
 
   /**
+   * Remover avaliação como profissional (somente <=2 estrelas)
+   */
+  deleteAsNutritionist: async (reviewId: string): Promise<ApiResponse<{ message: string }>> => {
+    return api.delete<{ message: string }>(`/reviews/${encodeURIComponent(reviewId)}/as-nutritionist`)
+  },
+
+  /**
    * Marcar avaliação como útil
    */
   markHelpful: async (reviewId: string): Promise<ApiResponse<void>> => {
     return api.post<void>(`/reviews/${reviewId}/helpful`, {})
   },
+
+  // Aliases legados
+  getByArchitect: async (architectId: string, page = 1, limit = 10) =>
+    reviewService.getByNutritionist(architectId, page, limit),
+  getArchitectStats: async (architectId: string) => reviewService.getNutritionistStats(architectId),
 }
 
 

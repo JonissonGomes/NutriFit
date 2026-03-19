@@ -1,9 +1,10 @@
-﻿package rest
+package rest
 
 import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"nufit/backend/internal/models"
@@ -29,7 +30,7 @@ func createReview(c *gin.Context) {
 		NutritionistID string `json:"nutritionistId" binding:"required"`
 		MealPlanID     string `json:"mealPlanId,omitempty"`
 		Rating         int    `json:"rating" binding:"required,min=1,max=5"`
-		Comment        string `json:"comment"`
+		Comment        string `json:"comment" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -37,14 +38,27 @@ func createReview(c *gin.Context) {
 		return
 	}
 
-	// Decodificar IDs opacos
-	nutritionistID, err := security.DecodeUserID(req.NutritionistID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de nutricionista inválido"})
+	comment := strings.TrimSpace(req.Comment)
+	if len([]rune(comment)) < 20 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Comentário obrigatório (mínimo de 20 caracteres)"})
 		return
 	}
+	lower := strings.ToLower(comment)
+	banned := []string{"idiota", "burro", "lixo", "imbecil", "otario", "otário", "fdp", "desgraça", "desgraca"}
+	for _, b := range banned {
+		if strings.Contains(lower, b) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Comentário contém linguagem ofensiva. Ajuste e tente novamente."})
+			return
+		}
+	}
 
-	nutritionistObjID, err := primitive.ObjectIDFromHex(nutritionistID)
+	// Aceitar tanto ID opaco quanto ObjectID em hex.
+	nutritionistDecoded, decodeErr := security.DecodeUserID(req.NutritionistID)
+	nutritionistHex := req.NutritionistID
+	if decodeErr == nil && nutritionistDecoded != "" {
+		nutritionistHex = nutritionistDecoded
+	}
+	nutritionistObjID, err := primitive.ObjectIDFromHex(nutritionistHex)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de nutricionista inválido"})
 		return
@@ -60,7 +74,7 @@ func createReview(c *gin.Context) {
 		NutritionistID: nutritionistObjID,
 		PatientID:      patientObjID,
 		Rating:         req.Rating,
-		Comment:        req.Comment,
+		Comment:        comment,
 	}
 
 	// Decodificar mealPlanId se fornecido
@@ -92,6 +106,52 @@ func createReview(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, createdReview)
+}
+
+// deleteReviewAsNutritionist permite que o profissional oculte/remova avaliações ruins (<=2 estrelas) do próprio perfil.
+func deleteReviewAsNutritionist(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Não autenticado"})
+		return
+	}
+
+	opaqueReviewID := c.Param("id")
+	reviewID, err := security.DecodeReviewID(opaqueReviewID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de avaliação inválido"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	r, err := review.GetReviewByID(ctx, reviewID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Avaliação não encontrada"})
+		return
+	}
+
+	nutritionistObjID, err := primitive.ObjectIDFromHex(userID.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno"})
+		return
+	}
+
+	if r.NutritionistID != nutritionistObjID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Sem permissão"})
+		return
+	}
+	if r.Rating > 2 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Só é permitido remover avaliações com 1 ou 2 estrelas"})
+		return
+	}
+
+	if err := review.DeleteReviewAsNutritionist(ctx, reviewID, userID.(string)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao remover avaliação"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Avaliação removida com sucesso"})
 }
 
 // getNutritionistReviews lista avaliações de um nutricionista
