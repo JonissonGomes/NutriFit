@@ -173,7 +173,7 @@ func SetupRouter() *gin.Engine {
 			foodDiary := protected.Group("/food-diary")
 			{
 				foodDiary.GET("/:patientId", getFoodDiaryEntries)
-				foodDiary.POST("", RequireRole("nutricionista"), createFoodDiaryEntry)
+				foodDiary.POST("", RequireRole("nutricionista", "paciente"), createFoodDiaryEntry)
 				foodDiary.POST("/:id/photo", uploadFoodDiaryPhoto)
 				foodDiary.POST("/:id/ai-analyze", RequireRole("nutricionista"), analyzeFoodDiaryPhoto)
 				foodDiary.PUT("/:id/comment", RequireRole("nutricionista"), addNutritionistComment)

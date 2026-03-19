@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Loader2, Plus, Upload } from 'lucide-react'
-import { foodDiaryService } from '../../services'
-import type { FoodDiaryEntry, MealType } from '../../types/api'
+import { foodDiaryService, mealPlanService } from '../../services'
+import type { FoodDiaryEntry, Meal, MealPlan, MealType } from '../../types/api'
 
 const mealTypeLabel: Record<MealType, string> = {
   'cafe-manha': 'Café da manhã',
@@ -14,6 +14,8 @@ const mealTypeLabel: Record<MealType, string> = {
 
 const FoodDiary = () => {
   const [items, setItems] = useState<FoodDiaryEntry[]>([])
+  const [activePlan, setActivePlan] = useState<MealPlan | null>(null)
+  const [planMeals, setPlanMeals] = useState<Meal[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadingId, setUploadingId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
@@ -24,11 +26,22 @@ const FoodDiary = () => {
   })
   const [newDescription, setNewDescription] = useState('')
   const [newPhoto, setNewPhoto] = useState<File | null>(null)
+  const [selectedFoods, setSelectedFoods] = useState<string[]>([])
+  const [customFoods, setCustomFoods] = useState('')
 
   const load = async () => {
     setLoading(true)
-    const res = await foodDiaryService.listByPatient('me', { limit: 50 })
-    setItems(res.data?.data || [])
+    const [resDiary, resPlans] = await Promise.all([
+      foodDiaryService.listByPatient('me', { limit: 50 }),
+      mealPlanService.list({ status: 'active', page: 1, limit: 20 }),
+    ])
+
+    setItems(resDiary.data?.data || [])
+    const plansPayload = (resPlans.data as any)?.data ?? (resPlans.data as any)
+    const plans = Array.isArray(plansPayload) ? plansPayload : Array.isArray(plansPayload?.data) ? plansPayload.data : []
+    const active = (plans as MealPlan[])[0] || null
+    setActivePlan(active)
+    setPlanMeals(Array.isArray(active?.meals) ? active.meals : [])
     setLoading(false)
   }
 
@@ -58,10 +71,15 @@ const FoodDiary = () => {
       const [hh, mm] = newTime.split(':').map((x) => parseInt(x, 10))
       const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh || 0, mm || 0, 0, 0)
 
+      const planFoodsText = selectedFoods.length > 0 ? `Alimentos do plano: ${selectedFoods.join(', ')}` : ''
+      const customFoodsText = customFoods.trim() ? `Alimentos adicionais: ${customFoods.trim()}` : ''
+      const notesText = newDescription.trim()
+      const composedDescription = [planFoodsText, customFoodsText, notesText].filter(Boolean).join('\n')
+
       const res = await foodDiaryService.create({
         date: dt.toISOString(),
         mealType: newMealType,
-        description: newDescription.trim() || undefined,
+        description: composedDescription || undefined,
       } as any)
 
       const created = (res.data as any)?.data as FoodDiaryEntry | undefined
@@ -71,6 +89,8 @@ const FoodDiary = () => {
 
       setNewDescription('')
       setNewPhoto(null)
+      setSelectedFoods([])
+      setCustomFoods('')
       await load()
     } finally {
       setCreating(false)
@@ -101,6 +121,15 @@ const FoodDiary = () => {
 
       <div className="bg-white border border-gray-200 rounded-2xl p-5">
         <div className="font-semibold text-gray-900">Novo registro</div>
+        {activePlan ? (
+          <div className="mt-2 text-sm text-gray-700">
+            Plano ativo: <b>{activePlan.title}</b>
+          </div>
+        ) : (
+          <div className="mt-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            Nenhum plano ativo encontrado. Você ainda pode registrar o diário manualmente.
+          </div>
+        )}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <label className="text-xs font-semibold text-gray-700">Refeição</label>
@@ -135,6 +164,56 @@ const FoodDiary = () => {
             />
           </div>
         </div>
+
+        {planMeals.length > 0 ? (
+          <div className="mt-4">
+            <label className="text-xs font-semibold text-gray-700">Alimentos consumidos (do plano desta refeição)</label>
+            <div className="mt-2 border border-gray-200 rounded-xl p-3">
+              {(() => {
+                const mealRef = planMeals.find((m) => m.type === newMealType)
+                const options = mealRef?.foods || []
+                if (options.length === 0) {
+                  return <div className="text-sm text-gray-500">Não há alimentos definidos para esta refeição no plano.</div>
+                }
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {options.map((f, idx) => {
+                      const label = `${f.name} (${f.quantity} ${f.unit})`
+                      const checked = selectedFoods.includes(label)
+                      return (
+                        <label key={`${f.foodId}-${idx}`} className="inline-flex items-center gap-2 text-sm text-gray-800">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedFoods((prev) => [...prev, label])
+                              } else {
+                                setSelectedFoods((prev) => prev.filter((x) => x !== label))
+                              }
+                            }}
+                          />
+                          <span>{label}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-3">
+          <label className="text-xs font-semibold text-gray-700">Alimentos adicionais (opcional)</label>
+          <input
+            value={customFoods}
+            onChange={(e) => setCustomFoods(e.target.value)}
+            className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white"
+            placeholder="Ex.: 1 banana, 2 torradas"
+          />
+        </div>
+
         <div className="mt-3">
           <label className="text-xs font-semibold text-gray-700">Descrição (opcional)</label>
           <textarea

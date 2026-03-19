@@ -1,4 +1,4 @@
-﻿package ai
+package ai
 
 import (
 	"bytes"
@@ -27,6 +27,34 @@ type GeminiClient struct {
 	BaseURL    string
 }
 
+func resolveTextModel() string {
+	// Prioridade:
+	// 1) GEMINI_TEXT_MODEL
+	// 2) GEMINI_MODEL (global)
+	// 3) default seguro
+	if m := strings.TrimSpace(config.AppConfig.GeminiTextModel); m != "" {
+		return m
+	}
+	if m := strings.TrimSpace(config.AppConfig.GeminiModel); m != "" {
+		return m
+	}
+	return "gemini-1.5-pro"
+}
+
+func resolveVisionModel() string {
+	// Prioridade:
+	// 1) GEMINI_VISION_MODEL
+	// 2) GEMINI_MODEL (global)
+	// 3) default seguro
+	if m := strings.TrimSpace(config.AppConfig.GeminiVisionModel); m != "" {
+		return m
+	}
+	if m := strings.TrimSpace(config.AppConfig.GeminiModel); m != "" {
+		return m
+	}
+	return "gemini-1.5-flash"
+}
+
 // NewGeminiClient cria um novo cliente Gemini
 func NewGeminiClient() *GeminiClient {
 	if config.AppConfig.GeminiAPIKey == "" {
@@ -48,7 +76,9 @@ func (c *GeminiClient) GenerateText(ctx context.Context, prompt string, systemIn
 		return "", ErrAIUnavailable
 	}
 
-	url := fmt.Sprintf("%s/models/gemini-pro:generateContent?key=%s", c.BaseURL, c.APIKey)
+	model := resolveTextModel()
+
+	url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", c.BaseURL, model, c.APIKey)
 
 	payload := map[string]interface{}{
 		"contents": []map[string]interface{}{
@@ -146,7 +176,9 @@ func (c *GeminiClient) AnalyzeImage(ctx context.Context, imageURL string, prompt
 	}
 	encoded := base64.StdEncoding.EncodeToString(data)
 
-	url := fmt.Sprintf("%s/models/gemini-1.5-flash:generateContent?key=%s", c.BaseURL, c.APIKey)
+	visionModel := resolveVisionModel()
+
+	url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", c.BaseURL, visionModel, c.APIKey)
 
 	payload := map[string]interface{}{
 		"contents": []map[string]interface{}{

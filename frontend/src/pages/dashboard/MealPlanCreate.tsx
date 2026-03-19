@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Loader2, Save, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Info, Loader2, Plus, Save, Sparkles } from 'lucide-react'
 import { anamnesisService, anthropometricService, labExamService, mealPlanService, patientService } from '../../services'
 import { useToast } from '../../contexts/ToastContext'
 import { sanitizeInput, limitLength } from '../../utils/inputUtils'
-import type { ClinicalSnapshot, MealPlanCategory, MealPlanStatus } from '../../types/api'
+import type { ClinicalSnapshot, MealPlanCategory, MealPlanStatus, MealType } from '../../types/api'
 
 const categoryLabel: Record<MealPlanCategory, string> = {
   emagrecimento: 'Emagrecimento',
@@ -23,6 +23,31 @@ const MealPlanCreate = () => {
   const location = useLocation()
   const { showToast } = useToast()
 
+  const activityFactorByLevel: Record<string, number> = {
+    Sedentário: 1.2,
+    'Levemente ativo': 1.375,
+    'Moderadamente ativo': 1.55,
+    'Muito ativo': 1.725,
+    'Extremamente ativo': 1.9,
+  }
+
+  const objectiveOptions: Record<string, string> = {
+    emagrecimento: 'Emagrecimento',
+    'ganho-massa': 'Ganho de massa',
+    manutencao: 'Manutenção',
+  }
+
+  const sexOptions = ['Feminino', 'Masculino', 'Prefiriu não declarar'] as const
+
+  const mealTypeLabel: Record<MealType, string> = {
+    'cafe-manha': 'Café da manhã',
+    'lanche-manha': 'Lanche (manhã)',
+    almoco: 'Almoço',
+    'lanche-tarde': 'Lanche (tarde)',
+    jantar: 'Jantar',
+    ceia: 'Ceia',
+  }
+
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [loadingContext, setLoadingContext] = useState(false)
@@ -36,9 +61,9 @@ const MealPlanCreate = () => {
   const [sex, setSex] = useState('')
   const [height, setHeight] = useState('')
   const [weight, setWeight] = useState('')
-  const [objective, setObjective] = useState('emagrecimento')
-  const [activityLevel, setActivityLevel] = useState('moderado')
-  const [activityFactor, setActivityFactor] = useState('1.55')
+  const [objective, setObjective] = useState<string>('emagrecimento')
+  const [activityLevel, setActivityLevel] = useState<string>('Moderadamente ativo')
+  const [activityFactor, setActivityFactor] = useState<number>(1.55)
   const [tmb, setTmb] = useState('')
   const [getValue, setGetValue] = useState('')
   const [restrictionsText, setRestrictionsText] = useState('')
@@ -50,11 +75,17 @@ const MealPlanCreate = () => {
   const [mealsPerDay, setMealsPerDay] = useState('5')
   const [aiGenerating, setAIGenerating] = useState(false)
   const [aiDraft, setAIDraft] = useState<any>(null)
+  const [mealsDraft, setMealsDraft] = useState<any[]>([])
   const [anamnesisSummary, setAnamnesisSummary] = useState('')
   const [latestAnthro, setLatestAnthro] = useState<any>(null)
   const [latestExamSummary, setLatestExamSummary] = useState('')
 
+  const [manualMealType, setManualMealType] = useState<MealType>('cafe-manha')
+  const [manualMealTime, setManualMealTime] = useState('07:00')
+  const [manualMealNotes, setManualMealNotes] = useState('')
+
   const selectedPatient = useMemo(() => patients.find((p) => p.id === patientId), [patients, patientId])
+  const selectedPlatformPatientId = useMemo(() => String(selectedPatient?.userId || '').trim(), [selectedPatient])
   const canSave = useMemo(() => title.trim().length >= 3 && patientId.trim().length > 0, [title, patientId])
 
   useEffect(() => {
@@ -146,11 +177,34 @@ const MealPlanCreate = () => {
         return
       }
       setAIDraft((res.data as any)?.data || res.data)
+      const nextMeals = (res.data as any)?.data?.meals || (res.data as any)?.meals || []
+      setMealsDraft(Array.isArray(nextMeals) ? nextMeals : [])
       showToast('Rascunho IA gerado. Revise antes de salvar.', 'success')
     } finally {
       setAIGenerating(false)
     }
   }
+
+  const toFormattedGet = (value: number): string => {
+    // Mostra sem casas se for inteiro; caso contrário 1 casa.
+    const rounded = Math.round(value)
+    return Math.abs(value - rounded) < 0.0001 ? String(rounded) : String(Math.round(value * 10) / 10)
+  }
+
+  useEffect(() => {
+    const nextFactor = activityFactorByLevel[activityLevel] ?? 1.55
+    setActivityFactor(nextFactor)
+  }, [activityLevel])
+
+  useEffect(() => {
+    const tmbNum = toNumber(tmb)
+    if (tmbNum === undefined) {
+      setGetValue('')
+      return
+    }
+    setGetValue(toFormattedGet(tmbNum * activityFactor))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tmb, activityFactor])
 
   const buildClinicalNotes = () => {
     return [
@@ -198,7 +252,7 @@ const MealPlanCreate = () => {
       energy: {
         objective: objective.trim() || undefined,
         activityLevel: activityLevel.trim() || undefined,
-        activityFactor: toNumber(activityFactor),
+        activityFactor: activityFactor,
         tmb: toNumber(tmb),
         get: toNumber(getValue),
       },
@@ -225,13 +279,20 @@ const MealPlanCreate = () => {
 
     setSaving(true)
     try {
+      if (!selectedPlatformPatientId) {
+        showToast(
+          'Este paciente não está vinculado a uma conta da plataforma. O plano não aparecerá no módulo do paciente até vincular um usuário.',
+          'warning'
+        )
+      }
+
       const res = await mealPlanService.create({
-        patientId,
-        title: title.trim(),
+        patientId: selectedPlatformPatientId || undefined,
+        title: sanitizeInput(title).trim(),
         description: description.trim() || undefined,
         category,
         status,
-        meals: aiDraft?.meals || [],
+        meals: mealsDraft,
         restrictions: parseList(restrictionsText),
         clinicalSnapshot: buildClinicalSnapshot(),
         notes: buildClinicalNotes(),
@@ -271,8 +332,28 @@ const MealPlanCreate = () => {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-3 text-sm text-gray-700">
-        Etapa {step}/4
+      <div className="bg-white border border-gray-200 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="flex-1">
+              <div className="flex items-center">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    n <= step ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  {n}
+                </div>
+                {n !== 4 ? (
+                  <div className={`flex-1 h-[2px] mx-2 ${n < step ? 'bg-primary-600' : 'bg-gray-200'}`} />
+                ) : null}
+              </div>
+              <div className={`mt-2 text-xs font-semibold ${n <= step ? 'text-primary-700' : 'text-gray-400'}`}>
+                {n === 1 ? 'Paciente' : n === 2 ? 'Baseline' : n === 3 ? 'Estratégia' : 'Revisão'}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
@@ -283,7 +364,7 @@ const MealPlanCreate = () => {
               <select value={patientId} onChange={(e) => setPatientId(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white">
                 {patients.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} {p.email ? `(${p.email})` : ''}
+                    {p.name} {p.email ? `(${p.email})` : ''} {!p.userId ? '• sem conta' : ''}
                   </option>
                 ))}
               </select>
@@ -294,7 +375,12 @@ const MealPlanCreate = () => {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-1">Título *</label>
-              <input value={title} onChange={(e) => setTitle(limitLength(sanitizeInput(e.target.value), 80))} className="w-full px-3 py-2 rounded-lg border border-gray-300" placeholder="Ex.: Plano de emagrecimento - 8 semanas" />
+              <input
+                value={title}
+                onChange={(e) => setTitle(limitLength(e.target.value, 80))}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300"
+                placeholder="Ex.: Plano de emagrecimento - 8 semanas"
+              />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
@@ -323,14 +409,88 @@ const MealPlanCreate = () => {
             <div className="text-sm text-gray-600">{loadingContext ? 'Carregando contexto clínico...' : 'Contexto clínico carregado do paciente selecionado.'}</div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div><label className="text-sm font-semibold">Idade</label><input value={age} onChange={(e) => setAge(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">Sexo</label><input value={sex} onChange={(e) => setSex(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">Objetivo</label><input value={objective} onChange={(e) => setObjective(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
+              <div>
+                <label className="text-sm font-semibold">Sexo</label>
+                <select value={sex} onChange={(e) => setSex(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white">
+                  <option value="">Selecione</option>
+                  {sexOptions.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold">Objetivo</label>
+                <select value={objective} onChange={(e) => setObjective(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white">
+                  {Object.entries(objectiveOptions).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div><label className="text-sm font-semibold">Altura (cm)</label><input value={height} onChange={(e) => setHeight(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
               <div><label className="text-sm font-semibold">Peso (kg)</label><input value={weight} onChange={(e) => setWeight(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">Nível atividade</label><input value={activityLevel} onChange={(e) => setActivityLevel(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">Fator atividade</label><input value={activityFactor} onChange={(e) => setActivityFactor(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">TMB</label><input value={tmb} onChange={(e) => setTmb(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">GET</label><input value={getValue} onChange={(e) => setGetValue(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
+              <div>
+                <label className="text-sm font-semibold">Nível de atividade</label>
+                <select
+                  value={activityLevel}
+                  onChange={(e) => setActivityLevel(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white"
+                >
+                  {Object.keys(activityFactorByLevel).map((k) => (
+                    <option key={k} value={k}>
+                      {k}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm font-semibold">Fator de Atividade</label>
+                  <span title="Multiplicador aplicado sobre a TMB para estimar o gasto energético diário.">
+                    <Info className="h-3.5 w-3.5 text-gray-400" />
+                  </span>
+                </div>
+                <input value={String(activityFactor)} disabled className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700" />
+                <div className="text-xs text-gray-500 mt-1">Multiplicador</div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm font-semibold">TMB</label>
+                  <span title="Taxa metabólica basal: gasto energético em repouso (kcal). Base para calcular o GET.">
+                    <Info className="h-3.5 w-3.5 text-gray-400" />
+                  </span>
+                </div>
+                <div className="relative mt-1">
+                  <input
+                    value={tmb}
+                    onChange={(e) => setTmb(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 pr-10"
+                    inputMode="decimal"
+                    placeholder="Ex.: 1500"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">kcal</span>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm font-semibold">GET</label>
+                  <span title="GET = TMB × Fator de Atividade (kcal/dia). Campo calculado.">
+                    <Info className="h-3.5 w-3.5 text-gray-400" />
+                  </span>
+                </div>
+                <div className="relative mt-1">
+                  <input
+                    value={getValue}
+                    disabled
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 pr-14"
+                    placeholder="—"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">kcal/dia</span>
+                </div>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-1">Restrições (separadas por vírgula)</label>
@@ -357,7 +517,78 @@ const MealPlanCreate = () => {
                 {aiGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 Gerar rascunho IA
               </button>
-              {aiDraft ? <span className="text-sm text-gray-700">Rascunho gerado com {Array.isArray(aiDraft.meals) ? aiDraft.meals.length : 0} refeição(ões).</span> : null}
+              {mealsDraft.length > 0 ? <span className="text-sm text-gray-700">Refeições no plano: {mealsDraft.length}</span> : null}
+            </div>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">Adicionar refeição manualmente</div>
+                  <div className="text-xs text-gray-600 mt-1">Para iniciar, você pode salvar uma refeição com apenas tipo, horário e observações (sem alimentos).</div>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-700">Tipo</label>
+                  <select value={manualMealType} onChange={(e) => setManualMealType(e.target.value as MealType)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white">
+                    {(Object.keys(mealTypeLabel) as MealType[]).map((t) => (
+                      <option key={t} value={t}>
+                        {mealTypeLabel[t]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-700">Horário</label>
+                  <input value={manualMealTime} onChange={(e) => setManualMealTime(e.target.value)} type="time" className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-700">Observações (opcional)</label>
+                  <input value={manualMealNotes} onChange={(e) => setManualMealNotes(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white" placeholder="Ex.: sem lactose" />
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMealsDraft((prev) => [
+                      ...prev,
+                      {
+                        type: manualMealType,
+                        time: manualMealTime,
+                        foods: [],
+                        notes: manualMealNotes.trim() || '',
+                      },
+                    ])
+                    setManualMealNotes('')
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white font-semibold hover:bg-primary-700 disabled:opacity-60"
+                >
+                  <Plus className="h-4 w-4" />
+                  Adicionar refeição
+                </button>
+              </div>
+
+              {mealsDraft.length > 0 ? (
+                <div className="mt-4 space-y-2">
+                  {mealsDraft.map((m, idx) => (
+                    <div key={`${m.type}-${m.time}-${idx}`} className="flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-lg p-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-gray-900 truncate">{mealTypeLabel[m.type as MealType] || m.type}</div>
+                        <div className="text-xs text-gray-600">Horário: {m.time}</div>
+                        {m.notes ? <div className="text-xs text-gray-500 truncate mt-1">{m.notes}</div> : null}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMealsDraft((prev) => prev.filter((_, i) => i !== idx))}
+                        className="px-3 py-2 rounded-lg border border-red-200 text-red-700 text-sm font-semibold hover:bg-red-50"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </>
         ) : null}

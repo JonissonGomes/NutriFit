@@ -64,6 +64,12 @@ type Config struct {
 
 	// AI / Gemini
 	GeminiAPIKey string
+	// Modelo global padrão do Gemini (fallback para texto/vision).
+	GeminiModel string
+	// Modelo do Gemini para geração de texto (ex.: gemini-1.5-pro).
+	GeminiTextModel string
+	// Modelo do Gemini Vision (ex.: gemini-1.5-flash).
+	GeminiVisionModel string
 
 	// E-mail (SMTP Gmail)
 	EmailUser       string
@@ -123,7 +129,10 @@ func LoadConfig() (*Config, error) {
 		BoostHighlightWeeklyPrice: parseFloat(getEnv("BOOST_HIGHLIGHT_WEEKLY_PRICE", "199.90")),
 		BoostHighlightMonthlyPrice: parseFloat(getEnv("BOOST_HIGHLIGHT_MONTHLY_PRICE", "599.90")),
 
-		GeminiAPIKey: getEnv("GEMINI_API_KEY", ""),
+		GeminiAPIKey:     getEnv("GEMINI_API_KEY", ""),
+		GeminiModel: getEnv("GEMINI_MODEL", ""),
+		GeminiTextModel: getEnv("GEMINI_TEXT_MODEL", "gemini-1.5-pro"),
+		GeminiVisionModel: getEnv("GEMINI_VISION_MODEL", "gemini-1.5-flash"),
 
 		EmailUser:     getEnv("EMAIL_USER", ""),
 		EmailPass:     getEnv("EMAIL_PASS", ""),
