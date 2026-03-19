@@ -41,6 +41,7 @@ import LabExams from './pages/dashboard/LabExams'
 import FoodDiaryPatients from './pages/dashboard/FoodDiaryPatients'
 import MyContents from './pages/dashboard/MyContents'
 import MealPlanCreate from './pages/dashboard/MealPlanCreate'
+import MealPlanDetail from './pages/dashboard/MealPlanDetail'
 
 // Páginas do paciente
 import ClientDashboard from './pages/client/ClientDashboard'
@@ -113,6 +114,7 @@ function App() {
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/meal-plans" element={<NutritionistMealPlans />} />
                             <Route path="/meal-plans/new" element={<MealPlanCreate />} />
+                            <Route path="/meal-plans/:id" element={<MealPlanDetail />} />
                             <Route path="/patients" element={<Patients />} />
                             <Route path="/food-diary" element={<FoodDiaryPatients />} />
                             <Route path="/lab-exams" element={<LabExams />} />
@@ -140,6 +142,7 @@ function App() {
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/meal-plans" element={<NutritionistMealPlans />} />
                             <Route path="/meal-plans/new" element={<MealPlanCreate />} />
+                            <Route path="/meal-plans/:id" element={<MealPlanDetail />} />
                             <Route path="/patients" element={<Patients />} />
                             <Route path="/food-diary" element={<FoodDiaryPatients />} />
                             <Route path="/lab-exams" element={<LabExams />} />

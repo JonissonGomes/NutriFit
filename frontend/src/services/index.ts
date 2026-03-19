@@ -31,6 +31,7 @@ export { foodDiaryService } from './foodDiary.service'
 export { anamnesisService } from './anamnesis.service'
 export { patientService } from './patient.service'
 export { labExamService } from './labExam.service'
+export { anthropometricService } from './anthropometric.service'
 export { adminService } from './admin.service'
 
 // Re-exportar tipos principais (apenas da API)

@@ -108,6 +108,43 @@ export interface Meal {
   notes?: string
 }
 
+export interface ClinicalPatientSnapshot {
+  name?: string
+  email?: string
+  phone?: string
+  age?: number
+  sex?: string
+  height?: number
+  weight?: number
+}
+
+export interface ClinicalEnergySnapshot {
+  objective?: string
+  activityLevel?: string
+  activityFactor?: number
+  tmb?: number
+  get?: number
+}
+
+export interface ClinicalStrategySnapshot {
+  calories?: number
+  proteins?: number
+  carbohydrates?: number
+  fats?: number
+  mealsPerDay?: number
+}
+
+export interface ClinicalSnapshot {
+  patient?: ClinicalPatientSnapshot
+  energy?: ClinicalEnergySnapshot
+  strategy?: ClinicalStrategySnapshot
+  restrictions?: string[]
+  preferences?: string[]
+  anamnesisSummary?: string
+  labExamSummary?: string
+  bmi?: number
+}
+
 export interface MealPlan {
   id: string
   nutritionistId: string
@@ -121,6 +158,7 @@ export interface MealPlan {
   meals: Meal[]
   totalMacros?: MacroNutrients
   restrictions?: string[]
+  clinicalSnapshot?: ClinicalSnapshot
   notes?: string
   isTemplate: boolean
   createdAt: string
@@ -128,6 +166,7 @@ export interface MealPlan {
 }
 
 export interface CreateMealPlanRequest {
+  patientId?: string
   title: string
   description?: string
   category: MealPlanCategory
@@ -136,6 +175,7 @@ export interface CreateMealPlanRequest {
   endDate?: string
   meals?: Meal[]
   restrictions?: string[]
+  clinicalSnapshot?: ClinicalSnapshot
   notes?: string
   isTemplate?: boolean
 }

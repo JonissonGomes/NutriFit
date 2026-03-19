@@ -567,17 +567,24 @@ const PublicProfile = () => {
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-gray-700">Estrelas</label>
-                      <select
-                        value={reviewRating}
-                        onChange={(e) => setReviewRating(Number(e.target.value))}
-                        className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      >
-                        {[5, 4, 3, 2, 1].map((n) => (
-                          <option key={n} value={n}>
-                            {n} estrela(s)
-                          </option>
-                        ))}
-                      </select>
+                      <div className="mt-2 flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((n) => {
+                          const active = n <= reviewRating
+                          return (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => setReviewRating(n)}
+                              className="p-1 rounded-md hover:bg-yellow-50 transition-colors"
+                              title={`${n} estrela(s)`}
+                              aria-label={`${n} estrela(s)`}
+                            >
+                              <StarIcon sx={{ fontSize: 24, color: active ? '#f59e0b' : '#d1d5db' }} />
+                            </button>
+                          )
+                        })}
+                        <span className="ml-2 text-sm text-gray-700">{reviewRating}/5</span>
+                      </div>
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-xs font-semibold text-gray-700">Plano concluído (obrigatório)</label>
