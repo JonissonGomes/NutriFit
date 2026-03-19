@@ -27,32 +27,55 @@ type GeminiClient struct {
 	BaseURL    string
 }
 
-func resolveTextModel() string {
+func uniqueNonEmpty(values ...string) []string {
+	seen := map[string]struct{}{}
+	out := make([]string, 0, len(values))
+	for _, v := range values {
+		m := strings.TrimSpace(v)
+		if m == "" {
+			continue
+		}
+		if _, ok := seen[m]; ok {
+			continue
+		}
+		seen[m] = struct{}{}
+		out = append(out, m)
+	}
+	return out
+}
+
+func resolveTextModels() []string {
 	// Prioridade:
 	// 1) GEMINI_TEXT_MODEL
 	// 2) GEMINI_MODEL (global)
-	// 3) default seguro
-	if m := strings.TrimSpace(config.AppConfig.GeminiTextModel); m != "" {
-		return m
-	}
-	if m := strings.TrimSpace(config.AppConfig.GeminiModel); m != "" {
-		return m
-	}
-	return "gemini-1.5-pro"
+	// 3) fallbacks resilientes
+	return uniqueNonEmpty(
+		config.AppConfig.GeminiTextModel,
+		config.AppConfig.GeminiModel,
+		"gemini-2.0-flash",
+		"gemini-1.5-flash",
+	)
 }
 
-func resolveVisionModel() string {
+func resolveVisionModels() []string {
 	// Prioridade:
 	// 1) GEMINI_VISION_MODEL
 	// 2) GEMINI_MODEL (global)
-	// 3) default seguro
-	if m := strings.TrimSpace(config.AppConfig.GeminiVisionModel); m != "" {
-		return m
+	// 3) fallbacks resilientes
+	return uniqueNonEmpty(
+		config.AppConfig.GeminiVisionModel,
+		config.AppConfig.GeminiModel,
+		"gemini-2.0-flash",
+		"gemini-1.5-flash",
+	)
+}
+
+func isModelNotFoundResponse(status int, body []byte) bool {
+	if status != http.StatusNotFound {
+		return false
 	}
-	if m := strings.TrimSpace(config.AppConfig.GeminiModel); m != "" {
-		return m
-	}
-	return "gemini-1.5-flash"
+	lower := strings.ToLower(string(body))
+	return strings.Contains(lower, "models/") && strings.Contains(lower, "not found")
 }
 
 // NewGeminiClient cria um novo cliente Gemini
@@ -75,10 +98,6 @@ func (c *GeminiClient) GenerateText(ctx context.Context, prompt string, systemIn
 	if c == nil {
 		return "", ErrAIUnavailable
 	}
-
-	model := resolveTextModel()
-
-	url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", c.BaseURL, model, c.APIKey)
 
 	payload := map[string]interface{}{
 		"contents": []map[string]interface{}{
@@ -103,43 +122,54 @@ func (c *GeminiClient) GenerateText(ctx context.Context, prompt string, systemIn
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return "", err
-	}
+	var lastErr error
+	for _, model := range resolveTextModels() {
+		url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", c.BaseURL, model, c.APIKey)
+		req, reqErr := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+		if reqErr != nil {
+			return "", reqErr
+		}
+		req.Header.Set("Content-Type", "application/json")
 
-	req.Header.Set("Content-Type", "application/json")
+		resp, doErr := c.HTTPClient.Do(req)
+		if doErr != nil {
+			lastErr = doErr
+			break
+		}
 
-	resp, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("erro na API Gemini: %s", string(body))
-	}
+		resp.Body.Close()
 
-	var result struct {
-		Candidates []struct {
-			Content struct {
-				Parts []struct {
-					Text string `json:"text"`
-				} `json:"parts"`
-			} `json:"content"`
-		} `json:"candidates"`
-	}
+		if resp.StatusCode != http.StatusOK {
+			if isModelNotFoundResponse(resp.StatusCode, body) {
+				lastErr = fmt.Errorf("modelo Gemini indisponível: %s", model)
+				continue
+			}
+			return "", fmt.Errorf("erro na API Gemini: %s", string(body))
+		}
 
-	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
-	}
+		var result struct {
+			Candidates []struct {
+				Content struct {
+					Parts []struct {
+						Text string `json:"text"`
+					} `json:"parts"`
+				} `json:"content"`
+			} `json:"candidates"`
+		}
 
-	if len(result.Candidates) == 0 || len(result.Candidates[0].Content.Parts) == 0 {
-		return "", errors.New("resposta vazia da API")
+		if err = json.Unmarshal(body, &result); err != nil {
+			return "", err
+		}
+		if len(result.Candidates) == 0 || len(result.Candidates[0].Content.Parts) == 0 {
+			return "", errors.New("resposta vazia da API")
+		}
+		return result.Candidates[0].Content.Parts[0].Text, nil
 	}
-
-	return result.Candidates[0].Content.Parts[0].Text, nil
+	if lastErr != nil {
+		return "", lastErr
+	}
+	return "", errors.New("nenhum modelo Gemini disponível para geração de texto")
 }
 
 // AnalyzeImage analisa uma imagem usando Gemini Vision
@@ -176,10 +206,6 @@ func (c *GeminiClient) AnalyzeImage(ctx context.Context, imageURL string, prompt
 	}
 	encoded := base64.StdEncoding.EncodeToString(data)
 
-	visionModel := resolveVisionModel()
-
-	url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", c.BaseURL, visionModel, c.APIKey)
-
 	payload := map[string]interface{}{
 		"contents": []map[string]interface{}{
 			{
@@ -199,38 +225,52 @@ func (c *GeminiClient) AnalyzeImage(ctx context.Context, imageURL string, prompt
 		return "", err
 	}
 
-	gReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return "", err
-	}
-	gReq.Header.Set("Content-Type", "application/json")
-	gResp, err := c.HTTPClient.Do(gReq)
-	if err != nil {
-		return "", err
-	}
-	defer gResp.Body.Close()
+	var lastErr error
+	for _, visionModel := range resolveVisionModels() {
+		url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", c.BaseURL, visionModel, c.APIKey)
+		gReq, reqErr := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+		if reqErr != nil {
+			return "", reqErr
+		}
+		gReq.Header.Set("Content-Type", "application/json")
 
-	if gResp.StatusCode != http.StatusOK {
+		gResp, doErr := c.HTTPClient.Do(gReq)
+		if doErr != nil {
+			lastErr = doErr
+			break
+		}
 		body, _ := io.ReadAll(gResp.Body)
-		return "", fmt.Errorf("erro na API Gemini Vision: %s", string(body))
-	}
+		gResp.Body.Close()
 
-	var result struct {
-		Candidates []struct {
-			Content struct {
-				Parts []struct {
-					Text string `json:"text"`
-				} `json:"parts"`
-			} `json:"content"`
-		} `json:"candidates"`
+		if gResp.StatusCode != http.StatusOK {
+			if isModelNotFoundResponse(gResp.StatusCode, body) {
+				lastErr = fmt.Errorf("modelo Gemini Vision indisponível: %s", visionModel)
+				continue
+			}
+			return "", fmt.Errorf("erro na API Gemini Vision: %s", string(body))
+		}
+
+		var result struct {
+			Candidates []struct {
+				Content struct {
+					Parts []struct {
+						Text string `json:"text"`
+					} `json:"parts"`
+				} `json:"content"`
+			} `json:"candidates"`
+		}
+		if err := json.Unmarshal(body, &result); err != nil {
+			return "", err
+		}
+		if len(result.Candidates) == 0 || len(result.Candidates[0].Content.Parts) == 0 {
+			return "", errors.New("resposta vazia da API (vision)")
+		}
+		return result.Candidates[0].Content.Parts[0].Text, nil
 	}
-	if err := json.NewDecoder(gResp.Body).Decode(&result); err != nil {
-		return "", err
+	if lastErr != nil {
+		return "", lastErr
 	}
-	if len(result.Candidates) == 0 || len(result.Candidates[0].Content.Parts) == 0 {
-		return "", errors.New("resposta vazia da API (vision)")
-	}
-	return result.Candidates[0].Content.Parts[0].Text, nil
+	return "", errors.New("nenhum modelo Gemini disponível para análise de imagem")
 }
 
 // CheckAIAvailable verifica se a IA está disponível
