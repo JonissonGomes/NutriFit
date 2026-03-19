@@ -133,6 +133,19 @@ export const geolocationService = {
   },
 
   /**
+   * Autocomplete de endereços/cidades (via Nominatim no backend)
+   */
+  autocompleteAddress: async (
+    query: string,
+    limit: number = 5
+  ): Promise<ApiResponse<{ suggestions: { label: string; value: string }[] }>> => {
+    const params = new URLSearchParams()
+    params.set('query', query)
+    params.set('limit', String(limit))
+    return api.get(`/geo/address-autocomplete?${params.toString()}`, { requiresAuth: false })
+  },
+
+  /**
    * Atualiza a localização do usuário autenticado
    */
   updateMyLocation: async (location: GeoLocation): Promise<ApiResponse<{ success: boolean; location: GeoLocation }>> => {

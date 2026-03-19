@@ -1,11 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, MapPin, Filter, X } from 'lucide-react'
+import { geolocationService } from '../../services/geolocation.service'
 
 const ProfessionalSearch = () => {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [location, setLocation] = useState('')
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false)
+  const locationSearchTimeout = useRef<number | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('')
 
@@ -33,6 +37,36 @@ const ProfessionalSearch = () => {
   const handleQuickSearch = (category: string) => {
     navigate(`/explore?category=${category}`)
   }
+
+  useEffect(() => {
+    if (locationSearchTimeout.current) {
+      window.clearTimeout(locationSearchTimeout.current)
+    }
+
+    const q = location.trim()
+    if (!q || q.length < 2) {
+      setLocationSuggestions([])
+      setIsSearchingLocation(false)
+      return
+    }
+
+    setIsSearchingLocation(true)
+    locationSearchTimeout.current = window.setTimeout(async () => {
+      try {
+        const resp = await geolocationService.autocompleteAddress(q, 6)
+        const suggestions = resp.data?.suggestions?.map((s) => s.value) ?? []
+        setLocationSuggestions(suggestions)
+      } finally {
+        setIsSearchingLocation(false)
+      }
+    }, 350)
+
+    return () => {
+      if (locationSearchTimeout.current) {
+        window.clearTimeout(locationSearchTimeout.current)
+      }
+    }
+  }, [location])
 
   return (
     <section className="py-16 md:py-24 bg-gradient-to-b from-primary-50/50 to-white">
@@ -69,6 +103,27 @@ const ProfessionalSearch = () => {
                   placeholder="Localização (cidade, estado)"
                   className="w-full pl-12 pr-4 py-4 rounded-xl border border-stone-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all text-stone-900 placeholder-stone-400"
                 />
+                {(isSearchingLocation || locationSuggestions.length > 0) && (
+                  <div className="absolute z-20 left-0 right-0 mt-2 rounded-xl border border-stone-200 bg-white shadow-lg overflow-hidden">
+                    {isSearchingLocation ? (
+                      <div className="px-4 py-2 text-sm text-stone-500">Buscando...</div>
+                    ) : (
+                      locationSuggestions.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-stone-50"
+                          onClick={() => {
+                            setLocation(s)
+                            setLocationSuggestions([])
+                          }}
+                        >
+                          {s}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
 
               <button

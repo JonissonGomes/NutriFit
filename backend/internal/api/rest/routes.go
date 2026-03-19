@@ -406,6 +406,7 @@ func SetupRouter() *gin.Engine {
 			geo.GET("/cities", getAvailableCities)
 			geo.GET("/states", getAvailableStates)
 			geo.GET("/distance", calculateDistance)
+		geo.GET("/address-autocomplete", addressAutocomplete)
 		}
 
 		// Analytics tracking (public - for tracking anonymous visitors)

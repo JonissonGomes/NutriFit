@@ -1,8 +1,11 @@
-﻿package rest
+package rest
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -108,6 +111,111 @@ func searchByLocation(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+type addressAutocompleteResult struct {
+	DisplayName string `json:"display_name"`
+	Address     struct {
+		City         string `json:"city"`
+		Town         string `json:"town"`
+		Village      string `json:"village"`
+		Municipality string `json:"municipality"`
+		State        string `json:"state"`
+		Region       string `json:"region"`
+	} `json:"address"`
+}
+
+// addressAutocomplete busca sugestões de endereços/cidades via Nominatim (OpenStreetMap).
+// Retorna sugestões no formato "Cidade, UF" quando possível.
+func addressAutocomplete(c *gin.Context) {
+	query := strings.TrimSpace(c.Query("query"))
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Informe query"})
+		return
+	}
+
+	limit := 5
+	if l := c.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 10 {
+			limit = parsed
+		}
+	}
+
+	u := url.URL{
+		Scheme: "https",
+		Host:   "nominatim.openstreetmap.org",
+		Path:   "/search",
+	}
+	q := u.Query()
+	q.Set("format", "json")
+	q.Set("addressdetails", "1")
+	q.Set("limit", fmt.Sprintf("%d", limit))
+	q.Set("q", query)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao montar requisição"})
+		return
+	}
+	// Nominatim pede User-Agent.
+	req.Header.Set("User-Agent", "NutriFit/1.0 (nominatim; educational use)")
+
+	client := &http.Client{Timeout: 8 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao consultar serviço de endereços"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Falha ao consultar serviço de endereços"})
+		return
+	}
+
+	var raw []addressAutocompleteResult
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Resposta inválida do serviço de endereços"})
+		return
+	}
+
+	type suggestion struct {
+		Label string `json:"label"`
+		Value string `json:"value"`
+	}
+	suggestions := make([]suggestion, 0, len(raw))
+
+	for _, r := range raw {
+		city := r.Address.City
+		if city == "" {
+			city = r.Address.Town
+		}
+		if city == "" {
+			city = r.Address.Village
+		}
+		if city == "" {
+			city = r.Address.Municipality
+		}
+		state := r.Address.State
+		if state == "" {
+			state = r.Address.Region
+		}
+
+		label := strings.TrimSpace(r.DisplayName)
+		value := label
+		if city != "" && state != "" {
+			label = fmt.Sprintf("%s, %s", city, state)
+			value = label
+		} else if city != "" {
+			label = city
+			value = city
+		}
+
+		suggestions = append(suggestions, suggestion{Label: label, Value: value})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"suggestions": suggestions})
 }
 
 // getLocationFromIP obtém localização a partir do IP

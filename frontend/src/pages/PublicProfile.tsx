@@ -16,6 +16,7 @@ import { blogService } from '../services/blog.service'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import type { PublicProfile as PublicProfileType } from '../services/profile.service'
+import { DEFAULT_CUSTOMIZATION } from '../services/profile.service'
 import type { ReviewWithDetails } from '../services/review.service'
 import ConfirmModal from '../components/common/ConfirmModal'
 import type { BlogPost } from '../services/blog.service'
@@ -146,12 +147,50 @@ const PublicProfile = () => {
     )
   }
 
+  const customization = profile.customization ?? DEFAULT_CUSTOMIZATION
+  const showStats = customization.showStats !== false
+  const showServices = customization.showServices !== false
+  const showReviews = customization.showReviews !== false
+  const showContact = customization.showContact !== false
+
+  const heroStyle = customization.heroStyle ?? 'full'
+  const cardStyle = customization.projectCardStyle ?? 'simple'
+  const layoutType = customization.layout ?? 'grid'
+  const isMinimalHero = heroStyle === 'minimal' || layoutType === 'minimalist'
+
+  const primaryColor = customization.primaryColor?.trim() || undefined
+  const primaryColorHexAlpha = primaryColor && primaryColor.startsWith('#') && primaryColor.length === 7 ? `${primaryColor}20` : undefined
+  const primaryColorSolid = primaryColor && primaryColor.startsWith('#') && primaryColor.length === 7 ? primaryColor : undefined
+
+  const coverHeightClass =
+    isMinimalHero ? 'h-20 md:h-24' : heroStyle === 'full' ? 'h-40 md:h-56' : heroStyle === 'compact' ? 'h-28 md:h-36' : 'h-20 md:h-24'
+
+  const avatarOffsetClass =
+    isMinimalHero
+      ? 'relative z-10 -mt-8 md:-mt-10'
+      : heroStyle === 'full'
+        ? 'relative z-10 -mt-16 md:-mt-20'
+        : heroStyle === 'compact'
+          ? 'relative z-10 -mt-12 md:-mt-14'
+          : 'relative z-10 -mt-8 md:-mt-10'
+
+  const avatarSizeClass =
+    isMinimalHero
+      ? 'w-18 h-18 md:w-20 md:h-20'
+      : heroStyle === 'full'
+        ? 'w-28 h-28 md:w-32 md:h-32'
+        : heroStyle === 'compact'
+          ? 'w-20 h-20 md:w-24 md:h-24'
+          : 'w-18 h-18 md:w-20 md:h-20'
+
   const contactEmail = profile.contact?.email || profile.email
   const contactPhone = profile.contact?.phone || profile.phone
   const contactWebsite = profile.contact?.website || profile.website
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div
+      className={`min-h-screen ${customization.backgroundStyle === 'dark' ? 'bg-stone-950' : customization.backgroundStyle === 'gradient' ? 'bg-gradient-to-b from-primary-900/10 via-gray-50 to-gray-50' : 'bg-gray-50'}`}
+    >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <Link
           to="/explore"
@@ -162,7 +201,10 @@ const PublicProfile = () => {
         </Link>
 
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="h-40 md:h-56 bg-gradient-to-r from-primary-600 to-accent-600 relative z-0">
+          <div
+            className={`${coverHeightClass} bg-gradient-to-r from-primary-600 to-accent-600 relative z-0`}
+            style={primaryColorSolid ? { backgroundImage: `linear-gradient(90deg, ${primaryColorSolid}, #14b8a6)` } : undefined}
+          >
             {profile.coverImage && (
               <img src={profile.coverImage} className="w-full h-full object-cover opacity-90" alt="Capa" />
             )}
@@ -170,8 +212,8 @@ const PublicProfile = () => {
 
           <div className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row md:items-start gap-5">
-              <div className="relative z-10 -mt-16 md:-mt-20">
-                <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-white p-1 shadow-md">
+              <div className={avatarOffsetClass}>
+                <div className={`${avatarSizeClass} rounded-2xl bg-white p-1 shadow-md`}>
                   <div className="w-full h-full rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center">
                     {profile.avatar ? (
                       <img src={profile.avatar} alt={profile.displayName} className="w-full h-full object-cover" />
@@ -193,10 +235,14 @@ const PublicProfile = () => {
                         <VerifiedIcon sx={{ fontSize: 22, color: '#10b981' }} titleAccess="Verificado" />
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600">
+                      <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600">
                       <span className="inline-flex items-center gap-1">
-                        <StarIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
-                        {rating.avg.toFixed(1)} ({rating.count})
+                          <StarIcon sx={{ fontSize: 18, color: primaryColorSolid ?? '#f59e0b' }} />
+                          {showStats ? (
+                            <>
+                              {rating.avg.toFixed(1)} ({rating.count})
+                            </>
+                          ) : null}
                       </span>
                       {profile.location?.address?.city && (
                         <span className="inline-flex items-center gap-1">
@@ -205,7 +251,14 @@ const PublicProfile = () => {
                           {profile.location.address.state ? `, ${profile.location.address.state}` : ''}
                         </span>
                       )}
-                      {profile.specialty && <span className="px-2 py-0.5 rounded-full bg-primary-50 text-primary-800">{profile.specialty}</span>}
+                        {profile.specialty && (
+                          <span
+                            className="px-2 py-0.5 rounded-full bg-primary-50 text-primary-800"
+                            style={primaryColorHexAlpha && primaryColorSolid ? { backgroundColor: primaryColorHexAlpha, color: primaryColorSolid } : undefined}
+                          >
+                            {profile.specialty}
+                          </span>
+                        )}
                     </div>
                   </div>
 
@@ -223,9 +276,9 @@ const PublicProfile = () => {
                   </button>
                 </div>
 
-                {profile.bio && <p className="mt-4 text-gray-700 leading-relaxed">{profile.bio}</p>}
+                {profile.bio && !isMinimalHero && <p className="mt-4 text-gray-700 leading-relaxed">{profile.bio}</p>}
 
-                {profile.specialties?.length ? (
+                {profile.specialties?.length && showServices && !isMinimalHero ? (
                   <div className="mt-4 flex flex-wrap gap-2">
                     {profile.specialties.slice(0, 10).map((s) => (
                       <span key={s} className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
@@ -244,30 +297,172 @@ const PublicProfile = () => {
                       Este profissional ainda não publicou conteúdos.
                     </div>
                   ) : (
-                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {posts.map((p) => (
-                        <Link
-                          key={p.id}
-                          to={`/conteudos/public/${p.slug}`}
-                          className="block bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow"
-                        >
-                          <div className="flex gap-3 items-start">
-                            {(p.featuredImage ||
-                              p.attachments?.find((a) => a.type === 'image')?.url) && (
-                              <img
-                                src={p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url}
-                                alt={p.title}
-                                className="w-20 h-20 rounded-lg object-cover border border-gray-100 flex-shrink-0"
-                              />
-                            )}
-                            <div className="min-w-0">
-                              <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
-                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
-                            </div>
+                    layoutType === 'carousel' ? (
+                      <div className="mt-3 -mx-4 px-4 overflow-x-auto pb-2">
+                        <div className="flex gap-3">
+                          {posts.map((p) => {
+                            const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
+                            return (
+                              <Link
+                                key={p.id}
+                                to={`/conteudos/public/${p.slug}`}
+                                className="min-w-[260px] sm:min-w-[300px] block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow"
+                              >
+                                {thumbUrl ? (
+                                  <img src={thumbUrl} alt={p.title} className="w-full h-36 object-cover" />
+                                ) : (
+                                  <div className="w-full h-36 bg-gradient-to-r from-primary-600 to-accent-600" />
+                                )}
+                                <div className="p-4">
+                                  <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
+                                  {!isMinimalHero ? (
+                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
+                                  ) : null}
+                                  <p className="text-[11px] text-gray-500 mt-2">{`Por ${profile.displayName}`}</p>
+                                </div>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ) : layoutType === 'featured' && posts.length > 0 ? (
+                      <div className="mt-3 space-y-4">
+                        {(() => {
+                          const featured = posts[0]
+                          const featuredThumb = featured.featuredImage || featured.attachments?.find((a) => a.type === 'image')?.url
+                          const featuredCard =
+                            cardStyle === 'overlay' ? (
+                              <Link
+                                to={`/conteudos/public/${featured.slug}`}
+                                className="block bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-sm transition-shadow"
+                              >
+                                <div className="relative">
+                                  {featuredThumb ? (
+                                    <img src={featuredThumb} alt={featured.title} className="w-full h-52 object-cover" />
+                                  ) : (
+                                    <div className="w-full h-52 bg-gradient-to-r from-primary-600 to-accent-600" />
+                                  )}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                                    <p className="font-semibold text-white line-clamp-2">{featured.title}</p>
+                                    {!isMinimalHero ? (
+                                      <p className="text-sm text-white/90 mt-1 line-clamp-2">{featured.excerpt}</p>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </Link>
+                            ) : (
+                              <Link
+                                to={`/conteudos/public/${featured.slug}`}
+                                className="block bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-sm transition-shadow"
+                              >
+                                {featuredThumb ? (
+                                  <img src={featuredThumb} alt={featured.title} className="w-full h-52 object-cover" />
+                                ) : (
+                                  <div className="w-full h-52 bg-gradient-to-r from-primary-600 to-accent-600" />
+                                )}
+                                <div className="p-5">
+                                  <p className="text-xl font-bold text-gray-900">{featured.title}</p>
+                                  {cardStyle !== 'simple' && !isMinimalHero ? (
+                                    <p className="text-gray-600 mt-2 line-clamp-3">{featured.excerpt}</p>
+                                  ) : null}
+                                  {cardStyle === 'detailed' ? (
+                                    <p className="text-[11px] text-gray-500 mt-3">{`Por ${profile.displayName} • ${featured.readTime || 1} min de leitura`}</p>
+                                  ) : null}
+                                </div>
+                              </Link>
+                            )
+                          return featuredCard
+                        })()}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {posts.slice(1).map((p) => {
+                            const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
+                            return (
+                              <Link
+                                key={p.id}
+                                to={`/conteudos/public/${p.slug}`}
+                                className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow"
+                              >
+                                {thumbUrl ? (
+                                  <img src={thumbUrl} alt={p.title} className="w-full h-28 object-cover" />
+                                ) : (
+                                  <div className="w-full h-28 bg-gradient-to-r from-primary-600 to-accent-600" />
+                                )}
+                                <div className="p-4">
+                                  <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
+                                  {!isMinimalHero ? (
+                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
+                                  ) : null}
+                                </div>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      (() => {
+                        const gridColumns = Math.min(4, Math.max(1, customization.gridColumns ?? 3))
+                        const mdColsClass =
+                          gridColumns === 1
+                            ? 'md:grid-cols-1'
+                            : gridColumns === 2
+                              ? 'md:grid-cols-2'
+                              : gridColumns === 3
+                                ? 'md:grid-cols-3'
+                                : 'md:grid-cols-4'
+
+                        return (
+                          <div className={`mt-3 grid grid-cols-1 ${mdColsClass} gap-3 md:gap-4`}>
+                            {posts.map((p) => {
+                              const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
+                              const isOverlay = cardStyle === 'overlay' || layoutType === 'portfolio'
+                              return (
+                                <Link
+                                  key={p.id}
+                                  to={`/conteudos/public/${p.slug}`}
+                                  className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow"
+                                >
+                                  {isOverlay ? (
+                                    <div className="relative">
+                                      {thumbUrl ? (
+                                        <img src={thumbUrl} alt={p.title} className="w-full h-32 object-cover" />
+                                      ) : (
+                                        <div className="w-full h-32 bg-gradient-to-r from-primary-600 to-accent-600" />
+                                      )}
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                                        <p className="font-semibold text-white line-clamp-2">{p.title}</p>
+                                        {!isMinimalHero && cardStyle !== 'simple' ? (
+                                          <p className="text-sm text-white/90 mt-1 line-clamp-2">{p.excerpt}</p>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      {thumbUrl ? (
+                                        <img src={thumbUrl} alt={p.title} className="w-full h-32 object-cover" />
+                                      ) : (
+                                        <div className="w-full h-32 bg-gradient-to-r from-primary-600 to-accent-600" />
+                                      )}
+                                      <div className="p-4">
+                                        <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
+                                        {!isMinimalHero && cardStyle !== 'simple' ? (
+                                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
+                                        ) : null}
+                                        {cardStyle === 'detailed' ? (
+                                          <p className="text-[11px] text-gray-500 mt-2">{`Por ${profile.displayName}`}</p>
+                                        ) : null}
+                                      </div>
+                                    </>
+                                  )}
+                                </Link>
+                              )
+                            })}
                           </div>
-                        </Link>
-                      ))}
-                    </div>
+                        )
+                      })()
+                    )
                   )}
                 </div>
               </div>
@@ -276,76 +471,80 @@ const PublicProfile = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2 bg-white border border-gray-200 rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-gray-900">Avaliações</h2>
-            {reviews.length === 0 ? (
-              <p className="text-sm text-gray-600 mt-2">Ainda não há avaliações.</p>
-            ) : (
-              <div className="mt-4 space-y-4">
-                {reviews.map((r) => (
-                  <div key={r.id} className="border border-gray-100 rounded-xl p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold text-gray-900 truncate">{r.clientName || 'Paciente'}</div>
-                      <div className="text-sm text-gray-700 inline-flex items-center gap-1">
-                        <StarIcon sx={{ fontSize: 18, color: '#f59e0b' }} /> {r.rating}
+          {showReviews ? (
+            <div className="md:col-span-2 bg-white border border-gray-200 rounded-2xl p-6">
+              <h2 className="text-lg font-bold text-gray-900">Avaliações</h2>
+              {reviews.length === 0 ? (
+                <p className="text-sm text-gray-600 mt-2">Ainda não há avaliações.</p>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  {reviews.map((r) => (
+                    <div key={r.id} className="border border-gray-100 rounded-xl p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-semibold text-gray-900 truncate">{r.clientName || 'Paciente'}</div>
+                        <div className="text-sm text-gray-700 inline-flex items-center gap-1">
+                          <StarIcon sx={{ fontSize: 18, color: primaryColorSolid ?? '#f59e0b' }} /> {r.rating}
+                        </div>
                       </div>
+                      {r.comment && <p className="text-sm text-gray-700 mt-2">{r.comment}</p>}
                     </div>
-                    {r.comment && <p className="text-sm text-gray-700 mt-2">{r.comment}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-gray-900">Contato</h2>
-            <div className="mt-4 space-y-3 text-sm text-gray-700">
-              {contactEmail && (
-                <div className="flex items-center gap-2">
-                  <EmailIcon sx={{ fontSize: 18 }} />
-                  <span className="truncate">{contactEmail}</span>
-                </div>
-              )}
-              {contactPhone && (
-                <div className="flex items-center gap-2">
-                  <PhoneIcon sx={{ fontSize: 18 }} />
-                  <span className="truncate">{contactPhone}</span>
-                </div>
-              )}
-              {contactWebsite && (
-                <div className="flex items-center gap-2">
-                  <LanguageIcon sx={{ fontSize: 18 }} />
-                  <a href={contactWebsite} className="text-primary-700 font-semibold truncate" target="_blank" rel="noreferrer">
-                    {contactWebsite}
-                  </a>
-                </div>
-              )}
-
-              {profile.social?.instagram?.url && (
-                <div className="flex items-center gap-2">
-                  <InstagramIcon sx={{ fontSize: 18 }} />
-                  <a href={profile.social.instagram.url} className="text-primary-700 font-semibold truncate" target="_blank" rel="noreferrer">
-                    Instagram
-                  </a>
-                </div>
-              )}
-              {profile.social?.facebook?.url && (
-                <div className="flex items-center gap-2">
-                  <FacebookIcon sx={{ fontSize: 18 }} />
-                  <a href={profile.social.facebook.url} className="text-primary-700 font-semibold truncate" target="_blank" rel="noreferrer">
-                    Facebook
-                  </a>
-                </div>
-              )}
-
-              {profile.verification?.verified && (
-                <div className="mt-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 text-primary-800 font-semibold">
-                  <VerifiedIcon sx={{ fontSize: 18, color: '#10b981' }} />
-                  Verificado
+                  ))}
                 </div>
               )}
             </div>
-          </div>
+          ) : null}
+
+          {showContact ? (
+            <div className={showReviews ? 'bg-white border border-gray-200 rounded-2xl p-6' : 'bg-white border border-gray-200 rounded-2xl p-6 md:col-span-3'}>
+              <h2 className="text-lg font-bold text-gray-900">Contato</h2>
+              <div className="mt-4 space-y-3 text-sm text-gray-700">
+                {contactEmail && (
+                  <div className="flex items-center gap-2">
+                    <EmailIcon sx={{ fontSize: 18 }} />
+                    <span className="truncate">{contactEmail}</span>
+                  </div>
+                )}
+                {contactPhone && (
+                  <div className="flex items-center gap-2">
+                    <PhoneIcon sx={{ fontSize: 18 }} />
+                    <span className="truncate">{contactPhone}</span>
+                  </div>
+                )}
+                {contactWebsite && (
+                  <div className="flex items-center gap-2">
+                    <LanguageIcon sx={{ fontSize: 18 }} />
+                    <a href={contactWebsite} className="text-primary-700 font-semibold truncate" target="_blank" rel="noreferrer">
+                      {contactWebsite}
+                    </a>
+                  </div>
+                )}
+
+                {profile.social?.instagram?.url && (
+                  <div className="flex items-center gap-2">
+                    <InstagramIcon sx={{ fontSize: 18 }} />
+                    <a href={profile.social.instagram.url} className="text-primary-700 font-semibold truncate" target="_blank" rel="noreferrer">
+                      Instagram
+                    </a>
+                  </div>
+                )}
+                {profile.social?.facebook?.url && (
+                  <div className="flex items-center gap-2">
+                    <FacebookIcon sx={{ fontSize: 18 }} />
+                    <a href={profile.social.facebook.url} className="text-primary-700 font-semibold truncate" target="_blank" rel="noreferrer">
+                      Facebook
+                    </a>
+                  </div>
+                )}
+
+                {profile.verification?.verified && (
+                  <div className="mt-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 text-primary-800 font-semibold">
+                    <VerifiedIcon sx={{ fontSize: 18, color: '#10b981' }} />
+                    Verificado
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 

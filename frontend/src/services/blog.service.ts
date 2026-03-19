@@ -169,9 +169,8 @@ export const blogService = {
   uploadAttachments: async (id: string, files: File[]): Promise<ApiResponse<BlogPost>> => {
     const form = new FormData()
     for (const f of files) form.append('files', f)
-    return api.post<BlogPost>(`/blog/posts/${id}/attachments`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    } as any)
+    // Não setar Content-Type manualmente: o browser adiciona o boundary corretamente.
+    return api.post<BlogPost>(`/blog/posts/${id}/attachments`, form)
   },
 
   /**

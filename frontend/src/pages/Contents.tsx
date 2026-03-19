@@ -76,20 +76,30 @@ const Contents = () => {
               </Link>
             )}
 
-            <div className="space-y-4">
-              {rest.slice(0, 8).map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/conteudos/public/${p.slug}`}
-                  className="block bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow"
-                >
-                  <p className="text-sm font-semibold text-gray-900 line-clamp-2">{p.title}</p>
-                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
-                  <p className="text-[11px] text-gray-500 mt-2">
-                    {p.author?.name ? `Por ${p.author.name}` : 'Autor NuFit'}
-                  </p>
-                </Link>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {rest.slice(0, 8).map((p) => {
+                const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
+                return (
+                  <Link
+                    key={p.id}
+                    to={`/conteudos/public/${p.slug}`}
+                    className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow"
+                  >
+                    {thumbUrl ? (
+                      <img src={thumbUrl} alt={p.title} className="w-full h-32 object-cover" />
+                    ) : (
+                      <div className="w-full h-32 bg-gradient-to-r from-primary-600 to-accent-600" />
+                    )}
+                    <div className="p-4">
+                      <p className="text-sm font-semibold text-gray-900 line-clamp-2">{p.title}</p>
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
+                      <p className="text-[11px] text-gray-500 mt-2">
+                        {p.author?.name ? `Por ${p.author.name}` : 'Autor NuFit'}
+                      </p>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           </div>
         )}

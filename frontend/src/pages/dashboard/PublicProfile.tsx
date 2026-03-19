@@ -26,6 +26,44 @@ type PublicProfileType = ProfileServicePublicProfile
 import LayoutCustomizer from '../../components/profile/LayoutCustomizer'
 import LayoutPreview from '../../components/profile/LayoutPreview'
 
+const NUTRICIONISTA_SPECIALTIES = [
+  // Clínico / acompanhamento individual (core)
+  'Nutrição Clínica',
+  'Nutrição Esportiva',
+  'Nutrição Funcional',
+  'Nutrição Comportamental',
+  'Emagrecimento e Obesidade',
+
+  // Saúde e condições específicas
+  'Nutrição em Diabetes',
+  'Nutrição Cardiovascular',
+  'Nutrição em Doenças Gastrointestinais',
+  'Nutrição Oncológica',
+  'Nutrição em Doenças Renais',
+
+  // Ciclos de vida
+  'Nutrição Materno-Infantil',
+  'Nutrição Pediátrica',
+  'Nutrição Geriátrica',
+
+  // Outras
+  'Nutrição em Saúde Coletiva',
+  'Nutrição em Alimentação Coletiva (UAN)',
+] as const
+
+const MEDICO_SPECIALTIES = [
+  // Mais conectadas com nutrição
+  'Endocrinologia e Metabologia',
+  'Medicina do Esporte',
+  'Clínica Médica',
+
+  // Média relevância
+  'Cardiologia',
+  'Gastroenterologia',
+  'Nefrologia',
+  'Geriatria',
+] as const
+
 const PublicProfile = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -36,7 +74,11 @@ const PublicProfile = () => {
   const professionalRegistrationLabel = useMemo(() => {
     const reg = user?.professionalRegistration
     if (!reg?.type || !reg?.number) return 'CRN/CRM não informado'
-    return `${reg.type} ${reg.number.trim()}`
+    const type = String(reg.type).toUpperCase()
+    const number = String(reg.number).trim()
+    // Se o número já vem com o prefixo (ex.: "CRN-4 146"), não duplicar.
+    if (number.toUpperCase().startsWith(type)) return number
+    return `${type} ${number}`
   }, [user])
   
   const [isLoading, setIsLoading] = useState(true)
@@ -97,27 +139,9 @@ const PublicProfile = () => {
     setIsSearchingLocation(true)
     locationSearchTimeout.current = window.setTimeout(async () => {
       try {
-        // Heurística simples: se tiver vírgula, tratar como "cidade, UF"
-        const [cityRaw, stateRaw] = q.split(',').map((s) => s.trim())
-        const city = cityRaw || undefined
-        const state = stateRaw || undefined
-
-        const resp = await geolocationService.searchByLocation({
-          city,
-          state,
-          limit: 8,
-          page: 1,
-        })
-
-        const suggestions = new Set<string>()
-        for (const r of resp.data?.results || []) {
-          const addr = r.profile.location?.address
-          if (!addr?.city) continue
-          suggestions.add(`${addr.city}${addr.state ? `, ${addr.state}` : ''}`)
-        }
-
-        // Se não vier nada (ex: cidade sem profissionais), ainda manter o texto sem travar UI
-        setLocationSuggestions(Array.from(suggestions).slice(0, 8))
+        const resp = await geolocationService.autocompleteAddress(q, 8)
+        const suggestions = resp.data?.suggestions?.map((s) => s.value) ?? []
+        setLocationSuggestions(suggestions)
       } finally {
         setIsSearchingLocation(false)
       }
@@ -216,7 +240,7 @@ const PublicProfile = () => {
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     let sanitizedValue = value
     
@@ -737,15 +761,31 @@ const PublicProfile = () => {
                     <WorkIcon sx={{ fontSize: 16 }} />
                     Especialidade Principal
                   </label>
-                  <input
-                    type="text"
-                    name="specialty"
-                    value={formData.specialty}
-                    onChange={handleChange}
-                    maxLength={INPUT_LIMITS.SPECIALTY}
-                    className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Ex: Nutrição Clínica, Esportiva"
-                  />
+                  {(user?.role === 'nutricionista' || user?.role === 'medico') ? (
+                    <select
+                      name="specialty"
+                      value={formData.specialty}
+                      onChange={handleChange}
+                      className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+                    >
+                      <option value="">Selecione uma especialidade</option>
+                      {(user?.role === 'nutricionista' ? NUTRICIONISTA_SPECIALTIES : MEDICO_SPECIALTIES).map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      name="specialty"
+                      value={formData.specialty}
+                      onChange={handleChange}
+                      maxLength={INPUT_LIMITS.SPECIALTY}
+                      className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="Ex: Nutrição Clínica, Esportiva"
+                    />
+                  )}
                 </div>
 
                 <div>

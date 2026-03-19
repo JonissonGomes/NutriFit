@@ -10,6 +10,7 @@ const MyContents = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [posts, setPosts] = useState<BlogPost[]>([])
+  const [updatingVisibilityId, setUpdatingVisibilityId] = useState<string | null>(null)
 
   const [title, setTitle] = useState('')
   const [excerpt, setExcerpt] = useState('')
@@ -93,6 +94,22 @@ const MyContents = () => {
     await load()
   }
 
+  const handleToggleVisibility = async (post: BlogPost, nextPublished: boolean) => {
+    if (!post?.id) return
+    setUpdatingVisibilityId(post.id)
+    try {
+      const res = await blogService.update(post.id, { published: nextPublished })
+      if (res.error) {
+        showToast(res.error, 'error')
+        return
+      }
+      showToast(nextPublished ? 'Conteúdo visível no perfil.' : 'Conteúdo oculto do perfil.', 'success')
+      await load()
+    } finally {
+      setUpdatingVisibilityId(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -169,7 +186,7 @@ const MyContents = () => {
                     key={src}
                     src={src}
                     alt={`Prévia ${idx + 1}`}
-                    className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-stone-700"
+                    className="w-full h-28 object-cover rounded-lg border border-gray-200 dark:border-stone-700"
                   />
                 ))}
               </div>
@@ -215,7 +232,7 @@ const MyContents = () => {
                     <img
                       src={p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url}
                       alt={p.title}
-                      className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-stone-700 mb-3"
+                    className="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-stone-700 mb-3"
                     />
                   )}
                   <p className="font-semibold text-gray-900 dark:text-white truncate">{p.title}</p>
@@ -224,6 +241,17 @@ const MyContents = () => {
                     {p.published ? 'Publicado' : 'Rascunho'} • slug: {p.slug}
                   </p>
                 </div>
+              <div className="flex flex-col items-end gap-3">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={p.published}
+                    disabled={updatingVisibilityId === p.id}
+                    onChange={(e) => void handleToggleVisibility(p, e.target.checked)}
+                  />
+                  Visível no perfil
+                </label>
+
                 <div className="flex items-center gap-3">
                   <Link
                     to={`/conteudos/meus/${p.slug}`}
@@ -239,6 +267,7 @@ const MyContents = () => {
                     Excluir
                   </button>
                 </div>
+              </div>
               </div>
             ))}
           </div>
