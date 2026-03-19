@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"encoding/csv"
@@ -8,8 +8,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"nufit/backend/internal/database"
+	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/patient"
+	"nufit/backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func listPatients(c *gin.Context) {
@@ -205,4 +210,81 @@ func importPatients(c *gin.Context) {
 		"skipped": skipped,
 		"errors":  errorsList,
 	})
+}
+
+type platformPatientResult struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Email  string `json:"email,omitempty"`
+	Phone  string `json:"phone,omitempty"`
+	Avatar string `json:"avatar,omitempty"`
+}
+
+// searchPlatformPatients busca pacientes já cadastrados na plataforma por nome/email.
+// Útil para o profissional adicionar rapidamente alguém na sua lista de pacientes.
+func searchPlatformPatients(c *gin.Context) {
+	query := strings.TrimSpace(c.Query("query"))
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Informe query"})
+		return
+	}
+
+	limit := 10
+	if l := c.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 25 {
+			limit = parsed
+		}
+	}
+
+	// Usar regex no formato $regex/$options para máxima compatibilidade
+	// (evita problemas de serialização dependendo do driver/versão).
+	regexFilter := bson.M{"$regex": query, "$options": "i"}
+	filter := bson.M{
+		"role": string(models.RolePaciente),
+		"$or": []bson.M{
+			{"name": regexFilter},
+			{"email": regexFilter},
+		},
+	}
+
+	opts := options.Find().
+		SetLimit(int64(limit)).
+		SetSort(bson.D{{Key: "updatedAt", Value: -1}, {Key: "createdAt", Value: -1}}).
+		SetProjection(bson.M{"name": 1, "email": 1, "phone": 1, "avatar": 1})
+
+	cur, err := database.UsersCollection.Find(c.Request.Context(), filter, opts)
+	if err != nil {
+		// Em dev, esse log ajuda a identificar index/serialização/estrutura de dados.
+		utils.Debug("searchPlatformPatients error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar pacientes na plataforma"})
+		return
+	}
+	defer cur.Close(c.Request.Context())
+
+	type userDoc struct {
+		ID     primitive.ObjectID `bson:"_id"`
+		Name   string             `bson:"name"`
+		Email  string             `bson:"email"`
+		Phone  string             `bson:"phone,omitempty"`
+		Avatar string             `bson:"avatar,omitempty"`
+	}
+
+	var docs []userDoc
+	if err := cur.All(c.Request.Context(), &docs); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao ler resultados"})
+		return
+	}
+
+	out := make([]platformPatientResult, 0, len(docs))
+	for _, d := range docs {
+		out = append(out, platformPatientResult{
+			ID:     d.ID.Hex(),
+			Name:   d.Name,
+			Email:  d.Email,
+			Phone:  d.Phone,
+			Avatar: d.Avatar,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": out})
 }

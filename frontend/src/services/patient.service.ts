@@ -21,9 +21,22 @@ export interface CreatePatientRequest {
 
 export interface UpdatePatientRequest extends Partial<CreatePatientRequest> {}
 
+export interface PlatformPatient {
+  id: string
+  name: string
+  email?: string
+  phone?: string
+  avatar?: string
+}
+
 export const patientService = {
   async list(): Promise<ApiResponse<{ data: Patient[] }>> {
     return api.get(`/patients`)
+  },
+
+  async searchPlatform(query: string, limit = 10): Promise<ApiResponse<{ data: PlatformPatient[] }>> {
+    const q = query.trim()
+    return api.get(`/patients/search-platform?query=${encodeURIComponent(q)}&limit=${encodeURIComponent(limit)}`)
   },
 
   async create(payload: CreatePatientRequest): Promise<ApiResponse<{ data: Patient }>> {

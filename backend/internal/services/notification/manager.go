@@ -1,4 +1,4 @@
-﻿package notification
+package notification
 
 import (
 	"context"
@@ -243,6 +243,27 @@ func NotifyNewFavorite(ctx context.Context, architectID primitive.ObjectID, clie
 		Title:    "Novo favorito",
 		Message:  clientName + " adicionou você aos favoritos",
 		Channels: []models.NotificationChannel{models.ChannelInApp},
+	}
+	return CreateNotification(ctx, notification)
+}
+
+// NotifyFoodDiaryCheckIn cria notificação de check-in no diário alimentar.
+func NotifyFoodDiaryCheckIn(ctx context.Context, nutritionistID primitive.ObjectID, patientName string, mealType string, entryID primitive.ObjectID, at time.Time) error {
+	title := "Novo check-in no diário"
+	msg := patientName + " registrou " + mealType
+	notification := &models.Notification{
+		UserID:      nutritionistID,
+		Type:        models.NotificationTypeFoodDiary,
+		Title:       title,
+		Message:     msg,
+		RelatedType: "food_diary_entry",
+		RelatedID:   &entryID,
+		Channels:    []models.NotificationChannel{models.ChannelInApp},
+		Metadata: map[string]interface{}{
+			"patientName": patientName,
+			"mealType":    mealType,
+			"at":          at,
+		},
 	}
 	return CreateNotification(ctx, notification)
 }

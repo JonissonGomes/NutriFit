@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, DollarSign, Clock, Building2, ArrowLeft, CheckCircle, X, Power, Loader2 } from 'lucide-react'
+import { Plus, Edit, Trash2, DollarSign, Clock, ClipboardList, ArrowLeft, CheckCircle, X, Power, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { servicesService } from '../../services'
 import type { Service, CreateServiceRequest, ServiceCategory, ServiceStats } from '../../services/services.service'
@@ -28,7 +28,7 @@ const Services = () => {
     description: '',
     price: 0,
     duration: '',
-    category: 'residencial',
+    category: 'consulta',
     features: [],
   })
   const [newFeature, setNewFeature] = useState('')
@@ -158,7 +158,7 @@ const Services = () => {
       description: '',
       price: 0,
       duration: '',
-      category: 'residencial',
+      category: 'consulta',
       features: [],
     })
     setShowModal(true)
@@ -172,7 +172,7 @@ const Services = () => {
       description: '',
       price: 0,
       duration: '',
-      category: 'residencial',
+      category: 'consulta',
       features: [],
     })
     setNewFeature('')
@@ -195,7 +195,7 @@ const Services = () => {
     }))
   }
 
-  const categories: ServiceCategory[] = ['residencial', 'comercial', 'interiores', 'reforma', 'consultoria', 'paisagismo', 'outro']
+  const categories: ServiceCategory[] = ['consulta', 'retorno', 'avaliacao', 'plano_alimentar', 'acompanhamento', 'bioimpedancia', 'outro']
 
   if (loading) {
     return (
@@ -235,7 +235,7 @@ const Services = () => {
         <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-primary-50 rounded-lg">
-              <Building2 className="h-6 w-6 text-primary-600" />
+              <ClipboardList className="h-6 w-6 text-primary-600" />
             </div>
           </div>
           <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{stats?.total || services.length}</h3>
@@ -374,7 +374,7 @@ const Services = () => {
         </div>
       ) : (
         <div className="bg-white rounded-xl p-12 border border-gray-200 text-center">
-          <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <ClipboardList className="h-12 w-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500 mb-4">Você ainda não tem serviços cadastrados</p>
           <button
             onClick={openNewModal}
@@ -524,7 +524,7 @@ const Services = () => {
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
                     maxLength={100}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Ex: Projeto executivo"
+                  placeholder="Ex: Plano alimentar personalizado"
                   />
                   <button
                     type="button"

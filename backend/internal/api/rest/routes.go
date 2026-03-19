@@ -150,6 +150,7 @@ func SetupRouter() *gin.Engine {
 			patients := protected.Group("/patients")
 			{
 				patients.GET("", listPatients)
+				patients.GET("/search-platform", searchPlatformPatients)
 				patients.POST("", createPatient)
 				patients.GET("/:id", getPatient)
 				patients.PUT("/:id", updatePatient)

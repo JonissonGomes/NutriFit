@@ -84,13 +84,13 @@ export interface QuestionStats {
 // ============================================
 
 export const QUESTION_CATEGORIES: { value: QuestionCategory; label: string; description: string }[] = [
-  { value: 'materiais', label: 'Materiais', description: 'Dúvidas sobre materiais de construção' },
-  { value: 'projeto', label: 'Projeto', description: 'Dúvidas sobre projetos arquitetônicos' },
-  { value: 'reforma', label: 'Reforma', description: 'Dúvidas sobre reformas e renovações' },
-  { value: 'interiores', label: 'Interiores', description: 'Dúvidas sobre design de interiores' },
-  { value: 'orcamento', label: 'Orçamento', description: 'Dúvidas sobre custos e orçamentos' },
-  { value: 'legislacao', label: 'Legislação', description: 'Dúvidas sobre leis e regulamentações' },
-  { value: 'outro', label: 'Outro', description: 'Outras dúvidas sobre arquitetura' },
+  { value: 'materiais', label: 'Nutrição clínica', description: 'Dúvidas sobre alimentação e saúde no dia a dia' },
+  { value: 'projeto', label: 'Nutrição esportiva', description: 'Dúvidas sobre performance, treino e suplementação' },
+  { value: 'reforma', label: 'Emagrecimento', description: 'Dúvidas sobre perda de peso e recomposição corporal' },
+  { value: 'interiores', label: 'Intolerâncias', description: 'Dúvidas sobre lactose, glúten e alergias alimentares' },
+  { value: 'orcamento', label: 'Diabetes', description: 'Dúvidas sobre controle glicêmico e plano alimentar' },
+  { value: 'legislacao', label: 'Saúde intestinal', description: 'Dúvidas sobre digestão, microbiota e sintomas gastrointestinais' },
+  { value: 'outro', label: 'Outro', description: 'Outras dúvidas sobre nutrição e saúde' },
 ]
 
 // ============================================
@@ -187,7 +187,7 @@ export const questionService = {
   },
 
   /**
-   * Busca perguntas respondidas por um arquiteto (público)
+   * Busca perguntas respondidas por um profissional (público)
    */
   getByArchitect: async (architectId: string, limit = 10): Promise<ApiResponse<Question[]>> => {
     return api.get<Question[]>(`/public/questions/architect/${architectId}?limit=${limit}`)

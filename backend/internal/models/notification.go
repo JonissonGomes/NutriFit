@@ -1,4 +1,4 @@
-﻿package models
+package models
 
 import (
 	"time"
@@ -16,6 +16,7 @@ const (
 	NotificationTypeReview         NotificationType = "review"
 	NotificationTypeVerification   NotificationType = "verification"
 	NotificationTypeFavorite       NotificationType = "favorite"
+	NotificationTypeFoodDiary      NotificationType = "food_diary"
 	NotificationTypeSystem         NotificationType = "system"
 )
 

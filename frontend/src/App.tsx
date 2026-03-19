@@ -92,6 +92,8 @@ function App() {
                             {/* Compatibilidade: se alguém acessar a rota antiga, renderiza como conteúdo público */}
                             <Route path="/conteudos/:slug" element={<ContentPost />} />
                             <Route path="/portfolio/:username" element={<PublicProfile />} />
+                            {/* Rota "oficial" para perfil público */}
+                            <Route path="/profile/:username" element={<PublicProfile />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                         </main>

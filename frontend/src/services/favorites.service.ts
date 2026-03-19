@@ -12,8 +12,8 @@ import type { PublicProfile, ApiResponse, PaginatedResponse } from '../types/api
 export interface Favorite {
   id: string
   clientId: string
-  architectId: string
-  architect?: PublicProfile
+  nutritionistId: string
+  nutritionist?: PublicProfile
   createdAt: Date
 }
 
@@ -28,7 +28,7 @@ export const favoritesService = {
   },
 
   /**
-   * Listar arquitetos favoritos
+   * Listar nutricionistas favoritos
    */
   async listFavorites(page: number = 1, limit: number = 50): Promise<ApiResponse<PaginatedResponse<Favorite>>> {
     const params = new URLSearchParams()
@@ -38,36 +38,36 @@ export const favoritesService = {
   },
 
   /**
-   * Adicionar arquiteto aos favoritos
+   * Adicionar nutricionista aos favoritos
    */
-  async addFavorite(architectId: string): Promise<ApiResponse<Favorite>> {
-    const id = this.normalizeId(architectId)
+  async addFavorite(nutritionistId: string): Promise<ApiResponse<Favorite>> {
+    const id = this.normalizeId(nutritionistId)
     if (!id) {
-      return { error: 'ID do arquiteto inválido' }
+      return { error: 'ID do nutricionista inválido' }
     }
 
     return api.post<Favorite>(`/favorites/${encodeURIComponent(id)}`)
   },
 
   /**
-   * Remover arquiteto dos favoritos
+   * Remover nutricionista dos favoritos
    */
-  async removeFavorite(architectId: string): Promise<ApiResponse<{ message: string }>> {
-    const id = this.normalizeId(architectId)
+  async removeFavorite(nutritionistId: string): Promise<ApiResponse<{ message: string }>> {
+    const id = this.normalizeId(nutritionistId)
     if (!id) {
-      return { error: 'ID do arquiteto inválido' }
+      return { error: 'ID do nutricionista inválido' }
     }
 
     return api.delete<{ message: string }>(`/favorites/${encodeURIComponent(id)}`)
   },
 
   /**
-   * Verificar se arquiteto está nos favoritos
+   * Verificar se nutricionista está nos favoritos
    */
-  async checkFavorite(architectId: string): Promise<ApiResponse<{ isFavorite: boolean }>> {
-    const id = this.normalizeId(architectId)
+  async checkFavorite(nutritionistId: string): Promise<ApiResponse<{ isFavorite: boolean }>> {
+    const id = this.normalizeId(nutritionistId)
     if (!id) {
-      return { error: 'ID do arquiteto inválido' }
+      return { error: 'ID do nutricionista inválido' }
     }
 
     return api.get<{ isFavorite: boolean }>(`/favorites/check/${encodeURIComponent(id)}`)
@@ -76,21 +76,21 @@ export const favoritesService = {
   /**
    * Toggle favorito (adiciona se não tem, remove se tem)
    */
-  async toggleFavorite(architectId: string): Promise<ApiResponse<{ isFavorite: boolean }>> {
-    const checkResult = await this.checkFavorite(architectId)
+  async toggleFavorite(nutritionistId: string): Promise<ApiResponse<{ isFavorite: boolean }>> {
+    const checkResult = await this.checkFavorite(nutritionistId)
     
     if (checkResult.error) {
       return { error: checkResult.error }
     }
 
     if (checkResult.data?.isFavorite) {
-      const removeResult = await this.removeFavorite(architectId)
+      const removeResult = await this.removeFavorite(nutritionistId)
       if (removeResult.error) {
         return { error: removeResult.error }
       }
       return { data: { isFavorite: false } }
     } else {
-      const addResult = await this.addFavorite(architectId)
+      const addResult = await this.addFavorite(nutritionistId)
       if (addResult.error) {
         return { error: addResult.error }
       }

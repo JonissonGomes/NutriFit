@@ -1,19 +1,25 @@
-﻿package rest
+package rest
 
 import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/food_diary"
 	"nufit/backend/internal/services/cloudinary"
 	"nufit/backend/internal/services/security"
 	"nufit/backend/internal/services/ai"
 	"nufit/backend/internal/services/image"
+	"nufit/backend/internal/services/meal_plan"
+	"nufit/backend/internal/services/notification"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func getFoodDiaryEntries(c *gin.Context) {
@@ -53,16 +59,129 @@ func getFoodDiaryEntries(c *gin.Context) {
 }
 
 func createFoodDiaryEntry(c *gin.Context) {
-	var entry models.FoodDiaryEntry
-	if err := c.ShouldBindJSON(&entry); err != nil {
+	userIDAny, _ := c.Get("userID")
+	userRoleAny, _ := c.Get("userRole")
+	userIDStr := userIDAny.(string)
+	userRoleStr := userRoleAny.(string)
+
+	type reqBody struct {
+		PatientID   string  `json:"patientId,omitempty"`
+		MealPlanID  *string `json:"mealPlanId,omitempty"`
+		Date        string  `json:"date"` // ISO-8601 (recomendado) ou RFC3339
+		MealType    string  `json:"mealType"`
+		Description string  `json:"description,omitempty"`
+	}
+
+	var req reqBody
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
 		return
+	}
+
+	if strings.TrimSpace(req.MealType) == "" || strings.TrimSpace(req.Date) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Informe date e mealType"})
+		return
+	}
+
+	// Quem pode criar:
+	// - paciente: sempre cria para si (patientId ignorado)
+	// - nutricionista/admin: pode criar para um paciente específico (patientId obrigatório)
+	var patientHex string
+	if userRoleStr == string(models.RolePaciente) {
+		patientHex = userIDStr
+	} else {
+		patientHex = strings.TrimSpace(req.PatientID)
+		if patientHex == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Informe patientId"})
+			return
+		}
+		// aceitar ID opaco (usr_*)
+		if decoded, err := security.DecodeUserID(patientHex); err == nil {
+			patientHex = decoded
+		}
+	}
+
+	patientOID, err := primitive.ObjectIDFromHex(patientHex)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "patientId inválido"})
+		return
+	}
+
+	// Parse date/time (aceita ISO ou RFC3339)
+	var when time.Time
+	if t, err := time.Parse(time.RFC3339, req.Date); err == nil {
+		when = t
+	} else if t, err := time.Parse("2006-01-02T15:04", req.Date); err == nil {
+		when = t
+	} else if t, err := time.Parse("2006-01-02", req.Date); err == nil {
+		when = t
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "date inválida (use ISO/RFC3339)"})
+		return
+	}
+
+	mealType := models.MealType(strings.TrimSpace(req.MealType))
+	entry := models.FoodDiaryEntry{
+		PatientID:    patientOID,
+		Date:         when,
+		MealType:     mealType,
+		Description:  strings.TrimSpace(req.Description),
+	}
+
+	// Tentar associar a um plano alimentar (para inferir nutricionista e permitir rastreio).
+	var nutritionistOID *primitive.ObjectID
+	if req.MealPlanID != nil && strings.TrimSpace(*req.MealPlanID) != "" {
+		// Se for paciente, garantimos ownership do plano.
+		if userRoleStr == string(models.RolePaciente) {
+			if mp, err := meal_plan.GetMealPlanForPatient(c.Request.Context(), strings.TrimSpace(*req.MealPlanID), patientHex); err == nil && mp != nil {
+				entry.MealPlanID = &mp.ID
+				nid := mp.NutritionistID
+				nutritionistOID = &nid
+			}
+		} else {
+			// Melhor esforço (sem validação extra aqui): buscar mealPlan e extrair nutritionistId
+			if mpOID, err := primitive.ObjectIDFromHex(strings.TrimSpace(*req.MealPlanID)); err == nil {
+				entry.MealPlanID = &mpOID
+			}
+		}
+	}
+
+	if nutritionistOID == nil && userRoleStr == string(models.RolePaciente) {
+		// Melhor esforço: pegar plano mais recente do paciente e inferir nutricionista.
+		var mp struct {
+			ID            primitive.ObjectID `bson:"_id"`
+			NutritionistID primitive.ObjectID `bson:"nutritionistId"`
+		}
+		err := database.MealPlansCollection.FindOne(
+			c.Request.Context(),
+			bson.M{"patientId": patientOID},
+			options.FindOne().SetSort(bson.D{{Key: "updatedAt", Value: -1}}).SetProjection(bson.M{"nutritionistId": 1}),
+		).Decode(&mp)
+		if err == nil {
+			entry.MealPlanID = &mp.ID
+			nutritionistOID = &mp.NutritionistID
+		}
 	}
 
 	created, err := food_diary.CreateEntry(c.Request.Context(), entry)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criar registro"})
 		return
+	}
+
+	// Notificar nutricionista quando o paciente fizer check-in.
+	if userRoleStr == string(models.RolePaciente) && nutritionistOID != nil {
+		// Buscar nome do paciente (best-effort)
+		patientName := "Paciente"
+		var u struct {
+			Name string `bson:"name"`
+		}
+		_ = database.UsersCollection.FindOne(c.Request.Context(), bson.M{"_id": patientOID}, options.FindOne().SetProjection(bson.M{"name": 1})).Decode(&u)
+		if strings.TrimSpace(u.Name) != "" {
+			patientName = strings.TrimSpace(u.Name)
+		}
+
+		_ = notification.NotifyFoodDiaryCheckIn(c.Request.Context(), *nutritionistOID, patientName, string(mealType), created.ID, created.Date)
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"data": created})

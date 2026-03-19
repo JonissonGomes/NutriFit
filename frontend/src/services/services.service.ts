@@ -1,5 +1,5 @@
 // ============================================
-// SERVIÇO DE SERVIÇOS DO ARQUITETO
+// SERVIÇO DE SERVIÇOS (NuFit)
 // ============================================
 
 import { api, sanitizeInput } from './api'
@@ -10,12 +10,12 @@ import type { ApiResponse, PaginatedResponse } from '../types/api'
 // ============================================
 
 export type ServiceCategory = 
-  | 'residencial'
-  | 'comercial'
-  | 'interiores'
-  | 'reforma'
-  | 'consultoria'
-  | 'paisagismo'
+  | 'consulta'
+  | 'retorno'
+  | 'avaliacao'
+  | 'plano_alimentar'
+  | 'acompanhamento'
+  | 'bioimpedancia'
   | 'outro'
 
 export interface Service {
@@ -101,7 +101,7 @@ export interface ServiceStats {
 
 export const servicesService = {
   /**
-   * Listar serviços do arquiteto
+   * Listar serviços
    */
   async list(filters?: ServiceFilters): Promise<ApiResponse<PaginatedResponse<Service>>> {
     const params = new URLSearchParams()
@@ -205,14 +205,14 @@ export const servicesService = {
   },
 
   /**
-   * Obter serviços públicos de um arquiteto
+   * Obter serviços públicos do profissional
    */
   async getPublicServices(architectId: string): Promise<ApiResponse<Service[]>> {
     if (!architectId || typeof architectId !== 'string') {
-      return { error: 'ID do arquiteto inválido' }
+      return { error: 'ID do profissional inválido' }
     }
 
-    return api.get<Service[]>(`/public/architects/${encodeURIComponent(architectId)}/services`)
+    return api.get<Service[]>(`/public/nutritionists/${encodeURIComponent(architectId)}/services`)
   },
 
   /**
@@ -232,12 +232,12 @@ export const servicesService = {
    */
   getCategoryLabel(category: ServiceCategory): string {
     const labels: Record<ServiceCategory, string> = {
-      residencial: 'Residencial',
-      comercial: 'Comercial',
-      interiores: 'Interiores',
-      reforma: 'Reforma',
-      consultoria: 'Consultoria',
-      paisagismo: 'Paisagismo',
+      consulta: 'Consulta',
+      retorno: 'Retorno',
+      avaliacao: 'Avaliação',
+      plano_alimentar: 'Plano alimentar',
+      acompanhamento: 'Acompanhamento',
+      bioimpedancia: 'Bioimpedância',
       outro: 'Outro',
     }
     return labels[category] || category
@@ -248,12 +248,12 @@ export const servicesService = {
    */
   getCategoryColor(category: ServiceCategory): string {
     const colors: Record<ServiceCategory, string> = {
-      residencial: 'bg-blue-100 text-blue-700',
-      comercial: 'bg-green-100 text-green-700',
-      interiores: 'bg-purple-100 text-purple-700',
-      reforma: 'bg-amber-100 text-amber-700',
-      consultoria: 'bg-cyan-100 text-cyan-700',
-      paisagismo: 'bg-emerald-100 text-emerald-700',
+      consulta: 'bg-blue-100 text-blue-700',
+      retorno: 'bg-indigo-100 text-indigo-700',
+      avaliacao: 'bg-amber-100 text-amber-700',
+      plano_alimentar: 'bg-emerald-100 text-emerald-700',
+      acompanhamento: 'bg-purple-100 text-purple-700',
+      bioimpedancia: 'bg-cyan-100 text-cyan-700',
       outro: 'bg-gray-100 text-gray-700',
     }
     return colors[category] || 'bg-gray-100 text-gray-700'

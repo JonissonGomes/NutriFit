@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useToast } from '../../contexts/ToastContext'
 import { favoritesService } from '../../services'
 
-interface FavoriteArchitect {
+interface FavoriteNutritionist {
   id: string
   username: string
   displayName: string
@@ -18,7 +18,7 @@ interface FavoriteArchitect {
 
 const ClientFavorites: React.FC = () => {
   const { showToast } = useToast()
-  const [favorites, setFavorites] = useState<FavoriteArchitect[]>([])
+  const [favorites, setFavorites] = useState<FavoriteNutritionist[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [, setRemovingId] = useState<string | null>(null)
 
@@ -33,9 +33,9 @@ const ClientFavorites: React.FC = () => {
       if (response.data && Array.isArray(response.data.data)) {
         // Transformar dados do backend para o formato esperado
         const favoritesData = response.data.data.map((fav: any) => {
-          const profile = fav.profile || fav.architect
+          const profile = fav.profile || fav.nutritionist || fav.architect
           return {
-            id: fav.architectId || fav.id || '',
+            id: fav.nutritionistId || fav.architectId || fav.id || '',
             username: profile?.username || '',
             displayName: profile?.displayName || profile?.name || '',
             avatar: profile?.avatar,
@@ -44,12 +44,12 @@ const ClientFavorites: React.FC = () => {
             specialties: profile?.specialties || [],
             rating: profile?.rating || 0,
             reviewCount: profile?.reviewsCount || profile?.reviewCount || 0,
-          } as FavoriteArchitect
+          } as FavoriteNutritionist
         })
         setFavorites(favoritesData)
       } else if (response.data && Array.isArray(response.data)) {
         // Fallback: se a resposta for um array direto
-        setFavorites(response.data as unknown as FavoriteArchitect[])
+        setFavorites(response.data as unknown as FavoriteNutritionist[])
       }
     } catch (error) {
       console.error('Erro ao carregar favoritos:', error)
@@ -59,11 +59,11 @@ const ClientFavorites: React.FC = () => {
     }
   }
 
-  const handleRemoveFavorite = async (architectId: string) => {
-    setRemovingId(architectId)
+  const handleRemoveFavorite = async (nutritionistId: string) => {
+    setRemovingId(nutritionistId)
     try {
-      await favoritesService.removeFavorite(architectId)
-      setFavorites(prev => prev.filter(f => f.id !== architectId))
+      await favoritesService.removeFavorite(nutritionistId)
+      setFavorites(prev => prev.filter(f => f.id !== nutritionistId))
       showToast('Nutricionista removido dos favoritos', 'success')
     } catch {
       showToast('Erro ao remover dos favoritos', 'error')
@@ -105,28 +105,28 @@ const ClientFavorites: React.FC = () => {
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {favorites.map(architect => (
-            <div key={architect.id} className="bg-white rounded-xl shadow-sm p-6">
+          {favorites.map((nutritionist) => (
+            <div key={nutritionist.id} className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    {architect.avatar ? (
-                      <img src={architect.avatar} alt="" className="w-full h-full object-cover" />
+                    {nutritionist.avatar ? (
+                      <img src={nutritionist.avatar} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-2xl">
-                        {architect.displayName?.charAt(0).toUpperCase() || '?'}
+                        {nutritionist.displayName?.charAt(0).toUpperCase() || '?'}
                       </span>
                     )}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{architect.displayName}</h3>
+                    <h3 className="font-semibold text-gray-900">{nutritionist.displayName}</h3>
                     <p className="text-sm text-gray-500">
-                      {architect.city && architect.state ? `${architect.city}, ${architect.state}` : 'Localização não informada'}
+                      {nutritionist.city && nutritionist.state ? `${nutritionist.city}, ${nutritionist.state}` : 'Localização não informada'}
                     </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => handleRemoveFavorite(architect.id)}
+                  onClick={() => handleRemoveFavorite(nutritionist.id)}
                   className="p-2 text-red-500 hover:bg-red-50 rounded-full transition"
                   title="Remover dos favoritos"
                 >
@@ -136,7 +136,7 @@ const ClientFavorites: React.FC = () => {
 
               {/* Especialidades */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {architect.specialties?.slice(0, 3).map((spec, idx) => (
+                {nutritionist.specialties?.slice(0, 3).map((spec, idx) => (
                   <span key={idx} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
                     {spec}
                   </span>
@@ -146,14 +146,14 @@ const ClientFavorites: React.FC = () => {
               {/* Rating */}
               <div className="flex items-center gap-2 mb-4">
                 <Star className="text-yellow-500" />
-                <span className="font-medium">{architect.rating?.toFixed(1) || '—'}</span>
-                <span className="text-gray-400">({architect.reviewCount || 0} avaliações)</span>
+                <span className="font-medium">{nutritionist.rating?.toFixed(1) || '—'}</span>
+                <span className="text-gray-400">({nutritionist.reviewCount || 0} avaliações)</span>
               </div>
 
               {/* Ações */}
               <div className="flex gap-2">
                 <Link
-                  to={`/portfolio/${architect.username}`}
+                  to={`/portfolio/${nutritionist.username}`}
                   className="flex-1 px-4 py-2 text-center bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm"
                 >
                   Ver perfil

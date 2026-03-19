@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import SearchIcon from '@mui/icons-material/Search'
-import PersonIcon from '@mui/icons-material/Person'
 import RestaurantIcon from '@mui/icons-material/Restaurant'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import FolderIcon from '@mui/icons-material/Folder'
@@ -10,12 +9,8 @@ const Hero = () => {
   const navigate = useNavigate()
   const { user, isAuthenticated } = useAuth()
 
-  const handleUserTypeSelect = (type: 'paciente' | 'nutricionista') => {
-    if (type === 'paciente') {
-      navigate('/explore')
-    } else {
-      navigate('/signup')
-    }
+  const handleUserTypeSelect = () => {
+    navigate('/explore')
   }
 
   return (
@@ -97,20 +92,20 @@ const Hero = () => {
           {/* User Type Selection - Only show if not authenticated */}
           {!isAuthenticated && (
             <div className="mb-8 md:mb-12 max-w-2xl mx-auto px-4">
-              <div className="bg-stone-900/60 backdrop-blur-md rounded-xl md:rounded-2xl p-1.5 md:p-2 border border-stone-700/50 flex flex-col sm:flex-row gap-2">
+              <div className="bg-stone-900/60 backdrop-blur-md rounded-xl md:rounded-2xl p-1.5 md:p-2 border border-stone-700/50 flex flex-col gap-2">
                 <button
-                  onClick={() => handleUserTypeSelect('paciente')}
-                  className="flex-1 px-4 md:px-6 py-3 md:py-4 rounded-lg md:rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center justify-center gap-2 bg-primary-600 text-white shadow-lg shadow-primary-600/50 hover:bg-primary-700 hover:shadow-xl hover:shadow-primary-600/60"
+                  onClick={() => handleUserTypeSelect()}
+                  className="w-full px-4 md:px-6 py-3 md:py-4 rounded-lg md:rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center justify-center gap-2 bg-primary-600 text-white shadow-lg shadow-primary-600/50 hover:bg-primary-700 hover:shadow-xl hover:shadow-primary-600/60"
                 >
                   <SearchIcon sx={{ fontSize: 20 }} />
-                  Buscar nutricionista
+                  Encontrar profissionais
                 </button>
                 <button
-                  onClick={() => handleUserTypeSelect('nutricionista')}
-                  className="flex-1 px-4 md:px-6 py-3 md:py-4 rounded-lg md:rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center justify-center gap-2 bg-accent-500 text-white shadow-lg shadow-accent-500/50 hover:bg-accent-600 hover:shadow-xl hover:shadow-accent-500/60"
+                  onClick={() => navigate('/login')}
+                  className="w-full px-4 md:px-6 py-3 md:py-4 rounded-lg md:rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center justify-center gap-2 bg-accent-500 text-white shadow-lg shadow-accent-500/50 hover:bg-accent-600 hover:shadow-xl hover:shadow-accent-500/60"
                 >
-                  <PersonIcon sx={{ fontSize: 20 }} />
-                  Sou nutricionista
+                  <DashboardIcon sx={{ fontSize: 20 }} />
+                  Meu espaço
                 </button>
               </div>
             </div>

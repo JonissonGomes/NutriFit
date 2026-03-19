@@ -103,7 +103,7 @@ export const geolocationService = {
   },
 
   /**
-   * Busca arquitetos próximos a uma localização
+   * Busca profissionais próximos a uma localização
    */
   searchNearby: async (filters: ProximitySearchFilters): Promise<ApiResponse<ProximitySearchResponse>> => {
     const params = new URLSearchParams()
@@ -120,7 +120,7 @@ export const geolocationService = {
   },
 
   /**
-   * Busca arquitetos por cidade/estado
+   * Busca profissionais por cidade/estado
    */
   searchByLocation: async (filters: LocationSearchFilters): Promise<ApiResponse<ProximitySearchResponse>> => {
     const params = new URLSearchParams()
@@ -153,7 +153,7 @@ export const geolocationService = {
   },
 
   /**
-   * Busca cidades disponíveis (com arquitetos cadastrados)
+   * Busca cidades disponíveis (com profissionais cadastrados)
    */
   getAvailableCities: async (state?: string): Promise<ApiResponse<{ cities: string[] }>> => {
     const params = state ? `?state=${encodeURIComponent(state)}` : ''
@@ -161,7 +161,7 @@ export const geolocationService = {
   },
 
   /**
-   * Busca estados disponíveis (com arquitetos cadastrados)
+   * Busca estados disponíveis (com profissionais cadastrados)
    */
   getAvailableStates: async (): Promise<ApiResponse<{ states: string[] }>> => {
     return api.get<{ states: string[] }>('/geo/states')
