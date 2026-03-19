@@ -131,8 +131,9 @@ func LoadConfig() (*Config, error) {
 
 		GeminiAPIKey:     getEnv("GEMINI_API_KEY", ""),
 		GeminiModel: getEnv("GEMINI_MODEL", ""),
-		GeminiTextModel: getEnv("GEMINI_TEXT_MODEL", "gemini-1.5-pro"),
-		GeminiVisionModel: getEnv("GEMINI_VISION_MODEL", "gemini-1.5-flash"),
+		// Deixar vazio por padrão para permitir que GEMINI_MODEL seja o fallback global.
+		GeminiTextModel: getEnv("GEMINI_TEXT_MODEL", ""),
+		GeminiVisionModel: getEnv("GEMINI_VISION_MODEL", ""),
 
 		EmailUser:     getEnv("EMAIL_USER", ""),
 		EmailPass:     getEnv("EMAIL_PASS", ""),

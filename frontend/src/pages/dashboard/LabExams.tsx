@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Loader2, Upload, Sparkles, Trash2, Plus } from 'lucide-react'
 import { labExamService, patientService } from '../../services'
 import type { LabExam, LabExamType } from '../../services/labExam.service'
+import ConfirmModal from '../../components/common/ConfirmModal'
+import { useConfirmDelete } from '../../hooks'
 
 const typeLabel: Record<LabExamType, string> = {
   blood: 'Sangue',
@@ -31,6 +33,7 @@ const LabExams = () => {
   const [editingRawTextId, setEditingRawTextId] = useState<string | null>(null)
   const [rawTextDrafts, setRawTextDrafts] = useState<Record<string, string>>({})
   const [savingRawTextId, setSavingRawTextId] = useState<string | null>(null)
+  const deleteFlow = useConfirmDelete<{ id: string; label: string }>()
 
   const selectedPatient = useMemo(() => patients.find((p) => p.id === patientId), [patients, patientId])
 
@@ -307,7 +310,7 @@ const LabExams = () => {
                   </button>
 
                   <button
-                    onClick={() => void remove(ex.id)}
+                    onClick={() => deleteFlow.open({ id: ex.id, label: `Exame #${ex.id.slice(0, 8)}` })}
                     disabled={deletingId === ex.id}
                     className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-60 text-sm font-semibold"
                   >
@@ -404,6 +407,22 @@ const LabExams = () => {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteFlow.isOpen}
+        onClose={deleteFlow.close}
+        onConfirm={() =>
+          void deleteFlow.confirm(async (target) => {
+            await remove(target.id)
+          })
+        }
+        title="Excluir exame"
+        message={`Tem certeza que deseja excluir ${deleteFlow.target?.label || 'este exame'}?`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="danger"
+        loading={deleteFlow.loading || Boolean(deletingId)}
+      />
     </div>
   )
 }

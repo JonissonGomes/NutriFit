@@ -20,6 +20,7 @@ import { DEFAULT_CUSTOMIZATION } from '../services/profile.service'
 import type { ReviewWithDetails } from '../services/review.service'
 import ConfirmModal from '../components/common/ConfirmModal'
 import type { BlogPost } from '../services/blog.service'
+import { useConfirmDelete } from '../hooks'
 
 const PublicProfile = () => {
   const { username } = useParams<{ username: string }>()
@@ -32,8 +33,7 @@ const PublicProfile = () => {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [isFavorite, setIsFavorite] = useState(false)
-  const [showRemoveFavoriteModal, setShowRemoveFavoriteModal] = useState(false)
-  const [removingFavorite, setRemovingFavorite] = useState(false)
+  const removeFavoriteFlow = useConfirmDelete<string>()
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
   const [reviewMealPlanId, setReviewMealPlanId] = useState('')
@@ -116,7 +116,7 @@ const PublicProfile = () => {
     }
 
     if (isFavorite) {
-      setShowRemoveFavoriteModal(true)
+      removeFavoriteFlow.open(profile.userId)
       return
     }
 
@@ -130,22 +130,14 @@ const PublicProfile = () => {
     showToast('Adicionado aos favoritos', 'success')
   }
 
-  const confirmRemoveFavorite = async () => {
-    if (!profile?.userId) return
-    setRemovingFavorite(true)
-    try {
-      const nutritionistId = profile.userId.trim()
-      const res = await favoritesService.removeFavorite(nutritionistId)
-      if (res.error) {
-        showToast(res.error, 'error')
-        return
-      }
-      setIsFavorite(false)
-      showToast('Removido dos favoritos', 'success')
-    } finally {
-      setRemovingFavorite(false)
-      setShowRemoveFavoriteModal(false)
+  const confirmRemoveFavorite = async (nutritionistId: string) => {
+    const res = await favoritesService.removeFavorite(nutritionistId.trim())
+    if (res.error) {
+      showToast(res.error, 'error')
+      return
     }
+    setIsFavorite(false)
+    showToast('Removido dos favoritos', 'success')
   }
 
   const onSubmitReview = async () => {
@@ -720,14 +712,14 @@ const PublicProfile = () => {
       </div>
 
       <ConfirmModal
-        isOpen={showRemoveFavoriteModal}
+        isOpen={removeFavoriteFlow.isOpen}
         title="Remover dos favoritos?"
         message="Você quer remover este nutricionista da sua lista de favoritos?"
         confirmText="Remover"
         cancelText="Cancelar"
-        onConfirm={confirmRemoveFavorite}
-        onClose={() => setShowRemoveFavoriteModal(false)}
-        loading={removingFavorite}
+        onConfirm={() => void removeFavoriteFlow.confirm(confirmRemoveFavorite)}
+        onClose={removeFavoriteFlow.close}
+        loading={removeFavoriteFlow.loading}
         variant="danger"
       />
     </div>

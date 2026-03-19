@@ -7,6 +7,7 @@ import { useToast } from '../../contexts/ToastContext'
 import LoadingButton from '../../components/common/LoadingButton'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import { sanitizeInput, sanitizeText, limitLength } from '../../utils/inputUtils'
+import { useConfirmDelete } from '../../hooks'
 
 const Services = () => {
   const navigate = useNavigate()
@@ -19,8 +20,7 @@ const Services = () => {
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [serviceToDelete, setServiceToDelete] = useState<string | null>(null)
+  const deleteFlow = useConfirmDelete<string>()
 
   // Form state
   const [formData, setFormData] = useState<CreateServiceRequest>({
@@ -100,21 +100,16 @@ const Services = () => {
   }
 
   const handleDeleteClick = (id: string) => {
-    setServiceToDelete(id)
-    setShowDeleteConfirm(true)
+    deleteFlow.open(id)
   }
 
-  const handleDelete = async () => {
-    if (!serviceToDelete) return
-
-    setDeletingId(serviceToDelete)
+  const handleDelete = async (serviceId: string) => {
+    setDeletingId(serviceId)
     try {
-      const response = await servicesService.delete(serviceToDelete)
+      const response = await servicesService.delete(serviceId)
       if (response.data) {
         showToast('Serviço excluído com sucesso!', 'success')
         loadData()
-        setShowDeleteConfirm(false)
-        setServiceToDelete(null)
       } else if (response.error) {
         showToast(response.error, 'error')
       }
@@ -577,18 +572,15 @@ const Services = () => {
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
-        isOpen={showDeleteConfirm}
-        onClose={() => {
-          setShowDeleteConfirm(false)
-          setServiceToDelete(null)
-        }}
-        onConfirm={handleDelete}
+        isOpen={deleteFlow.isOpen}
+        onClose={deleteFlow.close}
+        onConfirm={() => void deleteFlow.confirm(handleDelete)}
         title="Excluir Serviço"
         message="Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita."
         confirmText="Excluir"
         cancelText="Cancelar"
         variant="danger"
-        loading={deletingId !== null}
+        loading={deleteFlow.loading || deletingId !== null}
       />
     </div>
   )

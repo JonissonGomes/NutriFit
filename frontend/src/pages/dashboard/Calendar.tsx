@@ -6,6 +6,7 @@ import { calendarService } from '../../services'
 import type { Event, CreateEventRequest, EventType, EventLocation } from '../../services/calendar.service'
 import { useToast } from '../../contexts/ToastContext'
 import LoadingButton from '../../components/common/LoadingButton'
+import { useConfirmDelete } from '../../hooks'
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -15,6 +16,7 @@ const Calendar = () => {
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const deleteFlow = useConfirmDelete<string>()
   const navigate = useNavigate()
   const { showToast } = useToast()
 
@@ -100,20 +102,14 @@ const Calendar = () => {
     setSaving(false)
   }
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [eventToDelete, setEventToDelete] = useState<string | null>(null)
-
   const handleDeleteClick = (eventId: string) => {
-    setEventToDelete(eventId)
-    setShowDeleteModal(true)
+    deleteFlow.open(eventId)
   }
 
-  const confirmDeleteEvent = async () => {
-    if (!eventToDelete) return
-
-    setDeletingId(eventToDelete)
+  const confirmDeleteEvent = async (eventId: string) => {
+    setDeletingId(eventId)
     try {
-      const response = await calendarService.deleteEvent(eventToDelete)
+      const response = await calendarService.deleteEvent(eventId)
 
       if (response.data) {
         showToast('Evento excluído com sucesso!', 'success')
@@ -125,8 +121,6 @@ const Calendar = () => {
       showToast('Erro ao excluir evento', 'error')
     } finally {
       setDeletingId(null)
-      setShowDeleteModal(false)
-      setEventToDelete(null)
     }
   }
 
@@ -217,17 +211,14 @@ const Calendar = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <ConfirmModal
-        isOpen={showDeleteModal}
+        isOpen={deleteFlow.isOpen}
         title="Excluir evento"
         message="Tem certeza que deseja excluir este evento?"
         confirmText="Excluir"
         cancelText="Cancelar"
-        onConfirm={() => void confirmDeleteEvent()}
-        onClose={() => {
-          setShowDeleteModal(false)
-          setEventToDelete(null)
-        }}
-        loading={!!deletingId}
+        onConfirm={() => void deleteFlow.confirm(confirmDeleteEvent)}
+        onClose={deleteFlow.close}
+        loading={deleteFlow.loading || !!deletingId}
         variant="danger"
       />
       {/* Header com botão voltar */}

@@ -4,6 +4,8 @@ import { blogService } from '../../services/blog.service'
 import type { BlogPost } from '../../services/blog.service'
 import LoadingButton from '../../components/common/LoadingButton'
 import { useToast } from '../../contexts/ToastContext'
+import ConfirmModal from '../../components/common/ConfirmModal'
+import { useConfirmDelete } from '../../hooks'
 
 const MyContents = () => {
   const { showToast } = useToast()
@@ -11,6 +13,8 @@ const MyContents = () => {
   const [saving, setSaving] = useState(false)
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [updatingVisibilityId, setUpdatingVisibilityId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const deleteFlow = useConfirmDelete<BlogPost>()
 
   const [title, setTitle] = useState('')
   const [excerpt, setExcerpt] = useState('')
@@ -85,12 +89,15 @@ const MyContents = () => {
 
   const handleDelete = async (id: string) => {
     if (!id) return
+    setDeletingId(id)
     const res = await blogService.delete(id)
     if (res.error) {
       showToast(res.error, 'error')
+      setDeletingId(null)
       return
     }
     showToast('Conteúdo excluído.', 'success')
+    setDeletingId(null)
     await load()
   }
 
@@ -261,7 +268,7 @@ const MyContents = () => {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => void handleDelete(p.id)}
+                    onClick={() => deleteFlow.open(p)}
                     className="text-sm font-semibold text-red-600 hover:text-red-700"
                   >
                     Excluir
@@ -273,6 +280,22 @@ const MyContents = () => {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={deleteFlow.isOpen}
+        onClose={deleteFlow.close}
+        onConfirm={() =>
+          void deleteFlow.confirm(async (target) => {
+            await handleDelete(target.id)
+          })
+        }
+        title="Excluir conteúdo"
+        message={`Deseja realmente excluir "${deleteFlow.target?.title || 'este conteúdo'}"?`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="danger"
+        loading={deleteFlow.loading || Boolean(deletingId)}
+      />
     </div>
   )
 }

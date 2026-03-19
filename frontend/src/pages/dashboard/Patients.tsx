@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, MessageCircle, Search, Upload, UserPlus, Users } from 'lucide-react'
 import { messageService, patientService } from '../../services'
 import { useNavigate } from 'react-router-dom'
+import ConfirmModal from '../../components/common/ConfirmModal'
+import { useConfirmDelete } from '../../hooks'
 
 const Patients = () => {
   const navigate = useNavigate()
@@ -16,6 +18,7 @@ const Patients = () => {
   const [createPhone, setCreatePhone] = useState('')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
+  const deleteFlow = useConfirmDelete<{ id: string; name: string }>()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -371,7 +374,7 @@ const Patients = () => {
                   <button
                     type="button"
                     disabled={updatingId === p.id}
-                    onClick={() => void onRemovePatient(p.id)}
+                    onClick={() => deleteFlow.open({ id: p.id, name: p.name || 'paciente' })}
                     className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 text-sm font-semibold text-red-700 disabled:opacity-60"
                     title="Remove o paciente da sua lista"
                   >
@@ -383,6 +386,22 @@ const Patients = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteFlow.isOpen}
+        onClose={deleteFlow.close}
+        onConfirm={() =>
+          void deleteFlow.confirm(async (target) => {
+            await onRemovePatient(target.id)
+          })
+        }
+        title="Confirmar remoção"
+        message={`Deseja encerrar/remover "${deleteFlow.target?.name || 'paciente'}" da sua lista?`}
+        confirmText="Sim, remover"
+        cancelText="Cancelar"
+        variant="danger"
+        loading={deleteFlow.loading || Boolean(updatingId)}
+      />
     </div>
   )
 }

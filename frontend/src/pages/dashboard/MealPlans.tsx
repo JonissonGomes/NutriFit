@@ -6,6 +6,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { sanitizeInput, limitLength } from '../../utils/inputUtils'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import { useConfirmDelete } from '../../hooks'
 import type { MealPlan } from '../../types/api'
 
 const statusLabel: Record<string, string> = {
@@ -28,8 +29,7 @@ const MealPlans = () => {
   const [items, setItems] = useState<MealPlan[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [deleteTarget, setDeleteTarget] = useState<MealPlan | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const deleteFlow = useConfirmDelete<MealPlan>()
   const isDoctor = user?.role === 'medico'
   const basePath = isDoctor ? '/medico' : '/nutritionist'
 
@@ -52,21 +52,14 @@ const MealPlans = () => {
     load()
   }, [showToast])
 
-  const onDelete = async () => {
-    if (!deleteTarget?.id) return
-    setDeleting(true)
-    try {
-      const res = await mealPlanService.remove(deleteTarget.id)
-      if (res.error) {
-        showToast(res.error, 'error')
-        return
-      }
-      setItems((prev) => prev.filter((mp) => mp.id !== deleteTarget.id))
-      showToast('Plano removido com sucesso.', 'success')
-      setDeleteTarget(null)
-    } finally {
-      setDeleting(false)
+  const onDelete = async (target: MealPlan) => {
+    const res = await mealPlanService.remove(target.id)
+    if (res.error) {
+      showToast(res.error, 'error')
+      return
     }
+    setItems((prev) => prev.filter((mp) => mp.id !== target.id))
+    showToast('Plano removido com sucesso.', 'success')
   }
 
   if (loading) {
@@ -163,7 +156,7 @@ const MealPlans = () => {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => setDeleteTarget(mp)}
+                    onClick={() => deleteFlow.open(mp)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-sm font-medium text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -177,18 +170,15 @@ const MealPlans = () => {
       )}
 
       <ConfirmModal
-        isOpen={Boolean(deleteTarget)}
-        onClose={() => {
-          if (deleting) return
-          setDeleteTarget(null)
-        }}
-        onConfirm={() => void onDelete()}
+        isOpen={deleteFlow.isOpen}
+        onClose={deleteFlow.close}
+        onConfirm={() => void deleteFlow.confirm(onDelete)}
         title="Confirmar exclusão"
-        message={`Tem certeza que deseja deletar o plano "${deleteTarget?.title || ''}"? Esta ação não pode ser desfeita.`}
+        message={`Tem certeza que deseja deletar o plano "${deleteFlow.target?.title || ''}"? Esta ação não pode ser desfeita.`}
         confirmText="Sim, deletar"
         cancelText="Cancelar"
         variant="danger"
-        loading={deleting}
+        loading={deleteFlow.loading}
       />
     </div>
   )
