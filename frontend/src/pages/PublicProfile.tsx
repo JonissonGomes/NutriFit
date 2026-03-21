@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
 import FavoriteIcon from '@mui/icons-material/Favorite'
+import AddIcon from '@mui/icons-material/Add'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import StarIcon from '@mui/icons-material/Star'
 import VerifiedIcon from '@mui/icons-material/Verified'
@@ -267,6 +268,8 @@ const PublicProfile = () => {
   const contactEmail = profile.contact?.email || profile.email
   const contactPhone = profile.contact?.phone || profile.phone
   const contactWebsite = profile.contact?.website || profile.website
+  const shouldScrollPosts = posts.length > 3
+  const shouldScrollRecipes = recipes.length > 3
 
   return (
     <div
@@ -348,14 +351,15 @@ const PublicProfile = () => {
                   <button
                     type="button"
                     onClick={handleToggleFavorite}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-semibold text-gray-900"
+                    className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-900"
+                    aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                    title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                   >
                     {isFavorite ? (
                       <FavoriteIcon sx={{ fontSize: 18, color: '#ef4444' }} />
                     ) : (
                       <FavoriteBorderIcon sx={{ fontSize: 18 }} />
                     )}
-                    Favoritar
                   </button>
                 </div>
 
@@ -382,21 +386,32 @@ const PublicProfile = () => {
               <h2 className="text-lg font-bold text-gray-900">Conteúdos</h2>
               <p className="text-sm text-gray-600 mt-1">Artigos e materiais publicados no NuFit.</p>
             </div>
-            <Link to={`/profile/${username}/conteudos`} className="text-sm font-semibold text-primary-700 hover:text-primary-800">Ver todos</Link>
+            <Link
+              to={`/profile/${username}/conteudos`}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-primary-200 text-primary-700 hover:bg-primary-50"
+              aria-label="Ver todos os conteúdos"
+              title="Ver todos os conteúdos"
+            >
+              <AddIcon sx={{ fontSize: 18 }} />
+            </Link>
           </div>
           {posts.length === 0 ? (
             <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
               Este profissional ainda não publicou conteúdos.
             </div>
           ) : (
-            <div className="mt-3 overflow-x-auto">
-              <div className="flex gap-3 min-w-max pb-1">
+            <div className={`mt-3 ${shouldScrollPosts ? 'overflow-x-auto' : 'overflow-hidden'}`}>
+              <div className={shouldScrollPosts ? 'flex gap-3 min-w-max pb-1' : 'grid grid-cols-3 gap-3'}>
                 {posts.slice(0, 10).map((p) => {
                   const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
                   return (
-                    <Link key={p.id} to={`/conteudos/public/${p.slug}`} className="w-72 bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow">
-                      {thumbUrl ? <img src={thumbUrl} alt={p.title} className="w-full h-36 object-cover" /> : <div className="w-full h-36 bg-gradient-to-r from-primary-600 to-accent-600" />}
-                      <div className="p-4">
+                    <Link
+                      key={p.id}
+                      to={`/conteudos/public/${p.slug}`}
+                      className={`${shouldScrollPosts ? 'w-[31%] min-w-[31%] max-w-[31%]' : 'w-full'} bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow`}
+                    >
+                      {thumbUrl ? <img src={thumbUrl} alt={p.title} className="w-full h-28 object-cover" /> : <div className="w-full h-28 bg-gradient-to-r from-primary-600 to-accent-600" />}
+                      <div className="p-3">
                         <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
                       </div>
@@ -414,18 +429,28 @@ const PublicProfile = () => {
               <h2 className="text-lg font-bold text-gray-900">Receitas</h2>
               <p className="text-sm text-gray-600 mt-1">Receitas compartilhadas publicamente por este profissional.</p>
             </div>
-            <Link to={`/profile/${username}/receitas`} className="text-sm font-semibold text-primary-700 hover:text-primary-800">Ver todos</Link>
+            <Link
+              to={`/profile/${username}/receitas`}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-primary-200 text-primary-700 hover:bg-primary-50"
+              aria-label="Ver todas as receitas"
+              title="Ver todas as receitas"
+            >
+              <AddIcon sx={{ fontSize: 18 }} />
+            </Link>
           </div>
           {recipes.length === 0 ? (
             <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
               Este profissional ainda não publicou receitas.
             </div>
           ) : (
-            <div className="mt-3 overflow-x-auto">
-              <div className="flex gap-3 min-w-max pb-1">
+            <div className={`mt-3 ${shouldScrollRecipes ? 'overflow-x-auto' : 'overflow-hidden'}`}>
+              <div className={shouldScrollRecipes ? 'flex gap-3 min-w-max pb-1' : 'grid grid-cols-3 gap-3'}>
                 {recipes.slice(0, 10).map((r) => (
-                  <div key={r.id} className="w-72 bg-white border border-gray-200 rounded-xl p-4">
-                    {r.imageUrls?.[0] ? <img src={r.imageUrls[0]} alt={r.title} className="w-full h-36 object-cover rounded-lg mb-3" /> : <div className="w-full h-36 rounded-lg bg-gray-100 mb-3" />}
+                  <div
+                    key={r.id}
+                    className={`${shouldScrollRecipes ? 'w-[31%] min-w-[31%] max-w-[31%]' : 'w-full'} bg-white border border-gray-200 rounded-xl p-3`}
+                  >
+                    {r.imageUrls?.[0] ? <img src={r.imageUrls[0]} alt={r.title} className="w-full h-28 object-cover rounded-lg mb-2.5" /> : <div className="w-full h-28 rounded-lg bg-gray-100 mb-2.5" />}
                     <div className="font-semibold text-gray-900">{r.title}</div>
                     {r.description ? <div className="text-sm text-gray-600 mt-1 line-clamp-2">{r.description}</div> : null}
                   </div>
