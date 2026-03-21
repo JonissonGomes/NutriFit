@@ -162,3 +162,45 @@ func Delete(ctx context.Context, id, nutritionistID string) error {
 	}
 	return nil
 }
+
+func AddImageURL(ctx context.Context, id, nutritionistID, imageURL string) (*models.Recipe, error) {
+	rid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	nid, err := primitive.ObjectIDFromHex(nutritionistID)
+	if err != nil {
+		return nil, err
+	}
+	var current models.Recipe
+	if err := database.RecipesCollection.FindOne(ctx, bson.M{"_id": rid, "nutritionistId": nid}).Decode(&current); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrRecipeNotFound
+		}
+		return nil, err
+	}
+	if len(current.ImageURLs) >= 3 {
+		return nil, errors.New("limite máximo de 3 imagens por receita")
+	}
+	after := options.After
+	res := database.RecipesCollection.FindOneAndUpdate(
+		ctx,
+		bson.M{"_id": rid, "nutritionistId": nid},
+		bson.M{
+			"$push": bson.M{"imageUrls": imageURL},
+			"$set":  bson.M{"updatedAt": time.Now()},
+		},
+		options.FindOneAndUpdate().SetReturnDocument(after),
+	)
+	if res.Err() != nil {
+		if errors.Is(res.Err(), mongo.ErrNoDocuments) {
+			return nil, ErrRecipeNotFound
+		}
+		return nil, res.Err()
+	}
+	var out models.Recipe
+	if err := res.Decode(&out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}

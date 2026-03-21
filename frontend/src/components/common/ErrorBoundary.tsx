@@ -66,15 +66,6 @@ class ErrorBoundary extends Component<Props, State> {
               Ocorreu um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver.
             </p>
 
-            {/* Detalhes do erro (apenas em desenvolvimento) */}
-            {import.meta.env.DEV && this.state.error && (
-              <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg text-left">
-                <p className="text-red-400 font-mono text-sm break-all">
-                  {this.state.error.toString()}
-                </p>
-              </div>
-            )}
-
             {/* Ações */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button

@@ -11,6 +11,7 @@ export interface Recipe {
   mealGroups?: string[]
   filters?: string[]
   calories?: number
+  imageUrls?: string[]
   isPublic: boolean
   patientIds?: string[]
   mealPlanIds?: string[]
@@ -31,6 +32,11 @@ export const recipeService = {
   },
   async listPublicByNutritionist(nutritionistId: string): Promise<ApiResponse<{ data: Recipe[] }>> {
     return api.get(`/public/recipes/nutritionist/${encodeURIComponent(nutritionistId)}`)
+  },
+  async uploadImage(id: string, file: File): Promise<ApiResponse<{ data: Recipe }>> {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post(`/recipes/${encodeURIComponent(id)}/images`, form)
   },
 }
 

@@ -184,6 +184,7 @@ func SetupRouter() *gin.Engine {
 				recipes.GET("", listMyRecipes)
 				recipes.POST("", RequireRole("nutricionista"), createRecipe)
 				recipes.PUT("/:id", RequireRole("nutricionista"), updateRecipe)
+				recipes.POST("/:id/images", RequireRole("nutricionista"), uploadRecipeImage)
 				recipes.DELETE("/:id", RequireRole("nutricionista"), deleteRecipe)
 			}
 

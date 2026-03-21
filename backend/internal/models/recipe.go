@@ -16,6 +16,7 @@ type Recipe struct {
 	MealGroups     []string             `bson:"mealGroups,omitempty" json:"mealGroups,omitempty"`
 	Filters        []string             `bson:"filters,omitempty" json:"filters,omitempty"`
 	Calories       float64              `bson:"calories,omitempty" json:"calories,omitempty"`
+	ImageURLs      []string             `bson:"imageUrls,omitempty" json:"imageUrls,omitempty"`
 	IsPublic       bool                 `bson:"isPublic" json:"isPublic"`
 	PatientIDs     []primitive.ObjectID `bson:"patientIds,omitempty" json:"patientIds,omitempty"`
 	MealPlanIDs    []primitive.ObjectID `bson:"mealPlanIds,omitempty" json:"mealPlanIds,omitempty"`
