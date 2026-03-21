@@ -216,12 +216,12 @@ const PublicProfile = () => {
 
   if (!profile) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="app-page app-section py-8">
         <Link to="/explore" className="inline-flex items-center gap-2 text-sm text-primary-700 font-semibold">
           <ArrowBackIcon sx={{ fontSize: 18 }} />
           Voltar
         </Link>
-        <div className="mt-6 bg-white border border-gray-200 rounded-xl p-8 text-center">
+        <div className="app-card mt-2 text-center">
           <p className="font-semibold text-gray-900">Nutricionista não encontrado.</p>
           <p className="text-gray-600 mt-2">Verifique o link e tente novamente.</p>
         </div>
@@ -272,7 +272,7 @@ const PublicProfile = () => {
     <div
       className={`min-h-screen ${customization.backgroundStyle === 'dark' ? 'bg-stone-950' : customization.backgroundStyle === 'gradient' ? 'bg-gradient-to-b from-primary-900/10 via-gray-50 to-gray-50' : 'bg-gray-50'}`}
     >
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="app-page app-section py-8">
         <Link
           to="/explore"
           className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800"
@@ -376,7 +376,7 @@ const PublicProfile = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+        <div className="app-card rounded-2xl">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Conteúdos</h2>
@@ -408,7 +408,7 @@ const PublicProfile = () => {
           )}
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+        <div className="app-card rounded-2xl">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Receitas</h2>

@@ -95,7 +95,7 @@ const Header = () => {
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
-      <nav className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <nav className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">

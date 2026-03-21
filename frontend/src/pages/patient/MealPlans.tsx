@@ -43,14 +43,14 @@ const MealPlans = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="app-page app-section">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Meu plano alimentar</h1>
-        <p className="text-gray-600 mt-1">Acesse refeições, macros e orientações do seu nutricionista.</p>
+        <h1 className="app-title">Meu plano alimentar</h1>
+        <p className="app-subtitle mt-1">Acesse refeições, macros e orientações do seu nutricionista.</p>
       </div>
 
       {items.length === 0 ? (
-        <div className="bg-white border border-primary-100 rounded-xl p-8 text-center">
+        <div className="app-card text-center">
           <p className="text-gray-700 font-semibold">Nenhum plano disponível ainda.</p>
           <p className="text-gray-600 mt-2">Quando seu nutricionista publicar um plano, ele aparecerá aqui.</p>
         </div>

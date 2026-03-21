@@ -5,10 +5,12 @@ import { mealPlanService, patientService, recipeService } from '../../services'
 import type { Recipe } from '../../services/recipe.service'
 import type { Patient } from '../../services/patient.service'
 import { useConfirmDelete } from '../../hooks'
+import { useToast } from '../../contexts/ToastContext'
 
 type MealPlanOption = { id: string; title: string }
 
 const Recipes = () => {
+  const { showToast } = useToast()
   const [items, setItems] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -66,6 +68,7 @@ const Recipes = () => {
       mealPlanIds: enableMealPlanAccess ? mealPlanIds : [],
     })
     if (created.error) {
+      showToast(created.error, 'error')
       setSaving(false)
       return
     }
@@ -73,7 +76,10 @@ const Recipes = () => {
     if (createdRecipe?.id && newRecipeImages.length > 0) {
       for (const file of newRecipeImages.slice(0, 3)) {
         const up = await recipeService.uploadImage(createdRecipe.id, file)
-        if (up.error) break
+        if (up.error) {
+          showToast(up.error, 'error')
+          break
+        }
       }
     }
     setSaving(false)
@@ -88,6 +94,7 @@ const Recipes = () => {
     setPatientQuery('')
     setMealPlanQuery('')
     await load()
+    showToast('Receita criada com sucesso.', 'success')
   }
 
   const onTogglePublic = async (r: Recipe) => {
@@ -100,18 +107,28 @@ const Recipes = () => {
     setItems((prev) => prev.filter((x) => x.id !== r.id))
   }
 
+  const onUploadImageExisting = async (recipeId: string, file: File) => {
+    const res = await recipeService.uploadImage(recipeId, file)
+    if (res.error) {
+      showToast(res.error, 'error')
+      return
+    }
+    showToast('Imagem adicionada à receita.', 'success')
+    await load()
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-[280px]"><Loader2 className="h-8 w-8 animate-spin text-primary-600" /></div>
   }
 
   return (
-    <div className="space-y-6">
+    <div className="app-page app-section">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Receitas</h1>
-        <p className="text-gray-600 mt-1">Gerencie receitas e controle visibilidade (pública/privada).</p>
+        <h1 className="app-title">Receitas</h1>
+        <p className="app-subtitle mt-1">Gerencie receitas e controle visibilidade (pública/privada).</p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+      <div className="app-card space-y-3">
         <div className="font-semibold text-gray-900">Nova receita</div>
         <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-300" placeholder="Título da receita" />
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-300 min-h-[90px]" placeholder="Descrição (opcional)" />
@@ -230,9 +247,9 @@ const Recipes = () => {
         </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="app-section">
         {items.map((r) => (
-          <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-3">
+          <div key={r.id} className="app-card flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
                 {r.imageUrls && r.imageUrls.length > 0 ? (
@@ -246,6 +263,21 @@ const Recipes = () => {
                   <button type="button" onClick={() => void onTogglePublic(r)} className={`text-xs font-semibold px-2 py-1 rounded ${r.isPublic ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>
                     {r.isPublic ? 'Pública' : 'Privada'}
                   </button>
+                </div>
+                <div className="mt-2">
+                  <label className="text-xs text-gray-600">Imagem da receita ({(r.imageUrls || []).length}/3)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={(r.imageUrls || []).length >= 3}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      void onUploadImageExisting(r.id, file)
+                      e.currentTarget.value = ''
+                    }}
+                    className="mt-1 block text-xs"
+                  />
                 </div>
               </div>
             </div>

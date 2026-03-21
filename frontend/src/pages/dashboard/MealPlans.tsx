@@ -71,11 +71,11 @@ const MealPlans = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="app-page app-section">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Planos alimentares</h1>
-          <p className="text-gray-600 mt-1">Gerencie e publique planos para seus pacientes.</p>
+          <h1 className="app-title">Planos alimentares</h1>
+          <p className="app-subtitle mt-1">Gerencie e publique planos para seus pacientes.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -106,12 +106,12 @@ const MealPlans = () => {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
+        <div className="app-card text-center">
           <p className="text-gray-900 font-semibold">Nenhum plano encontrado.</p>
           <p className="text-gray-600 mt-2">Crie seu primeiro plano alimentar para começar.</p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="app-card overflow-hidden p-0">
           <div className="hidden md:grid md:grid-cols-12 gap-3 px-5 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase tracking-wide">
             <div className="col-span-4">Título</div>
             <div className="col-span-2">Categoria</div>
