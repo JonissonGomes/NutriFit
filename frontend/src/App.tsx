@@ -20,6 +20,8 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Pricing from './pages/Pricing'
 import PublicProfile from './pages/PublicProfile'
+import PublicProfileContents from './pages/PublicProfileContents'
+import PublicProfileRecipes from './pages/PublicProfileRecipes'
 import Contents from './pages/Contents'
 import ContentPost from './pages/ContentPost'
 import NotFound from './pages/NotFound'
@@ -98,6 +100,8 @@ function App() {
                             <Route path="/portfolio/:username" element={<PublicProfile />} />
                             {/* Rota "oficial" para perfil público */}
                             <Route path="/profile/:username" element={<PublicProfile />} />
+                            <Route path="/profile/:username/conteudos" element={<PublicProfileContents />} />
+                            <Route path="/profile/:username/receitas" element={<PublicProfileRecipes />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                         </main>

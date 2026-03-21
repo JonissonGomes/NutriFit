@@ -236,7 +236,6 @@ const PublicProfile = () => {
   const showContact = customization.showContact !== false
 
   const heroStyle = customization.heroStyle ?? 'full'
-  const cardStyle = customization.projectCardStyle ?? 'simple'
   const layoutType = customization.layout ?? 'grid'
   const isMinimalHero = heroStyle === 'minimal' || layoutType === 'minimalist'
 
@@ -372,205 +371,68 @@ const PublicProfile = () => {
                   </div>
                 ) : null}
 
-                {/* Conteúdos */}
-                <div className="mt-6">
-                  <h2 className="text-lg font-bold text-gray-900">Conteúdos</h2>
-                  <p className="text-sm text-gray-600 mt-1">Artigos e materiais publicados no NuFit.</p>
-                  {posts.length === 0 ? (
-                    <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
-                      Este profissional ainda não publicou conteúdos.
-                    </div>
-                  ) : (
-                    layoutType === 'carousel' ? (
-                      <div className="mt-3 -mx-4 px-4 overflow-x-auto pb-2">
-                        <div className="flex gap-3">
-                          {posts.map((p) => {
-                            const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
-                            return (
-                              <Link
-                                key={p.id}
-                                to={`/conteudos/public/${p.slug}`}
-                                className="min-w-[260px] sm:min-w-[300px] block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow"
-                              >
-                                {thumbUrl ? (
-                                  <img src={thumbUrl} alt={p.title} className="w-full h-36 object-cover" />
-                                ) : (
-                                  <div className="w-full h-36 bg-gradient-to-r from-primary-600 to-accent-600" />
-                                )}
-                                <div className="p-4">
-                                  <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
-                                  {!isMinimalHero ? (
-                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
-                                  ) : null}
-                                  <p className="text-[11px] text-gray-500 mt-2">{`Por ${profile.displayName}`}</p>
-                                </div>
-                              </Link>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    ) : layoutType === 'featured' && posts.length > 0 ? (
-                      <div className="mt-3 space-y-4">
-                        {(() => {
-                          const featured = posts[0]
-                          const featuredThumb = featured.featuredImage || featured.attachments?.find((a) => a.type === 'image')?.url
-                          const featuredCard =
-                            cardStyle === 'overlay' ? (
-                              <Link
-                                to={`/conteudos/public/${featured.slug}`}
-                                className="block bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-sm transition-shadow"
-                              >
-                                <div className="relative">
-                                  {featuredThumb ? (
-                                    <img src={featuredThumb} alt={featured.title} className="w-full h-52 object-cover" />
-                                  ) : (
-                                    <div className="w-full h-52 bg-gradient-to-r from-primary-600 to-accent-600" />
-                                  )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                                    <p className="font-semibold text-white line-clamp-2">{featured.title}</p>
-                                    {!isMinimalHero ? (
-                                      <p className="text-sm text-white/90 mt-1 line-clamp-2">{featured.excerpt}</p>
-                                    ) : null}
-                                  </div>
-                                </div>
-                              </Link>
-                            ) : (
-                              <Link
-                                to={`/conteudos/public/${featured.slug}`}
-                                className="block bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-sm transition-shadow"
-                              >
-                                {featuredThumb ? (
-                                  <img src={featuredThumb} alt={featured.title} className="w-full h-52 object-cover" />
-                                ) : (
-                                  <div className="w-full h-52 bg-gradient-to-r from-primary-600 to-accent-600" />
-                                )}
-                                <div className="p-5">
-                                  <p className="text-xl font-bold text-gray-900">{featured.title}</p>
-                                  {cardStyle !== 'simple' && !isMinimalHero ? (
-                                    <p className="text-gray-600 mt-2 line-clamp-3">{featured.excerpt}</p>
-                                  ) : null}
-                                  {cardStyle === 'detailed' ? (
-                                    <p className="text-[11px] text-gray-500 mt-3">{`Por ${profile.displayName} • ${featured.readTime || 1} min de leitura`}</p>
-                                  ) : null}
-                                </div>
-                              </Link>
-                            )
-                          return featuredCard
-                        })()}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {posts.slice(1).map((p) => {
-                            const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
-                            return (
-                              <Link
-                                key={p.id}
-                                to={`/conteudos/public/${p.slug}`}
-                                className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow"
-                              >
-                                {thumbUrl ? (
-                                  <img src={thumbUrl} alt={p.title} className="w-full h-28 object-cover" />
-                                ) : (
-                                  <div className="w-full h-28 bg-gradient-to-r from-primary-600 to-accent-600" />
-                                )}
-                                <div className="p-4">
-                                  <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
-                                  {!isMinimalHero ? (
-                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
-                                  ) : null}
-                                </div>
-                              </Link>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      (() => {
-                        const gridColumns = Math.min(4, Math.max(1, customization.gridColumns ?? 3))
-                        const mdColsClass =
-                          gridColumns === 1
-                            ? 'md:grid-cols-1'
-                            : gridColumns === 2
-                              ? 'md:grid-cols-2'
-                              : gridColumns === 3
-                                ? 'md:grid-cols-3'
-                                : 'md:grid-cols-4'
-
-                        return (
-                          <div className={`mt-3 grid grid-cols-1 ${mdColsClass} gap-3 md:gap-4`}>
-                            {posts.map((p) => {
-                              const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
-                              const isOverlay = cardStyle === 'overlay' || layoutType === 'portfolio'
-                              return (
-                                <Link
-                                  key={p.id}
-                                  to={`/conteudos/public/${p.slug}`}
-                                  className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow"
-                                >
-                                  {isOverlay ? (
-                                    <div className="relative">
-                                      {thumbUrl ? (
-                                        <img src={thumbUrl} alt={p.title} className="w-full h-32 object-cover" />
-                                      ) : (
-                                        <div className="w-full h-32 bg-gradient-to-r from-primary-600 to-accent-600" />
-                                      )}
-                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                                        <p className="font-semibold text-white line-clamp-2">{p.title}</p>
-                                        {!isMinimalHero && cardStyle !== 'simple' ? (
-                                          <p className="text-sm text-white/90 mt-1 line-clamp-2">{p.excerpt}</p>
-                                        ) : null}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      {thumbUrl ? (
-                                        <img src={thumbUrl} alt={p.title} className="w-full h-32 object-cover" />
-                                      ) : (
-                                        <div className="w-full h-32 bg-gradient-to-r from-primary-600 to-accent-600" />
-                                      )}
-                                      <div className="p-4">
-                                        <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
-                                        {!isMinimalHero && cardStyle !== 'simple' ? (
-                                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
-                                        ) : null}
-                                        {cardStyle === 'detailed' ? (
-                                          <p className="text-[11px] text-gray-500 mt-2">{`Por ${profile.displayName}`}</p>
-                                        ) : null}
-                                      </div>
-                                    </>
-                                  )}
-                                </Link>
-                              )
-                            })}
-                          </div>
-                        )
-                      })()
-                    )
-                  )}
-                </div>
-
-                <div className="mt-6">
-                  <h2 className="text-lg font-bold text-gray-900">Receitas</h2>
-                  <p className="text-sm text-gray-600 mt-1">Receitas compartilhadas publicamente por este profissional.</p>
-                  {recipes.length === 0 ? (
-                    <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
-                      Este profissional ainda não publicou receitas.
-                    </div>
-                  ) : (
-                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {recipes.slice(0, 6).map((r) => (
-                        <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4">
-                          <div className="font-semibold text-gray-900">{r.title}</div>
-                          {r.description ? <div className="text-sm text-gray-600 mt-1 line-clamp-3">{r.description}</div> : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Conteúdos</h2>
+              <p className="text-sm text-gray-600 mt-1">Artigos e materiais publicados no NuFit.</p>
+            </div>
+            <Link to={`/profile/${username}/conteudos`} className="text-sm font-semibold text-primary-700 hover:text-primary-800">Ver todos</Link>
+          </div>
+          {posts.length === 0 ? (
+            <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
+              Este profissional ainda não publicou conteúdos.
+            </div>
+          ) : (
+            <div className="mt-3 overflow-x-auto">
+              <div className="flex gap-3 min-w-max pb-1">
+                {posts.slice(0, 10).map((p) => {
+                  const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
+                  return (
+                    <Link key={p.id} to={`/conteudos/public/${p.slug}`} className="w-72 bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow">
+                      {thumbUrl ? <img src={thumbUrl} alt={p.title} className="w-full h-36 object-cover" /> : <div className="w-full h-36 bg-gradient-to-r from-primary-600 to-accent-600" />}
+                      <div className="p-4">
+                        <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Receitas</h2>
+              <p className="text-sm text-gray-600 mt-1">Receitas compartilhadas publicamente por este profissional.</p>
+            </div>
+            <Link to={`/profile/${username}/receitas`} className="text-sm font-semibold text-primary-700 hover:text-primary-800">Ver todos</Link>
+          </div>
+          {recipes.length === 0 ? (
+            <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
+              Este profissional ainda não publicou receitas.
+            </div>
+          ) : (
+            <div className="mt-3 overflow-x-auto">
+              <div className="flex gap-3 min-w-max pb-1">
+                {recipes.slice(0, 10).map((r) => (
+                  <div key={r.id} className="w-72 bg-white border border-gray-200 rounded-xl p-4">
+                    {r.imageUrls?.[0] ? <img src={r.imageUrls[0]} alt={r.title} className="w-full h-36 object-cover rounded-lg mb-3" /> : <div className="w-full h-36 rounded-lg bg-gray-100 mb-3" />}
+                    <div className="font-semibold text-gray-900">{r.title}</div>
+                    {r.description ? <div className="text-sm text-gray-600 mt-1 line-clamp-2">{r.description}</div> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
