@@ -57,18 +57,25 @@ func ListPublicByNutritionist(ctx context.Context, nutritionistID string, limit 
 }
 
 func ListForPatient(ctx context.Context, patientID string, limit int64) ([]models.Recipe, error) {
-	pid, err := primitive.ObjectIDFromHex(patientID)
+	userOID, err := primitive.ObjectIDFromHex(patientID)
 	if err != nil {
 		return nil, err
 	}
 	if limit <= 0 || limit > 100 {
 		limit = 50
 	}
+	linkedPatientIDs := resolveLinkedPatientIDs(ctx, userOID)
+	patientIDOr := []bson.M{{"patientIds": userOID}}
+	if len(linkedPatientIDs) > 0 {
+		patientIDOr = append(patientIDOr, bson.M{"patientIds": bson.M{"$in": linkedPatientIDs}})
+	}
+
+	mealPlanIDs := patientMealPlanIDs(ctx, userOID, linkedPatientIDs)
 	filter := bson.M{
 		"$or": []bson.M{
 			{"isPublic": true},
-			{"patientIds": pid},
-			{"mealPlanIds": bson.M{"$in": patientMealPlanIDs(ctx, pid)}},
+			{"$or": patientIDOr},
+			{"mealPlanIds": bson.M{"$in": mealPlanIDs}},
 		},
 	}
 	cursor, err := database.RecipesCollection.Find(ctx, filter, options.Find().SetSort(bson.M{"updatedAt": -1}).SetLimit(limit))
@@ -83,8 +90,31 @@ func ListForPatient(ctx context.Context, patientID string, limit int64) ([]model
 	return out, nil
 }
 
-func patientMealPlanIDs(ctx context.Context, patientID primitive.ObjectID) []primitive.ObjectID {
-	cursor, err := database.MealPlansCollection.Find(ctx, bson.M{"patientId": patientID}, options.Find().SetProjection(bson.M{"_id": 1}))
+func resolveLinkedPatientIDs(ctx context.Context, userID primitive.ObjectID) []primitive.ObjectID {
+	cursor, err := database.PatientsCollection.Find(ctx, bson.M{"userId": userID}, options.Find().SetProjection(bson.M{"_id": 1}))
+	if err != nil {
+		return nil
+	}
+	defer cursor.Close(ctx)
+	var docs []struct {
+		ID primitive.ObjectID `bson:"_id"`
+	}
+	if err := cursor.All(ctx, &docs); err != nil {
+		return nil
+	}
+	ids := make([]primitive.ObjectID, 0, len(docs))
+	for _, d := range docs {
+		ids = append(ids, d.ID)
+	}
+	return ids
+}
+
+func patientMealPlanIDs(ctx context.Context, userID primitive.ObjectID, linkedPatientIDs []primitive.ObjectID) []primitive.ObjectID {
+	or := []bson.M{{"patientId": userID}}
+	if len(linkedPatientIDs) > 0 {
+		or = append(or, bson.M{"patientId": bson.M{"$in": linkedPatientIDs}})
+	}
+	cursor, err := database.MealPlansCollection.Find(ctx, bson.M{"$or": or}, options.Find().SetProjection(bson.M{"_id": 1}))
 	if err != nil {
 		return nil
 	}

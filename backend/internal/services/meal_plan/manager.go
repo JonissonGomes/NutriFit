@@ -1,4 +1,4 @@
-﻿package meal_plan
+package meal_plan
 
 import (
 	"context"
@@ -108,7 +108,7 @@ func GetMealPlan(ctx context.Context, mealPlanID string, nutritionistID string) 
 
 	var mealPlan models.MealPlan
 	err = database.MealPlansCollection.FindOne(ctx, bson.M{
-		"_id":           mealPlanOID,
+		"_id":            mealPlanOID,
 		"nutritionistId": nutritionistOID,
 	}).Decode(&mealPlan)
 
@@ -166,12 +166,16 @@ func ListMealPlans(ctx context.Context, nutritionistID string, patientID *string
 
 // ListMealPlansForPatient lista planos alimentares para um paciente autenticado.
 func ListMealPlansForPatient(ctx context.Context, patientID string, page, limit int) ([]models.MealPlan, int64, error) {
-	patientOID, err := primitive.ObjectIDFromHex(patientID)
+	userOID, err := primitive.ObjectIDFromHex(patientID)
 	if err != nil {
 		return nil, 0, err
 	}
-
-	filter := bson.M{"patientId": patientOID}
+	linkedPatientIDs := resolveLinkedPatientIDs(ctx, userOID)
+	or := []bson.M{{"patientId": userOID}}
+	if len(linkedPatientIDs) > 0 {
+		or = append(or, bson.M{"patientId": bson.M{"$in": linkedPatientIDs}})
+	}
+	filter := bson.M{"$or": or}
 
 	total, err := database.MealPlansCollection.CountDocuments(ctx, filter)
 	if err != nil {
@@ -211,15 +215,20 @@ func GetMealPlanForPatient(ctx context.Context, mealPlanID string, patientID str
 	if err != nil {
 		return nil, err
 	}
-	patientOID, err := primitive.ObjectIDFromHex(patientID)
+	userOID, err := primitive.ObjectIDFromHex(patientID)
 	if err != nil {
 		return nil, err
+	}
+	linkedPatientIDs := resolveLinkedPatientIDs(ctx, userOID)
+	or := []bson.M{{"patientId": userOID}}
+	if len(linkedPatientIDs) > 0 {
+		or = append(or, bson.M{"patientId": bson.M{"$in": linkedPatientIDs}})
 	}
 
 	var mealPlan models.MealPlan
 	err = database.MealPlansCollection.FindOne(ctx, bson.M{
-		"_id":       mealPlanOID,
-		"patientId": patientOID,
+		"_id": mealPlanOID,
+		"$or": or,
 	}).Decode(&mealPlan)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -228,6 +237,25 @@ func GetMealPlanForPatient(ctx context.Context, mealPlanID string, patientID str
 		return nil, err
 	}
 	return &mealPlan, nil
+}
+
+func resolveLinkedPatientIDs(ctx context.Context, userID primitive.ObjectID) []primitive.ObjectID {
+	cursor, err := database.PatientsCollection.Find(ctx, bson.M{"userId": userID}, options.Find().SetProjection(bson.M{"_id": 1}))
+	if err != nil {
+		return nil
+	}
+	defer cursor.Close(ctx)
+	var docs []struct {
+		ID primitive.ObjectID `bson:"_id"`
+	}
+	if err := cursor.All(ctx, &docs); err != nil {
+		return nil
+	}
+	ids := make([]primitive.ObjectID, 0, len(docs))
+	for _, d := range docs {
+		ids = append(ids, d.ID)
+	}
+	return ids
 }
 
 // UpdateMealPlan atualiza um plano alimentar
@@ -257,7 +285,7 @@ func UpdateMealPlan(ctx context.Context, mealPlanID string, nutritionistID strin
 	result := database.MealPlansCollection.FindOneAndUpdate(
 		ctx,
 		bson.M{
-			"_id":           mealPlanOID,
+			"_id":            mealPlanOID,
 			"nutritionistId": nutritionistOID,
 		},
 		bson.M{"$set": updates},
@@ -292,7 +320,7 @@ func DeleteMealPlan(ctx context.Context, mealPlanID string, nutritionistID strin
 	}
 
 	result, err := database.MealPlansCollection.DeleteOne(ctx, bson.M{
-		"_id":           mealPlanOID,
+		"_id":            mealPlanOID,
 		"nutritionistId": nutritionistOID,
 	})
 

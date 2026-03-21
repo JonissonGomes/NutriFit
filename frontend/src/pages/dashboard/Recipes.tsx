@@ -65,10 +65,15 @@ const Recipes = () => {
       patientIds: enablePatientAccess ? patientIds : [],
       mealPlanIds: enableMealPlanAccess ? mealPlanIds : [],
     })
-    const createdRecipe = (created.data as any)?.data
+    if (created.error) {
+      setSaving(false)
+      return
+    }
+    const createdRecipe = (created.data as any)?.data || (created.data as any)
     if (createdRecipe?.id && newRecipeImages.length > 0) {
       for (const file of newRecipeImages.slice(0, 3)) {
-        await recipeService.uploadImage(createdRecipe.id, file)
+        const up = await recipeService.uploadImage(createdRecipe.id, file)
+        if (up.error) break
       }
     }
     setSaving(false)
@@ -94,12 +99,6 @@ const Recipes = () => {
     await recipeService.remove(r.id)
     setItems((prev) => prev.filter((x) => x.id !== r.id))
   }
-
-  const onUploadImage = async (recipeId: string, file: File) => {
-    await recipeService.uploadImage(recipeId, file)
-    await load()
-  }
-
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[280px]"><Loader2 className="h-8 w-8 animate-spin text-primary-600" /></div>
@@ -234,33 +233,20 @@ const Recipes = () => {
       <div className="space-y-3">
         {items.map((r) => (
           <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-3">
-            <div>
-              <div className="font-semibold text-gray-900">{r.title}</div>
-              {r.description ? <div className="text-sm text-gray-600 mt-1">{r.description}</div> : null}
-              <div className="mt-2">
-                <button type="button" onClick={() => void onTogglePublic(r)} className={`text-xs font-semibold px-2 py-1 rounded ${r.isPublic ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>
-                  {r.isPublic ? 'Pública' : 'Privada'}
-                </button>
+            <div className="flex items-start gap-3">
+              <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
+                {r.imageUrls && r.imageUrls.length > 0 ? (
+                  <img src={r.imageUrls[0]} alt="Preview da receita" className="w-full h-full object-cover" />
+                ) : null}
               </div>
-              <div className="mt-3">
-                <label className="text-xs font-semibold text-gray-700">Imagens ({(r.imageUrls || []).length}/3)</label>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {(r.imageUrls || []).map((url) => (
-                    <img key={url} src={url} alt="Receita" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
-                  ))}
+              <div>
+                <div className="font-semibold text-gray-900">{r.title}</div>
+                {r.description ? <div className="text-sm text-gray-600 mt-1">{r.description}</div> : null}
+                <div className="mt-2">
+                  <button type="button" onClick={() => void onTogglePublic(r)} className={`text-xs font-semibold px-2 py-1 rounded ${r.isPublic ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-700'}`}>
+                    {r.isPublic ? 'Pública' : 'Privada'}
+                  </button>
                 </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={(r.imageUrls || []).length >= 3}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    void onUploadImage(r.id, file)
-                    e.currentTarget.value = ''
-                  }}
-                  className="mt-2 text-xs"
-                />
               </div>
             </div>
             <button type="button" onClick={() => deleteFlow.open(r)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-700 hover:bg-red-50">
