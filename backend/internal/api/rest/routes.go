@@ -1,10 +1,10 @@
 package rest
 
 import (
+	"github.com/gin-gonic/gin"
 	"nufit/backend/internal/config"
 	"nufit/backend/internal/services/websocket"
 	"nufit/backend/internal/utils"
-	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter() *gin.Engine {
@@ -19,7 +19,7 @@ func SetupRouter() *gin.Engine {
 	}
 
 	router := gin.Default()
-	
+
 	// Configurar limite de tamanho para multipart forms (100MB)
 	router.MaxMultipartMemory = 100 << 20 // 100 MB
 
@@ -179,6 +179,19 @@ func SetupRouter() *gin.Engine {
 				foodDiary.PUT("/:id/comment", RequireRole("nutricionista"), addNutritionistComment)
 			}
 
+			recipes := protected.Group("/recipes")
+			{
+				recipes.GET("", listMyRecipes)
+				recipes.POST("", RequireRole("nutricionista"), createRecipe)
+				recipes.PUT("/:id", RequireRole("nutricionista"), updateRecipe)
+				recipes.DELETE("/:id", RequireRole("nutricionista"), deleteRecipe)
+			}
+
+			predefinedMeals := protected.Group("/predefined-meals")
+			{
+				predefinedMeals.GET("", listPredefinedMeals)
+			}
+
 			// Goals
 			goals := protected.Group("/goals")
 			{
@@ -312,9 +325,9 @@ func SetupRouter() *gin.Engine {
 			// Analytics (authenticated)
 			analyticsGroup := protected.Group("/analytics")
 			{
-			analyticsGroup.GET("/overview", getAnalyticsOverview)
-			analyticsGroup.GET("/comparison", getAnalyticsComparison)
-			analyticsGroup.GET("/meal-plans/:id", getMealPlanAnalytics)
+				analyticsGroup.GET("/overview", getAnalyticsOverview)
+				analyticsGroup.GET("/comparison", getAnalyticsComparison)
+				analyticsGroup.GET("/meal-plans/:id", getMealPlanAnalytics)
 			}
 
 			// Badges (authenticated)
@@ -387,6 +400,7 @@ func SetupRouter() *gin.Engine {
 			public.GET("/blog/posts/by-slug/:slug", getBlogPostBySlug)
 			public.GET("/blog/categories", getBlogCategories)
 			public.GET("/blog/author/:authorId", getBlogPostsByAuthor)
+			public.GET("/recipes/nutritionist/:nutritionistId", listPublicRecipesByNutritionist)
 		}
 
 		// Explore routes (public)
@@ -408,7 +422,7 @@ func SetupRouter() *gin.Engine {
 			geo.GET("/cities", getAvailableCities)
 			geo.GET("/states", getAvailableStates)
 			geo.GET("/distance", calculateDistance)
-		geo.GET("/address-autocomplete", addressAutocomplete)
+			geo.GET("/address-autocomplete", addressAutocomplete)
 		}
 
 		// Analytics tracking (public - for tracking anonymous visitors)
@@ -426,8 +440,7 @@ func SetupRouter() *gin.Engine {
 
 func healthCheck(c *gin.Context) {
 	c.JSON(200, gin.H{
-		"status": "ok",
+		"status":  "ok",
 		"service": "nufit-api",
 	})
 }
-

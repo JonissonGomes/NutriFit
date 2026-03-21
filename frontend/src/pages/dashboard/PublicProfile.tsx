@@ -12,7 +12,6 @@ import SaveIcon from '@mui/icons-material/Save'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import ApartmentIcon from '@mui/icons-material/Apartment'
 import CloseIcon from '@mui/icons-material/Close'
-import AddIcon from '@mui/icons-material/Add'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
@@ -26,42 +25,34 @@ type PublicProfileType = ProfileServicePublicProfile
 import LayoutCustomizer from '../../components/profile/LayoutCustomizer'
 import LayoutPreview from '../../components/profile/LayoutPreview'
 
-const NUTRICIONISTA_SPECIALTIES = [
-  // Clínico / acompanhamento individual (core)
-  'Nutrição Clínica',
-  'Nutrição Esportiva',
-  'Nutrição Funcional',
-  'Nutrição Comportamental',
-  'Emagrecimento e Obesidade',
-
-  // Saúde e condições específicas
-  'Nutrição em Diabetes',
-  'Nutrição Cardiovascular',
-  'Nutrição em Doenças Gastrointestinais',
-  'Nutrição Oncológica',
-  'Nutrição em Doenças Renais',
-
-  // Ciclos de vida
-  'Nutrição Materno-Infantil',
-  'Nutrição Pediátrica',
-  'Nutrição Geriátrica',
-
-  // Outras
-  'Nutrição em Saúde Coletiva',
-  'Nutrição em Alimentação Coletiva (UAN)',
-] as const
-
-const MEDICO_SPECIALTIES = [
-  // Mais conectadas com nutrição
+const PROFESSIONAL_SPECIALTIES = [
+  'Alergias alimentares',
+  'Ayurveda',
+  'Clínica',
+  'Comportamental',
+  'Doenças autoimunes',
+  'Doenças cardiovasculares',
+  'Doenças Crônicas Não Transmissíveis',
+  'Doenças pulmonares',
+  'Doenças renais',
   'Endocrinologia e Metabologia',
-  'Medicina do Esporte',
-  'Clínica Médica',
-
-  // Média relevância
-  'Cardiologia',
-  'Gastroenterologia',
-  'Nefrologia',
+  'Esportiva',
+  'Estética',
+  'Fertilidade',
+  'Fitoterapia',
+  'Funcional',
   'Geriatria',
+  'Gerontologia',
+  'Materno-infantil',
+  'Nutrigenética',
+  'Oncológica',
+  'Ortomolecular',
+  'Pediátrica',
+  'Saúde da Mulher',
+  'Saúde intestinal',
+  'Terapia Intensiva',
+  'Transtornos alimentares',
+  'Vegetariana',
 ] as const
 
 const PublicProfile = () => {
@@ -113,7 +104,6 @@ const PublicProfile = () => {
   const locationSearchTimeout = useRef<number | null>(null)
   
   const [customization, setCustomization] = useState<ProfileCustomization>(DEFAULT_CUSTOMIZATION)
-  const [newSpecialty, setNewSpecialty] = useState('')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
@@ -397,17 +387,6 @@ const PublicProfile = () => {
     }
   }
 
-  const handleAddSpecialty = () => {
-    const trimmed = newSpecialty.trim()
-    if (trimmed && !formData.specialties.includes(trimmed)) {
-      setFormData({
-        ...formData,
-        specialties: [...formData.specialties, trimmed],
-      })
-      setNewSpecialty('')
-    }
-  }
-
   const handleRemoveSpecialty = (specialty: string) => {
     setFormData({
       ...formData,
@@ -415,11 +394,12 @@ const PublicProfile = () => {
     })
   }
 
-  const handleSpecialtyKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      handleAddSpecialty()
+  const handleToggleSpecialty = (specialty: string) => {
+    if (formData.specialties.includes(specialty)) {
+      handleRemoveSpecialty(specialty)
+      return
     }
+    setFormData((prev) => ({ ...prev, specialties: [...prev.specialties, specialty] }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -769,7 +749,7 @@ const PublicProfile = () => {
                       className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
                     >
                       <option value="">Selecione uma especialidade</option>
-                      {(user?.role === 'nutricionista' ? NUTRICIONISTA_SPECIALTIES : MEDICO_SPECIALTIES).map((s) => (
+                      {PROFESSIONAL_SPECIALTIES.map((s) => (
                         <option key={s} value={s}>
                           {s}
                         </option>
@@ -862,28 +842,17 @@ const PublicProfile = () => {
                   </div>
                 )}
 
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newSpecialty}
-                    onChange={(e) => {
-                      // Mesmo comportamento do nome: permitir espaços e acentos (sem sanitização agressiva)
-                      const value = e.target.value.replace(/<[^>]*>/g, '').replace(/[<>"&]/g, '')
-                      setNewSpecialty(limitLength(value, INPUT_LIMITS.SPECIALTY))
-                    }}
-                    onKeyPress={handleSpecialtyKeyPress}
-                    maxLength={INPUT_LIMITS.SPECIALTY}
-                    className="flex-1 px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Digite uma área de atuação e pressione Enter"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddSpecialty}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium text-sm flex items-center gap-1.5"
-                  >
-                    <AddIcon sx={{ fontSize: 18 }} />
-                    Adicionar
-                  </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {PROFESSIONAL_SPECIALTIES.map((s) => (
+                    <label key={s} className="inline-flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={formData.specialties.includes(s)}
+                        onChange={() => handleToggleSpecialty(s)}
+                      />
+                      <span>{s}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
             </div>

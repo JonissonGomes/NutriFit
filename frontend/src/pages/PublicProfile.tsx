@@ -13,6 +13,7 @@ import InstagramIcon from '@mui/icons-material/Instagram'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import { favoritesService, mealPlanService, profileService, reviewService } from '../services'
 import { blogService } from '../services/blog.service'
+import { recipeService } from '../services/recipe.service'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import type { PublicProfile as PublicProfileType } from '../services/profile.service'
@@ -20,6 +21,7 @@ import { DEFAULT_CUSTOMIZATION } from '../services/profile.service'
 import type { ReviewWithDetails } from '../services/review.service'
 import ConfirmModal from '../components/common/ConfirmModal'
 import type { BlogPost } from '../services/blog.service'
+import type { Recipe } from '../services/recipe.service'
 import { useConfirmDelete } from '../hooks'
 
 const PublicProfile = () => {
@@ -31,6 +33,7 @@ const PublicProfile = () => {
   const [profile, setProfile] = useState<PublicProfileType | null>(null)
   const [reviews, setReviews] = useState<ReviewWithDetails[]>([])
   const [posts, setPosts] = useState<BlogPost[]>([])
+  const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [isFavorite, setIsFavorite] = useState(false)
   const removeFavoriteFlow = useConfirmDelete<string>()
@@ -77,6 +80,8 @@ const PublicProfile = () => {
       // Conteúdos do autor (público)
       const bp = await blogService.getByAuthor(res.data.userId, 6)
       if (bp.data) setPosts(bp.data)
+      const rec = await recipeService.listPublicByNutritionist(res.data.userId)
+      setRecipes((rec.data as any)?.data || [])
 
       // Favorito (somente paciente)
       if (isAuthenticated && user?.role === 'paciente') {
@@ -542,6 +547,25 @@ const PublicProfile = () => {
                         )
                       })()
                     )
+                  )}
+                </div>
+
+                <div className="mt-6">
+                  <h2 className="text-lg font-bold text-gray-900">Receitas</h2>
+                  <p className="text-sm text-gray-600 mt-1">Receitas compartilhadas publicamente por este profissional.</p>
+                  {recipes.length === 0 ? (
+                    <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
+                      Este profissional ainda não publicou receitas.
+                    </div>
+                  ) : (
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {recipes.slice(0, 6).map((r) => (
+                        <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4">
+                          <div className="font-semibold text-gray-900">{r.title}</div>
+                          {r.description ? <div className="text-sm text-gray-600 mt-1 line-clamp-3">{r.description}</div> : null}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

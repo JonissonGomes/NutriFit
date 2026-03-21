@@ -1,55 +1,57 @@
-﻿package database
+package database
 
 import (
 	"context"
 	"time"
 
-	"nufit/backend/internal/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"nufit/backend/internal/config"
 )
 
 var (
-	MongoClient   *mongo.Client
-	MongoDB       *mongo.Database
-	UsersCollection         *mongo.Collection
-	ProjectsCollection      *mongo.Collection
-	ImagesCollection        *mongo.Collection
-	RefreshTokensCollection *mongo.Collection
-	ConversationsCollection *mongo.Collection
-	MessagesCollection      *mongo.Collection
-	ServicesCollection      *mongo.Collection
-	EventsCollection        *mongo.Collection
-	PublicProfilesCollection *mongo.Collection
-	FavoritesCollection     *mongo.Collection
-	UserSettingsCollection  *mongo.Collection
-	BillingCollection       *mongo.Collection
-	ReviewsCollection       *mongo.Collection
-	QuestionsCollection     *mongo.Collection
-	BlogPostsCollection     *mongo.Collection
-	AnalyticsCollection      *mongo.Collection
-	BadgesCollection        *mongo.Collection
-	NotificationsCollection *mongo.Collection
-	NotificationPrefsCollection *mongo.Collection
-	SearchIndexCollection   *mongo.Collection
-	ModelFilesCollection    *mongo.Collection
-	AdminActionsCollection  *mongo.Collection
-	ModerationReportsCollection *mongo.Collection
-	PlatformSettingsCollection *mongo.Collection
-	FeaturedContentCollection *mongo.Collection
+	MongoClient                  *mongo.Client
+	MongoDB                      *mongo.Database
+	UsersCollection              *mongo.Collection
+	ProjectsCollection           *mongo.Collection
+	ImagesCollection             *mongo.Collection
+	RefreshTokensCollection      *mongo.Collection
+	ConversationsCollection      *mongo.Collection
+	MessagesCollection           *mongo.Collection
+	ServicesCollection           *mongo.Collection
+	EventsCollection             *mongo.Collection
+	PublicProfilesCollection     *mongo.Collection
+	FavoritesCollection          *mongo.Collection
+	UserSettingsCollection       *mongo.Collection
+	BillingCollection            *mongo.Collection
+	ReviewsCollection            *mongo.Collection
+	QuestionsCollection          *mongo.Collection
+	BlogPostsCollection          *mongo.Collection
+	AnalyticsCollection          *mongo.Collection
+	BadgesCollection             *mongo.Collection
+	NotificationsCollection      *mongo.Collection
+	NotificationPrefsCollection  *mongo.Collection
+	SearchIndexCollection        *mongo.Collection
+	ModelFilesCollection         *mongo.Collection
+	AdminActionsCollection       *mongo.Collection
+	ModerationReportsCollection  *mongo.Collection
+	PlatformSettingsCollection   *mongo.Collection
+	FeaturedContentCollection    *mongo.Collection
 	BoostSubscriptionsCollection *mongo.Collection
 	// NuFit collections
-	PatientsCollection *mongo.Collection
-	MealPlansCollection *mongo.Collection
-	AnamnesisCollection *mongo.Collection
+	PatientsCollection           *mongo.Collection
+	MealPlansCollection          *mongo.Collection
+	AnamnesisCollection          *mongo.Collection
 	AnamnesisTemplatesCollection *mongo.Collection
-	FoodDiaryCollection *mongo.Collection
-	AnthropometricCollection *mongo.Collection
-	GoalsCollection *mongo.Collection
-	LabExamsCollection *mongo.Collection
-	QuestionnairesCollection *mongo.Collection
-	FoodsCollection *mongo.Collection
-	ShoppingListsCollection *mongo.Collection
+	FoodDiaryCollection          *mongo.Collection
+	AnthropometricCollection     *mongo.Collection
+	GoalsCollection              *mongo.Collection
+	LabExamsCollection           *mongo.Collection
+	QuestionnairesCollection     *mongo.Collection
+	FoodsCollection              *mongo.Collection
+	ShoppingListsCollection      *mongo.Collection
+	RecipesCollection            *mongo.Collection
+	PredefinedMealsCollection    *mongo.Collection
 )
 
 func ConnectMongoDB() error {
@@ -57,7 +59,7 @@ func ConnectMongoDB() error {
 	defer cancel()
 
 	clientOptions := options.Client().ApplyURI(config.AppConfig.MongoDBURI)
-	
+
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return err
@@ -111,6 +113,8 @@ func ConnectMongoDB() error {
 	QuestionnairesCollection = MongoDB.Collection("questionnaires")
 	FoodsCollection = MongoDB.Collection("foods")
 	ShoppingListsCollection = MongoDB.Collection("shopping_lists")
+	RecipesCollection = MongoDB.Collection("recipes")
+	PredefinedMealsCollection = MongoDB.Collection("predefined_meals")
 
 	return nil
 }
@@ -120,6 +124,3 @@ func DisconnectMongoDB() error {
 	defer cancel()
 	return MongoClient.Disconnect(ctx)
 }
-
-
-

@@ -33,6 +33,8 @@ export { patientService } from './patient.service'
 export { labExamService } from './labExam.service'
 export { anthropometricService } from './anthropometric.service'
 export { adminService } from './admin.service'
+export { recipeService } from './recipe.service'
+export { predefinedMealService } from './predefinedMeal.service'
 
 // Re-exportar tipos principais (apenas da API)
 export type * from '../types/api'

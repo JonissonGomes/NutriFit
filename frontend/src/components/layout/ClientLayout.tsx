@@ -50,6 +50,7 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
     { path: '/patient/progress', icon: LineChart, label: 'Evolução' },
     { path: '/patient/shopping-list', icon: ShoppingCart, label: 'Lista de Compras' },
     { path: '/patient/assistant', icon: Bot, label: 'Assistente' },
+    { path: '/patient/recipes', icon: BookText, label: 'Receitas' },
     { path: '/patient/favorites', icon: Heart, label: 'Favoritos' },
     { path: '/patient/messages', icon: MessageSquare, label: 'Mensagens' },
     { path: '/patient/bookings', icon: Calendar, label: 'Agendamentos' },

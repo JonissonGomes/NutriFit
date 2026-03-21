@@ -1,4 +1,4 @@
-﻿package database
+package database
 
 import (
 	"context"
@@ -389,10 +389,28 @@ func CreateIndexes() error {
 		return err
 	}
 
+	recipesIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "nutritionistId", Value: 1}, {Key: "updatedAt", Value: -1}}},
+		{Keys: bson.D{{Key: "isPublic", Value: 1}, {Key: "nutritionistId", Value: 1}}},
+		{Keys: bson.D{{Key: "patientIds", Value: 1}}},
+		{Keys: bson.D{{Key: "mealPlanIds", Value: 1}}},
+	}
+	if _, err = RecipesCollection.Indexes().CreateMany(ctx, recipesIndexes); err != nil {
+		return err
+	}
+
+	predefinedMealsIndexes := []mongo.IndexModel{
+		{Keys: bson.D{{Key: "name", Value: 1}}, Options: indexOptions().SetUnique(true)},
+		{Keys: bson.D{{Key: "mealGroups", Value: 1}}},
+		{Keys: bson.D{{Key: "filters", Value: 1}}},
+	}
+	if _, err = PredefinedMealsCollection.Indexes().CreateMany(ctx, predefinedMealsIndexes); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func indexOptions() *options.IndexOptions {
 	return options.Index()
 }
-

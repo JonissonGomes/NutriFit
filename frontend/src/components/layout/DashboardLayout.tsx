@@ -25,6 +25,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
 import LoadingButton from '../common/LoadingButton'
 import RestaurantIcon from '@mui/icons-material/Restaurant'
+import MenuBookIcon from '@mui/icons-material/MenuBook'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -63,6 +64,7 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
     ...(user?.role === 'nutricionista'
       ? [{ path: `${effectiveBasePath}/contents`, icon: ArticleIcon, label: 'Conteúdos' }]
       : []),
+    { path: `${effectiveBasePath}/recipes`, icon: MenuBookIcon, label: 'Receitas' },
     { path: `${effectiveBasePath}/profile`, icon: PersonIcon, label: 'Perfil Público' },
     { path: `${effectiveBasePath}/messages`, icon: ChatIcon, label: 'Mensagens' },
     { path: `${effectiveBasePath}/services`, icon: WorkIcon, label: 'Serviços' },

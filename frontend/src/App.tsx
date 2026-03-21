@@ -42,6 +42,7 @@ import FoodDiaryPatients from './pages/dashboard/FoodDiaryPatients'
 import MyContents from './pages/dashboard/MyContents'
 import MealPlanCreate from './pages/dashboard/MealPlanCreate'
 import MealPlanDetail from './pages/dashboard/MealPlanDetail'
+import NutritionistRecipes from './pages/dashboard/Recipes'
 
 // Páginas do paciente
 import ClientDashboard from './pages/client/ClientDashboard'
@@ -55,6 +56,7 @@ import PatientGoals from './pages/patient/Goals'
 import PatientProgress from './pages/patient/Progress'
 import PatientShoppingList from './pages/patient/ShoppingList'
 import PatientAIAssistant from './pages/patient/AIAssistant'
+import PatientRecipes from './pages/patient/Recipes'
 
 function App() {
   return (
@@ -124,6 +126,7 @@ function App() {
                             <Route path="/calendar" element={<Calendar />} />
                             <Route path="/analytics" element={<Analytics />} />
                             <Route path="/contents" element={<MyContents />} />
+                            <Route path="/recipes" element={<NutritionistRecipes />} />
                             <Route path="/settings" element={<Settings />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
@@ -152,6 +155,7 @@ function App() {
                             <Route path="/calendar" element={<Calendar />} />
                             <Route path="/analytics" element={<Analytics />} />
                             <Route path="/settings" element={<Settings />} />
+                            <Route path="/recipes" element={<NutritionistRecipes />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                         </DashboardLayout>
@@ -174,6 +178,7 @@ function App() {
                             <Route path="/progress" element={<PatientProgress />} />
                             <Route path="/shopping-list" element={<PatientShoppingList />} />
                             <Route path="/assistant" element={<PatientAIAssistant />} />
+                            <Route path="/recipes" element={<PatientRecipes />} />
                             <Route path="/favorites" element={<ClientFavorites />} />
                             <Route path="/messages" element={<ClientMessages />} />
                             <Route path="/bookings" element={<ClientBookings />} />
