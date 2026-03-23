@@ -10,6 +10,7 @@ const PublicProfileRecipes = () => {
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState<Recipe[]>([])
   const [name, setName] = useState('')
+  const shouldScrollMobile = items.length > 3
 
   useEffect(() => {
     const load = async () => {
@@ -30,27 +31,32 @@ const PublicProfileRecipes = () => {
   }, [username])
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="app-page app-section py-8">
       <Link to={`/profile/${username}`} className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700">
         <ArrowBackIcon sx={{ fontSize: 18 }} />
         Voltar ao perfil
       </Link>
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Receitas de {name || 'profissional'}</h1>
+        <h1 className="app-title">Receitas de {name || 'profissional'}</h1>
       </div>
       {loading ? (
         <div className="text-sm text-gray-600">Carregando...</div>
       ) : items.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 text-sm text-gray-600">Nenhuma receita publicada.</div>
+        <div className="app-card text-sm text-gray-600">Nenhuma receita publicada.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={`${shouldScrollMobile ? 'overflow-x-auto md:overflow-visible' : 'overflow-hidden md:overflow-visible'}`}>
+          <div className={shouldScrollMobile ? 'flex gap-3 min-w-max pb-1 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:min-w-0 md:pb-0' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'}>
           {items.map((r) => (
-            <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4">
+            <div
+              key={r.id}
+              className={`${shouldScrollMobile ? 'w-[46vw] min-w-[46vw] max-w-[46vw] md:w-full md:min-w-0 md:max-w-none' : 'w-full'} bg-white border border-gray-200 rounded-xl p-4`}
+            >
               {r.imageUrls?.[0] ? <img src={r.imageUrls[0]} alt={r.title} className="w-full h-36 object-cover rounded-lg mb-3" /> : null}
               <div className="font-semibold text-gray-900">{r.title}</div>
               {r.description ? <div className="text-sm text-gray-600 mt-1">{r.description}</div> : null}
             </div>
           ))}
+          </div>
         </div>
       )}
     </div>
