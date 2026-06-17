@@ -1,12 +1,15 @@
-﻿package rest
+package rest
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
+	"nufit/backend/internal/config"
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/admin"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -203,8 +206,9 @@ func updateUserPlanAdmin(c *gin.Context) {
 	}
 	_, err = database.UsersCollection.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{
 		"$set": bson.M{
-			"plan":      req.Plan,
-			"updatedAt": time.Now(),
+			"plan":         req.Plan,
+			"storageLimit": config.StorageLimitForPlan(req.Plan),
+			"updatedAt":    time.Now(),
 		},
 	})
 	if err != nil {
@@ -212,6 +216,32 @@ func updateUserPlanAdmin(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Plano atualizado"})
+}
+
+func deleteUserAdmin(c *gin.Context) {
+	if !requireAdmin(c) {
+		return
+	}
+
+	actorID, _ := c.Get("userID")
+	targetID := c.Param("id")
+
+	err := admin.DeleteUserCascade(c.Request.Context(), targetID, actorID.(string))
+	if err != nil {
+		switch {
+		case errors.Is(err, admin.ErrCannotDeleteSelf):
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		case errors.Is(err, admin.ErrCannotDeleteSuperAdmin):
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		case errors.Is(err, admin.ErrUserNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao excluir usuário"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Usuário excluído permanentemente"})
 }
 
 func adminOverview(c *gin.Context) {

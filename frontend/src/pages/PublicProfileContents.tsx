@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { blogService } from '../services/blog.service'
 import { profileService } from '../services/profile.service'
 import type { BlogPost } from '../services/blog.service'
@@ -32,10 +31,6 @@ const PublicProfileContents = () => {
 
   return (
     <div className="app-page app-section py-8">
-      <Link to={`/profile/${username}`} className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700">
-        <ArrowBackIcon sx={{ fontSize: 18 }} />
-        Voltar ao perfil
-      </Link>
       <div>
         <h1 className="app-title">Conteúdos de {name || 'profissional'}</h1>
       </div>

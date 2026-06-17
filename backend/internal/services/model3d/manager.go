@@ -13,9 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"nufit/backend/internal/config"
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
-	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/storage"
 	"nufit/backend/internal/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -41,9 +42,10 @@ var (
 // CONSTANTES
 // ============================================
 
-const (
-	MaxFileSize = 100 * 1024 * 1024 // 100MB
-)
+// MaxFileSizeBytes retorna o limite configurável de upload de modelos 3D.
+func MaxFileSizeBytes() int64 {
+	return config.GetMaxModelBytes()
+}
 
 // getTempDir retorna o diretório temporário para modelos 3D
 func getTempDir() string {
@@ -62,7 +64,7 @@ func Upload(ctx context.Context, userID string, file *multipart.FileHeader, req 
 	}
 
 	// Verificar tamanho do arquivo
-	if file.Size > MaxFileSize {
+	if file.Size > MaxFileSizeBytes() {
 		return nil, ErrFileTooLarge
 	}
 
@@ -98,11 +100,11 @@ func Upload(ctx context.Context, userID string, file *multipart.FileHeader, req 
 		return nil, err
 	}
 
-	// Upload para Cloudinary
-	folder := fmt.Sprintf("nufit/models/%s", userID)
-	uploadResult, err := cloudinary.UploadRaw(ctx, tempPath, folder)
+	// Upload para R2
+	objectKey := storage.BuildModelKey(userID, file.Filename)
+	uploadResult, err := storage.UploadRaw(ctx, tempPath, objectKey)
 	if err != nil {
-		return nil, fmt.Errorf("erro no upload para Cloudinary: %w", err)
+		return nil, fmt.Errorf("erro no upload para R2: %w", err)
 	}
 
 	// Criar registro no banco
@@ -405,7 +407,7 @@ func Delete(ctx context.Context, modelID, userID string, isAdmin bool) error {
 			return ErrUnauthorized
 		}
 
-		// TODO: Deletar arquivos do Cloudinary
+		// TODO: Deletar arquivos do R2
 	}
 
 	_, err = database.ModelFilesCollection.DeleteOne(ctx, bson.M{"_id": modelOID})

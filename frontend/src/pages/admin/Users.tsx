@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Loader2, Search, MoreVertical, UserCheck, UserX } from 'lucide-react'
+import { Loader2, Search, MoreVertical, UserCheck, UserX, Trash2 } from 'lucide-react'
 import { adminService } from '../../services'
 import type { AdminUserRow, AdminUsersParams } from '../../services/admin.service'
 import { useToast } from '../../contexts/ToastContext'
@@ -38,6 +38,7 @@ const UsersAdmin = () => {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const [confirmStatus, setConfirmStatus] = useState<{ userId: string; status: 'active' | 'suspended' } | null>(null)
   const [confirmPlan, setConfirmPlan] = useState<{ userId: string; plan: string } | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<AdminUserRow | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -91,6 +92,20 @@ const UsersAdmin = () => {
       return
     }
     showToast(res.data?.message ?? 'Plano atualizado', 'success')
+    void load()
+  }
+
+  const handleDeleteUser = async () => {
+    if (!confirmDelete) return
+    setUpdatingId(confirmDelete.id)
+    const res = await adminService.deleteUser(confirmDelete.id)
+    setUpdatingId(null)
+    setConfirmDelete(null)
+    if (res.error) {
+      showToast(res.error, 'error')
+      return
+    }
+    showToast(res.data?.message ?? 'Usuário excluído', 'success')
     void load()
   }
 
@@ -176,10 +191,10 @@ const UsersAdmin = () => {
                 </div>
               )}
             </div>
-            <div className="overflow-x-auto">
+            <div className="max-h-[480px] overflow-y-auto overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-sm text-gray-600">
+                  <tr className="border-b border-gray-100 bg-gray-50/95 backdrop-blur-sm text-left text-sm text-gray-600 sticky top-0 z-10">
                     <th className="px-5 py-3 font-semibold">Nome</th>
                     <th className="px-5 py-3 font-semibold">E-mail</th>
                     <th className="px-5 py-3 font-semibold">Perfil</th>
@@ -259,6 +274,17 @@ const UsersAdmin = () => {
                                   Suspender
                                 </button>
                               )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmDelete(u)
+                                  setMenuOpenId(null)
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-red-50 flex items-center gap-2 border-t border-gray-100"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Excluir permanentemente
+                              </button>
                             </div>
                           </>
                         )}
@@ -291,6 +317,22 @@ const UsersAdmin = () => {
         onClose={() => setConfirmStatus(null)}
         loading={updatingId === confirmStatus?.userId}
         variant={confirmStatus?.status === 'suspended' ? 'danger' : 'info'}
+      />
+
+      <ConfirmModal
+        isOpen={!!confirmDelete}
+        title="Excluir usuário permanentemente?"
+        message={
+          confirmDelete
+            ? `Esta ação não pode ser desfeita. O usuário "${confirmDelete.name}" e todos os dados vinculados (perfil, pacientes, planos, mensagens, etc.) serão removidos permanentemente.`
+            : ''
+        }
+        confirmText="Excluir permanentemente"
+        cancelText="Cancelar"
+        onConfirm={handleDeleteUser}
+        onClose={() => setConfirmDelete(null)}
+        loading={updatingId === confirmDelete?.id}
+        variant="danger"
       />
 
       {confirmPlan && (

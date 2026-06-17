@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"nufit/backend/internal/database"
-	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/storage"
 	"nufit/backend/internal/services/image"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -47,7 +47,7 @@ func uploadImage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo inválido"})
 		return
 	}
-	if file.Size > image.MaxImageSize {
+	if file.Size > image.MaxImageSizeBytes() {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
 		return
 	}
@@ -61,7 +61,7 @@ func uploadImage(c *gin.Context) {
 	defer src.Close()
 
 	// Read file data
-	fileData, err := image.ReadImageFromReader(src, image.MaxImageSize)
+	fileData, err := image.ReadImageFromReader(src, image.MaxImageSizeBytes())
 	if err != nil {
 		if errors.Is(err, image.ErrImageTooLarge) {
 			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
@@ -160,7 +160,7 @@ func uploadImagesBatch(c *gin.Context) {
 			results = append(results, r)
 			continue
 		}
-		if fh.Size > image.MaxImageSize {
+		if fh.Size > image.MaxImageSizeBytes() {
 			r.Error = "Arquivo muito grande. O tamanho máximo é 10MB."
 			results = append(results, r)
 			continue
@@ -173,7 +173,7 @@ func uploadImagesBatch(c *gin.Context) {
 			continue
 		}
 
-		data, err := image.ReadImageFromReader(src, image.MaxImageSize)
+		data, err := image.ReadImageFromReader(src, image.MaxImageSizeBytes())
 		_ = src.Close()
 		if err != nil {
 			if errors.Is(err, image.ErrImageTooLarge) {
@@ -354,7 +354,7 @@ func deleteImage(c *gin.Context) {
 		return
 	}
 
-	_ = cloudinary.DeleteImage(c.Request.Context(), img.PublicID)
+	_ = storage.DeleteImage(c.Request.Context(), img.PublicID)
 
 	_, err = database.ImagesCollection.DeleteOne(c.Request.Context(), bson.M{"_id": objID, "userId": userObjID})
 	if err != nil {

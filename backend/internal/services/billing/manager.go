@@ -235,7 +235,11 @@ func setUserPlan(ctx context.Context, userID string, planType models.PlanType) e
 		return err
 	}
 	_, err = database.UsersCollection.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{
-		"$set": bson.M{"plan": planType, "updatedAt": time.Now()},
+		"$set": bson.M{
+			"plan":         planType,
+			"storageLimit": config.StorageLimitForPlan(planType),
+			"updatedAt":    time.Now(),
+		},
 	})
 	return err
 }

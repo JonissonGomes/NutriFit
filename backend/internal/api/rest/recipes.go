@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"nufit/backend/internal/models"
-	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/storage"
 	"nufit/backend/internal/services/image"
 	"nufit/backend/internal/services/recipe"
 )
@@ -170,7 +171,7 @@ func uploadRecipeImage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo inválido"})
 		return
 	}
-	if fileHeader.Size > image.MaxImageSize {
+	if fileHeader.Size > image.MaxImageSizeBytes() {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
 		return
 	}
@@ -182,18 +183,19 @@ func uploadRecipeImage(c *gin.Context) {
 	}
 	defer f.Close()
 
-	buf, err := image.ReadImageFromReader(f, image.MaxImageSize)
+	buf, err := image.ReadImageFromReader(f, image.MaxImageSizeBytes())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Erro ao ler arquivo"})
 		return
 	}
-	if err := image.ValidateImage(buf, image.MaxImageSize); err != nil {
+	if err := image.ValidateImage(buf, image.MaxImageSizeBytes()); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Imagem inválida. Use JPEG, PNG, GIF ou WebP até 10MB."})
 		return
 	}
 
-	publicID := "nufit/recipes/" + id + "/" + time.Now().Format("20060102150405.000000000")
-	up, err := cloudinary.UploadImage(c.Request.Context(), buf, publicID, "nufit/recipes")
+	ext := filepath.Ext(fileHeader.Filename)
+	objectKey := storage.BuildRecipeImageKey(userID.(string), id, time.Now().Format("20060102150405")+ext)
+	up, err := storage.UploadImage(c.Request.Context(), buf, objectKey, "")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao fazer upload da imagem"})
 		return

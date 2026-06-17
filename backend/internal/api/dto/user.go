@@ -5,6 +5,7 @@ import (
 
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/security"
+	"nufit/backend/internal/services/storage"
 )
 
 // ============================================
@@ -57,7 +58,7 @@ func NewUserResponse(user *models.User) UserResponse {
 		Name:               user.Name,
 		Email:              user.Email,
 		Role:               string(user.Role),
-		Avatar:             user.Avatar,
+		Avatar:             storage.ResolveMediaURL(user.Avatar),
 		Plan:               string(user.Plan),
 		ProfessionalRegistration: user.ProfessionalRegistration,
 		StorageUsedPercent: storagePercent,
@@ -89,7 +90,7 @@ func NewUserPublicResponse(user *models.User) UserPublicResponse {
 	return UserPublicResponse{
 		Token:  token,
 		Name:   user.Name,
-		Avatar: user.Avatar,
+		Avatar: storage.ResolveMediaURL(user.Avatar),
 		Role:   string(user.Role),
 	}
 }

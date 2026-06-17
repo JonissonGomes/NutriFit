@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ExternalLink, Star } from 'lucide-react'
 import { exploreService } from '../../services'
+import { getProfileAvatarUrl } from '../../utils/mediaUrl'
 import type { PublicProfile } from '../../types/api'
 
 const FeaturedProjects = () => {
@@ -72,15 +73,16 @@ const FeaturedProjects = () => {
           {nutritionists.map((profile) => (
             <Link
               key={profile.id}
-              to={`/portfolio/${profile.username}`}
+              to={`/profile/${profile.username}`}
               className="group bg-white rounded-xl border border-primary-100 p-6 hover:border-primary-300 hover:shadow-lg transition-all duration-200"
             >
               <div className="flex items-center gap-4 mb-4">
-                {profile.avatar ? (
+                {getProfileAvatarUrl(profile) ? (
                   <img
-                    src={profile.avatar}
+                    src={getProfileAvatarUrl(profile)}
                     alt={profile.displayName}
                     className="w-16 h-16 rounded-full object-cover border-2 border-primary-100"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-xl font-bold">

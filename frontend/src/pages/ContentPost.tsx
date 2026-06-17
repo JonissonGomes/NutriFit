@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { useLocation, useParams } from 'react-router-dom'
 import { blogService } from '../services/blog.service'
 import type { BlogPost } from '../services/blog.service'
 import ReactMarkdown from 'react-markdown'
@@ -10,7 +9,6 @@ import { getFriendlyErrorMessage } from '../utils/feedbackMessages'
 
 const ContentPost = () => {
   const { slug } = useParams<{ slug: string }>()
-  const navigate = useNavigate()
   const location = useLocation()
   const [loading, setLoading] = useState(true)
   const [post, setPost] = useState<BlogPost | null>(null)
@@ -44,14 +42,6 @@ const ContentPost = () => {
   if (!post) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-4">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800"
-        >
-          <ArrowBackIcon sx={{ fontSize: 18 }} />
-          Voltar
-        </button>
         <InlineAlert variant="error">{error || 'Conteúdo não encontrado.'}</InlineAlert>
       </div>
     )
@@ -63,15 +53,6 @@ const ContentPost = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800"
-        >
-          <ArrowBackIcon sx={{ fontSize: 18 }} />
-          Voltar
-        </button>
-
         <article className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
           {featuredImage ? (
             <img src={featuredImage} alt={post.title} className="w-full h-56 object-cover" />

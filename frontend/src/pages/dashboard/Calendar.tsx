@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, User, ArrowLeft, X, Loader2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, User, X, Loader2 } from 'lucide-react'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import { calendarService } from '../../services'
 import type { Event, CreateEventRequest, EventType, EventLocation } from '../../services/calendar.service'
@@ -18,7 +17,6 @@ const Calendar = () => {
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const deleteFlow = useConfirmDelete<string>()
-  const navigate = useNavigate()
   const { showToast } = useToast()
 
   // Form state para novo evento
@@ -222,14 +220,7 @@ const Calendar = () => {
         loading={deleteFlow.loading || !!deletingId}
         variant="danger"
       />
-      {/* Header com botão voltar */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/nutritionist/dashboard')}
-          className="p-2 rounded-lg"
-        >
-          <ArrowLeft className="h-5 w-5 text-gray-600" />
-        </button>
         <div className="flex-1">
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">Agenda</h1>
           <p className="text-gray-600 mt-1 text-xs md:text-sm">Gerencie seus compromissos e reuniões</p>

@@ -23,8 +23,15 @@ func SetupRouter() *gin.Engine {
 
 	router := gin.Default()
 
-	// Configurar limite de tamanho para multipart forms (100MB)
-	router.MaxMultipartMemory = 100 << 20 // 100 MB
+	// Limite de multipart = maior limite por arquivo (modelos 3D)
+	maxUpload := config.GetMaxModelBytes()
+	if d := config.GetMaxDocumentBytes(); d > maxUpload {
+		maxUpload = d
+	}
+	if i := config.GetMaxImageBytes(); i > maxUpload {
+		maxUpload = i
+	}
+	router.MaxMultipartMemory = maxUpload
 
 	// CORS middleware
 	router.Use(corsMiddleware())
@@ -37,11 +44,15 @@ func SetupRouter() *gin.Engine {
 	// Health check
 	router.GET("/health", healthCheck)
 
+	// Arquivos públicos do R2 (fallback quando R2_PUBLIC_BASE_URL não está configurado)
+	v1 := router.Group("/api/v1")
+	v1.GET("/media/*filepath", serveMediaFile)
+
 	// WebSocket endpoint (authentication via query param)
 	router.GET("/ws", websocket.HandleWebSocket)
 
 	// API v1 routes
-	v1 := router.Group("/api/v1")
+	v1 = router.Group("/api/v1")
 	{
 		// Auth routes
 		auth := v1.Group("/auth")
@@ -385,6 +396,7 @@ func SetupRouter() *gin.Engine {
 				admin.GET("/users", listUsersAdmin)
 				admin.PUT("/users/:id/plan", updateUserPlanAdmin)
 				admin.PUT("/users/:id/status", updateUserStatusAdmin)
+				admin.DELETE("/users/:id", deleteUserAdmin)
 
 				// Verificações
 				verifications := admin.Group("/verifications")

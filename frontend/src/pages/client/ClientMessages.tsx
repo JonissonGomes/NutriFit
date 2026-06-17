@@ -340,17 +340,9 @@ const ClientMessages: React.FC = () => {
   return (
     <div className="h-[calc(100vh-8rem)] max-w-7xl mx-auto">
       {/* Header - apenas no desktop ou quando nenhuma conversa está selecionada no mobile */}
-      <div className={`flex items-center gap-4 mb-4 ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
-        <button
-          onClick={() => navigate('/patient/dashboard')}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5 text-gray-600" />
-        </button>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Mensagens</h1>
-          <p className="text-gray-600 mt-1 text-xs md:text-sm hidden md:block">Converse com nutricionistas</p>
-        </div>
+      <div className={`mb-4 ${selectedConversation ? 'hidden md:block' : 'block'}`}>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Mensagens</h1>
+        <p className="text-gray-600 mt-1 text-xs md:text-sm hidden md:block">Converse com nutricionistas</p>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 h-[calc(100%-5rem)] md:h-[calc(100%-5rem)] flex overflow-hidden shadow-sm">

@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react'
-import { ArrowLeft, User, Building2, Bell, Lock, CreditCard, Globe, Save, Loader2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { User, Building2, Bell, Lock, CreditCard, Globe, Save, Loader2 } from 'lucide-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { settingsService, type NotificationSettings, type Preferences, type PrivacySettings, type UserProfile } from '../../services/settings.service'
 import { billingService } from '../../services/billing.service'
 import LoadingButton from '../../components/common/LoadingButton'
+import SwitchField from '../../components/common/SwitchField'
 import { sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, maskCNPJ, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
 
 const Settings = () => {
-  const navigate = useNavigate()
   const { isDarkMode, setDarkMode } = useTheme()
   const { showToast } = useToast()
   const { user } = useAuth()
@@ -276,18 +275,9 @@ const Settings = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-        </button>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Configurações</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1 text-xs md:text-sm">Gerencie suas preferências e informações</p>
-        </div>
+      <div>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Configurações</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1 text-xs md:text-sm">Gerencie suas preferências e informações</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -470,92 +460,51 @@ const Settings = () => {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Notificações</h2>
               
               <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">Notificações por Email</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Receba atualizações por email</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={notifications.email}
-                      onChange={(e) => setNotifications({...notifications, email: e.target.checked})}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                  </label>
-                </div>
+                <SwitchField
+                  bordered
+                  label="Notificações por Email"
+                  description="Receba atualizações por email"
+                  checked={notifications.email}
+                  onChange={(email) => setNotifications({ ...notifications, email })}
+                />
 
-                <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {isClient ? 'Atualizações de Consultas' : 'Atualizações'}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {isClient ? 'Quando houver mudanças nas consultas/agendamentos' : 'Quando houver mudanças relevantes'}
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={notifications.projectUpdates}
-                      onChange={(e) => setNotifications({...notifications, projectUpdates: e.target.checked})}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                  </label>
-                </div>
+                <SwitchField
+                  bordered
+                  label={isClient ? 'Atualizações de Consultas' : 'Atualizações'}
+                  description={
+                    isClient
+                      ? 'Quando houver mudanças nas consultas/agendamentos'
+                      : 'Quando houver mudanças relevantes'
+                  }
+                  checked={notifications.projectUpdates}
+                  onChange={(projectUpdates) => setNotifications({ ...notifications, projectUpdates })}
+                />
 
                 {!isClient && (
-                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Mensagens de Clientes</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Novas mensagens dos clientes</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifications.clientMessages}
-                        onChange={(e) => setNotifications({...notifications, clientMessages: e.target.checked})}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                    </label>
-                  </div>
+                  <SwitchField
+                    bordered
+                    label="Mensagens de Clientes"
+                    description="Novas mensagens dos clientes"
+                    checked={notifications.clientMessages}
+                    onChange={(clientMessages) => setNotifications({ ...notifications, clientMessages })}
+                  />
                 )}
                 {isClient && (
-                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">Mensagens de Nutricionistas</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Respostas dos nutricionistas às suas mensagens</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifications.clientMessages}
-                        onChange={(e) => setNotifications({...notifications, clientMessages: e.target.checked})}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                    </label>
-                  </div>
+                  <SwitchField
+                    bordered
+                    label="Mensagens de Nutricionistas"
+                    description="Respostas dos nutricionistas às suas mensagens"
+                    checked={notifications.clientMessages}
+                    onChange={(clientMessages) => setNotifications({ ...notifications, clientMessages })}
+                  />
                 )}
 
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">Novidades e promoções</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Novidades e promoções</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={notifications.marketingEmails}
-                      onChange={(e) => setNotifications({...notifications, marketingEmails: e.target.checked})}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                  </label>
-                </div>
+                <SwitchField
+                  label="Novidades e promoções"
+                  description="Novidades e promoções"
+                  checked={notifications.marketingEmails}
+                  onChange={(marketingEmails) => setNotifications({ ...notifications, marketingEmails })}
+                />
               </div>
             </div>
           )}
@@ -706,35 +655,25 @@ const Settings = () => {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Preferências</h2>
               
               <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">Modo Escuro</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Ativar tema escuro</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isDarkMode}
-                      onChange={async (e) => {
-                        const newValue = e.target.checked
-                        setDarkMode(newValue)
-                        // Salvar automaticamente nas preferências
-                        try {
-                          const updatedPreferences: Preferences = {
-                            ...preferences,
-                            theme: newValue ? 'dark' : 'light',
-                          }
-                          await settingsService.updatePreferences(updatedPreferences)
-                          setPreferences(updatedPreferences)
-                        } catch (error) {
-                          console.error('Erro ao salvar preferência de tema:', error)
-                        }
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                  </label>
-                </div>
+                <SwitchField
+                  bordered
+                  label="Modo Escuro"
+                  description="Ativar tema escuro"
+                  checked={isDarkMode}
+                  onChange={async (newValue) => {
+                    setDarkMode(newValue)
+                    try {
+                      const updatedPreferences: Preferences = {
+                        ...preferences,
+                        theme: newValue ? 'dark' : 'light',
+                      }
+                      await settingsService.updatePreferences(updatedPreferences)
+                      setPreferences(updatedPreferences)
+                    } catch (error) {
+                      console.error('Erro ao salvar preferência de tema:', error)
+                    }
+                  }}
+                />
 
                 <div className="py-3">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

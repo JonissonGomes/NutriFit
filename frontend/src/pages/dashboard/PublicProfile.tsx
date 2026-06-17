@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import WorkIcon from '@mui/icons-material/Work'
 import SchoolIcon from '@mui/icons-material/School'
@@ -19,7 +18,8 @@ import { profileService, DEFAULT_CUSTOMIZATION } from '../../services'
 import type { ProfileCustomization, PublicProfile as ProfileServicePublicProfile } from '../../services/profile.service'
 import { geolocationService } from '../../services/geolocation.service'
 import LoadingButton from '../../components/common/LoadingButton'
-import { sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, validateUsername, validateUrl, validatePhone, unmask, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
+import { sanitizeName, sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, validateUsername, validateUrl, validatePhone, unmask, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
+import { resolveMediaUrl } from '../../utils/mediaUrl'
 
 type PublicProfileType = ProfileServicePublicProfile
 import LayoutCustomizer from '../../components/profile/LayoutCustomizer'
@@ -102,6 +102,10 @@ const PublicProfile = () => {
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
   const [isSearchingLocation, setIsSearchingLocation] = useState(false)
   const locationSearchTimeout = useRef<number | null>(null)
+
+  const [specialtyQuery, setSpecialtyQuery] = useState('')
+  const [showSpecialtySuggestions, setShowSpecialtySuggestions] = useState(false)
+  const specialtySearchRef = useRef<HTMLDivElement>(null)
   
   const [customization, setCustomization] = useState<ProfileCustomization>(DEFAULT_CUSTOMIZATION)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
@@ -143,6 +147,26 @@ const PublicProfile = () => {
       }
     }
   }, [locationQuery])
+
+  const specialtySuggestions = useMemo(() => {
+    const q = specialtyQuery.trim().toLowerCase()
+    if (q.length < 3) return []
+    return PROFESSIONAL_SPECIALTIES.filter(
+      (s) =>
+        s.toLowerCase().includes(q) &&
+        !formData.specialties.includes(s)
+    )
+  }, [specialtyQuery, formData.specialties])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (specialtySearchRef.current && !specialtySearchRef.current.contains(event.target as Node)) {
+        setShowSpecialtySuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const loadProfile = async () => {
     setIsLoading(true)
@@ -237,7 +261,7 @@ const PublicProfile = () => {
     // Aplicar sanitização e máscaras baseado no campo
     switch (name) {
       case 'displayName':
-        sanitizedValue = sanitizeInput(value)
+        sanitizedValue = sanitizeName(value)
         sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.NAME)
         break
       case 'username':
@@ -254,7 +278,7 @@ const PublicProfile = () => {
         sanitizedValue = limitLength(value, INPUT_LIMITS.LOCATION)
         break
       case 'specialty':
-        sanitizedValue = sanitizeInput(value)
+        sanitizedValue = sanitizeName(value)
         sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.SPECIALTY)
         break
       case 'experience':
@@ -288,15 +312,15 @@ const PublicProfile = () => {
         sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.WEBSITE)
         break
       case 'education':
-        sanitizedValue = sanitizeText(value, [' ', ',', '.', '-', '/'])
+        sanitizedValue = sanitizeText(value, [' ', ',', '.', '-', '/', '(', ')', '+'])
         sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.EDUCATION)
         break
       case 'awards':
-        sanitizedValue = sanitizeText(value, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';'])
+        sanitizedValue = sanitizeText(value, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';', '(', ')', '/'])
         sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.AWARDS)
         break
       default:
-        sanitizedValue = sanitizeInput(value)
+        sanitizedValue = sanitizeText(value, [' ', ',', '.', '-', ':', ';'])
     }
     
     setFormData({
@@ -330,15 +354,22 @@ const PublicProfile = () => {
     }
 
     setUploadingAvatar(true)
+    const localPreview = URL.createObjectURL(file)
+    setFormData((prev) => ({ ...prev, avatar: localPreview }))
     try {
       const response = await profileService.uploadAvatar(file)
       if (response.data?.url) {
-        setFormData(prev => ({ ...prev, avatar: response.data!.url }))
+        URL.revokeObjectURL(localPreview)
+        setFormData((prev) => ({ ...prev, avatar: response.data!.url }))
         showToast('Avatar atualizado com sucesso!', 'success')
       } else {
+        URL.revokeObjectURL(localPreview)
+        setFormData((prev) => ({ ...prev, avatar: '' }))
         showToast(response.error || 'Erro ao fazer upload do avatar', 'error')
       }
     } catch (error) {
+      URL.revokeObjectURL(localPreview)
+      setFormData((prev) => ({ ...prev, avatar: '' }))
       console.error('Erro ao fazer upload do avatar:', error)
       showToast('Erro ao fazer upload do avatar', 'error')
     } finally {
@@ -367,15 +398,22 @@ const PublicProfile = () => {
     }
 
     setUploadingCover(true)
+    const localPreview = URL.createObjectURL(file)
+    setFormData((prev) => ({ ...prev, coverImage: localPreview }))
     try {
       const response = await profileService.uploadCover(file)
       if (response.data?.url) {
-        setFormData(prev => ({ ...prev, coverImage: response.data!.url }))
+        URL.revokeObjectURL(localPreview)
+        setFormData((prev) => ({ ...prev, coverImage: response.data!.url }))
         showToast('Imagem de capa atualizada com sucesso!', 'success')
       } else {
+        URL.revokeObjectURL(localPreview)
+        setFormData((prev) => ({ ...prev, coverImage: '' }))
         showToast(response.error || 'Erro ao fazer upload da imagem de capa', 'error')
       }
     } catch (error) {
+      URL.revokeObjectURL(localPreview)
+      setFormData((prev) => ({ ...prev, coverImage: '' }))
       console.error('Erro ao fazer upload da imagem de capa:', error)
       showToast('Erro ao fazer upload da imagem de capa', 'error')
     } finally {
@@ -387,6 +425,16 @@ const PublicProfile = () => {
     }
   }
 
+  const handleAddSpecialty = (specialty: string) => {
+    if (formData.specialties.includes(specialty)) return
+    setFormData((prev) => ({
+      ...prev,
+      specialties: [...prev.specialties, specialty],
+    }))
+    setSpecialtyQuery('')
+    setShowSpecialtySuggestions(false)
+  }
+
   const handleRemoveSpecialty = (specialty: string) => {
     setFormData({
       ...formData,
@@ -394,13 +442,8 @@ const PublicProfile = () => {
     })
   }
 
-  const handleToggleSpecialty = (specialty: string) => {
-    if (formData.specialties.includes(specialty)) {
-      handleRemoveSpecialty(specialty)
-      return
-    }
-    setFormData((prev) => ({ ...prev, specialties: [...prev.specialties, specialty] }))
-  }
+  const avatarPreviewUrl = resolveMediaUrl(formData.avatar)
+  const coverPreviewUrl = resolveMediaUrl(formData.coverImage)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -435,15 +478,15 @@ const PublicProfile = () => {
 
       // Montar objeto de perfil (dados já sanitizados pelo handleChange, mas garantir antes de enviar)
       const profileData: Partial<PublicProfileType> = {
-        displayName: sanitizeInput(formData.displayName),
+        displayName: sanitizeName(formData.displayName).trim(),
         username: formData.username.toLowerCase().trim(),
         bio: sanitizeText(formData.bio, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';', '(', ')', '[', ']', '{', '}', '/', '\\', '@', '#', '$', '%', '*', '+', '=', '_', '|', '~', '`', '^', '´', '°', 'ª', 'º']),
-        specialty: sanitizeInput(formData.specialty),
+        specialty: sanitizeName(formData.specialty).trim(),
         experience: sanitizeText(formData.experience, ['+', ' ', 'a', 'n', 'o', 's', 'A', 'N', 'O', 'S']),
         website: formData.website ? sanitizeUrl(formData.website) : undefined,
-        email: sanitizeInput(formData.email.toLowerCase().trim()),
+        email: formData.email.toLowerCase().trim(),
         phone: formData.phone ? unmask(formData.phone) : undefined,
-        specialties: formData.specialties.map(s => sanitizeInput(s)),
+        specialties: formData.specialties,
         awards: sanitizeText(formData.awards, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';']),
         education: sanitizeText(formData.education, [' ', ',', '.', '-', '/']),
         customization,
@@ -495,6 +538,7 @@ const PublicProfile = () => {
     specialty: formData.specialty,
     avatar: formData.avatar,
     coverImage: formData.coverImage,
+    specialties: formData.specialties,
     email: formData.email,
     phone: formData.phone,
     projectsCount: 12,
@@ -519,14 +563,7 @@ const PublicProfile = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3 md:gap-4">
-        <button
-          onClick={() => navigate('/nutritionist/dashboard')}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowBackIcon sx={{ fontSize: 20 }} />
-        </button>
-        <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-gray-900">Perfil Público</h1>
             <p className="text-gray-600 mt-1 text-xs md:text-sm">Personalize como os clientes veem você</p>
@@ -542,7 +579,6 @@ const PublicProfile = () => {
               <span className="hidden md:inline">Visualizar Perfil</span>
             </a>
           )}
-        </div>
       </div>
 
       {/* Main Content - Two Columns */}
@@ -582,9 +618,9 @@ const PublicProfile = () => {
                         <p className="text-sm text-gray-600">Enviando imagem...</p>
                       </div>
                     </div>
-                  ) : formData.coverImage ? (
+                  ) : coverPreviewUrl ? (
                     <img
-                      src={formData.coverImage}
+                      src={coverPreviewUrl}
                       alt="Capa"
                       className="w-full h-full object-cover"
                     />
@@ -617,9 +653,9 @@ const PublicProfile = () => {
                         <div className="w-full h-full rounded-full border-4 border-white shadow-xl bg-gray-100 flex items-center justify-center">
                           <div className="animate-spin h-6 w-6 border-2 border-primary-600 border-t-transparent rounded-full"></div>
                         </div>
-                      ) : formData.avatar ? (
+                      ) : avatarPreviewUrl ? (
                         <img
-                          src={formData.avatar}
+                          src={avatarPreviewUrl}
                           alt="Foto de perfil"
                           className="w-full h-full rounded-full object-cover border-4 border-white shadow-xl"
                         />
@@ -843,17 +879,44 @@ const PublicProfile = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {PROFESSIONAL_SPECIALTIES.map((s) => (
-                    <label key={s} className="inline-flex items-center gap-2 text-sm text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={formData.specialties.includes(s)}
-                        onChange={() => handleToggleSpecialty(s)}
-                      />
-                      <span>{s}</span>
-                    </label>
-                  ))}
+                <div className="relative" ref={specialtySearchRef}>
+                  <input
+                    type="text"
+                    value={specialtyQuery}
+                    onChange={(e) => {
+                      const value = limitLength(e.target.value, INPUT_LIMITS.SPECIALTY)
+                      setSpecialtyQuery(value)
+                      setShowSpecialtySuggestions(true)
+                    }}
+                    onFocus={() => setShowSpecialtySuggestions(true)}
+                    maxLength={INPUT_LIMITS.SPECIALTY}
+                    className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Digite pelo menos 3 letras para buscar..."
+                    autoComplete="off"
+                  />
+
+                  {showSpecialtySuggestions && specialtyQuery.trim().length >= 3 && (
+                    <div className="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                      {specialtySuggestions.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-gray-500">Nenhuma área encontrada</div>
+                      ) : (
+                        specialtySuggestions.map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 text-gray-700"
+                            onClick={() => handleAddSpecialty(s)}
+                          >
+                            {s}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {specialtyQuery.trim().length > 0 && specialtyQuery.trim().length < 3 && (
+                    <p className="text-xs text-gray-500 mt-1">Digite mais {3 - specialtyQuery.trim().length} letra(s) para buscar</p>
+                  )}
                 </div>
               </div>
             </div>

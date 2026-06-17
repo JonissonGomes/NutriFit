@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import SwitchField from '../../components/common/SwitchField'
 import { mealPlanService, patientService, recipeService } from '../../services'
 import type { Recipe } from '../../services/recipe.service'
 import type { Patient } from '../../services/patient.service'
@@ -132,10 +133,11 @@ const Recipes = () => {
         <div className="font-semibold text-gray-900">Nova receita</div>
         <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-300" placeholder="Título da receita" />
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-300 min-h-[90px]" placeholder="Descrição (opcional)" />
-        <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-          <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
-          Compartilhar publicamente
-        </label>
+        <SwitchField
+          label="Compartilhar publicamente"
+          checked={isPublic}
+          onChange={setIsPublic}
+        />
 
         <div>
           <div className="text-sm font-medium text-gray-700 mb-1">Imagens da receita (até 3)</div>
@@ -157,18 +159,14 @@ const Recipes = () => {
         </div>
 
         <div className="rounded-lg border border-gray-200 p-3 space-y-2">
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={enablePatientAccess}
-              onChange={(e) => {
-                const enabled = e.target.checked
-                setEnablePatientAccess(enabled)
-                if (!enabled) setPatientIds([])
-              }}
-            />
-            Permitir visualização para pacientes específicos
-          </label>
+          <SwitchField
+            label="Permitir visualização para pacientes específicos"
+            checked={enablePatientAccess}
+            onChange={(enabled) => {
+              setEnablePatientAccess(enabled)
+              if (!enabled) setPatientIds([])
+            }}
+          />
           {enablePatientAccess && (
             <>
               <input
@@ -197,18 +195,14 @@ const Recipes = () => {
         </div>
 
         <div className="rounded-lg border border-gray-200 p-3 space-y-2">
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={enableMealPlanAccess}
-              onChange={(e) => {
-                const enabled = e.target.checked
-                setEnableMealPlanAccess(enabled)
-                if (!enabled) setMealPlanIds([])
-              }}
-            />
-            Permitir visualização para planos alimentares específicos
-          </label>
+          <SwitchField
+            label="Permitir visualização para planos alimentares específicos"
+            checked={enableMealPlanAccess}
+            onChange={(enabled) => {
+              setEnableMealPlanAccess(enabled)
+              if (!enabled) setMealPlanIds([])
+            }}
+          />
           {enableMealPlanAccess && (
             <>
               <input

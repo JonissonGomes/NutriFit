@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Info, Loader2, Sparkles } from 'lucide-react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Info, Loader2, Sparkles } from 'lucide-react'
 import { mealPlanService } from '../../services'
 import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
@@ -89,7 +89,8 @@ const MealPlanDetail = () => {
     const data = (res.data as any)?.data ?? res.data
     if (!data) {
       showToast(res.error || 'Plano não encontrado', 'error')
-      navigate(-1)
+      const basePath = location.pathname.startsWith('/medico') ? '/medico/meal-plans' : '/nutritionist/meal-plans'
+      navigate(basePath)
       return
     }
     setMealPlan(data as MealPlan)
@@ -219,10 +220,7 @@ const MealPlanDetail = () => {
   return (
     <div className="space-y-6">
       <div>
-        <Link to={location.pathname.startsWith('/medico') ? '/medico/meal-plans' : '/nutritionist/meal-plans'} className="inline-flex items-center gap-2 text-primary-700 font-semibold">
-          <ArrowLeft className="h-4 w-4" /> Voltar para planos
-        </Link>
-        <h1 className="app-page-title mt-3">{mealPlan.title}</h1>
+        <h1 className="app-page-title">{mealPlan.title}</h1>
         {mealPlan.description ? <p className="text-gray-600 mt-1">{mealPlan.description}</p> : null}
       </div>
 

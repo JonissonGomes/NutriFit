@@ -10,8 +10,9 @@ import (
 
 type Config struct {
 	// Server
-	Port string
-	Env  string
+	Port        string
+	Env         string
+	APIBaseURL  string
 
 	// MongoDB
 	MongoDBURI string
@@ -27,14 +28,24 @@ type Config struct {
 	GoogleClientSecret string
 	GoogleRedirectURI  string
 
-	// Cloudinary
-	CloudinaryCloudName string
-	CloudinaryAPIKey    string
-	CloudinaryAPISecret string
-	CloudinaryBaseFolder string
+	// Cloudflare R2 (armazenamento de arquivos)
+	R2AccountID       string
+	R2AccessKeyID     string
+	R2SecretAccessKey string
+	R2BucketName      string
+	R2EndpointURL     string
+	R2PublicBaseURL   string
 
-	// Storage limit (bytes) for new users / free plan
-	StorageLimitFree int64
+	// Cotas de armazenamento total por plano (bytes)
+	StorageLimitFree         int64
+	StorageLimitStarter      int64
+	StorageLimitProfessional int64
+	StorageLimitBusiness     int64
+
+	// Limites por arquivo enviado em um único upload (bytes)
+	UploadMaxImageBytes    int64
+	UploadMaxDocumentBytes int64
+	UploadMaxModelBytes    int64
 
 	// CORS
 	CORSAllowedOrigins []string
@@ -94,8 +105,9 @@ func LoadConfig() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		Port:  getEnv("PORT", "8080"),
-		Env:   getEnv("ENV", "development"),
+		Port:       getEnv("PORT", "8080"),
+		Env:        getEnv("ENV", "development"),
+		APIBaseURL: getEnv("API_BASE_URL", "http://localhost:8080"),
 
 		MongoDBURI: getEnv("MONGODB_URI", ""),
 		MongoDBDB:  getEnv("MONGODB_DB", "nufit"),
@@ -108,12 +120,21 @@ func LoadConfig() (*Config, error) {
 		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
 		GoogleRedirectURI:  getEnv("GOOGLE_REDIRECT_URI", ""),
 
-		CloudinaryCloudName:   getEnv("CLOUDINARY_CLOUD_NAME", ""),
-		CloudinaryAPIKey:     getEnv("CLOUDINARY_API_KEY", ""),
-		CloudinaryAPISecret:   getEnv("CLOUDINARY_API_SECRET", ""),
-		CloudinaryBaseFolder:  getEnv("CLOUDINARY_BASE_FOLDER", "nufit"),
+		R2AccountID:       getEnv("R2_ACCOUNT_ID", ""),
+		R2AccessKeyID:     getEnv("R2_ACCESS_KEY_ID", ""),
+		R2SecretAccessKey: getEnv("R2_SECRET_ACCESS_KEY", ""),
+		R2BucketName:      getEnv("R2_BUCKET_NAME", ""),
+		R2EndpointURL:     getEnv("R2_ENDPOINT_URL", ""),
+		R2PublicBaseURL:   getEnv("R2_PUBLIC_BASE_URL", ""),
 
-		StorageLimitFree: parseInt64(getEnv("STORAGE_LIMIT_FREE", "5368709120")),
+		StorageLimitFree:         parseInt64(getEnv("STORAGE_LIMIT_FREE", "5368709120")),
+		StorageLimitStarter:      parseInt64(getEnv("STORAGE_LIMIT_STARTER", "10737418240")),
+		StorageLimitProfessional: parseInt64(getEnv("STORAGE_LIMIT_PRO", "53687091200")),
+		StorageLimitBusiness:     parseInt64(getEnv("STORAGE_LIMIT_BUSINESS", "214748364800")),
+
+		UploadMaxImageBytes:    MBToBytes(int64(parseInt(getEnv("UPLOAD_MAX_IMAGE_MB", "10")))),
+		UploadMaxDocumentBytes: MBToBytes(int64(parseInt(getEnv("UPLOAD_MAX_DOCUMENT_MB", "20")))),
+		UploadMaxModelBytes:    MBToBytes(int64(parseInt(getEnv("UPLOAD_MAX_MODEL_MB", "100")))),
 
 		CORSAllowedOrigins: parseStringSlice(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")),
 

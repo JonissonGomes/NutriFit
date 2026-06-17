@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { blogService } from '../../services/blog.service'
 import type { BlogPost } from '../../services/blog.service'
 import LoadingButton from '../../components/common/LoadingButton'
+import SwitchField from '../../components/common/SwitchField'
 import { useToast } from '../../contexts/ToastContext'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import { useConfirmDelete } from '../../hooks'
@@ -206,10 +207,11 @@ const MyContents = () => {
             )}
           </div>
 
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
-            Público (visível para visitantes)
-          </label>
+          <SwitchField
+            label="Público (visível para visitantes)"
+            checked={published}
+            onChange={setPublished}
+          />
 
           <LoadingButton
             onClick={handleCreate}
@@ -249,15 +251,12 @@ const MyContents = () => {
                   </p>
                 </div>
               <div className="flex flex-col items-end gap-3">
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    checked={p.published}
-                    disabled={updatingVisibilityId === p.id}
-                    onChange={(e) => void handleToggleVisibility(p, e.target.checked)}
-                  />
-                  Visível no perfil
-                </label>
+                <SwitchField
+                  label="Visível no perfil"
+                  checked={p.published}
+                  disabled={updatingVisibilityId === p.id}
+                  onChange={(checked) => void handleToggleVisibility(p, checked)}
+                />
 
                 <div className="flex items-center gap-3">
                   <Link

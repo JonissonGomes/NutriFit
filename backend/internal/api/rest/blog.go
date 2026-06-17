@@ -14,7 +14,7 @@ import (
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/blog"
-	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/storage"
 	"nufit/backend/internal/services/image"
 	"nufit/backend/internal/services/profile"
 
@@ -298,12 +298,10 @@ func uploadBlogAttachments(c *gin.Context) {
 		}
 
 		sanitizedFilename := sanitizeFilename(fh.Filename)
-		publicID := cloudinary.BuildPublicID(userID.(string), postID, sanitizedFilename)
 
 		if ext == ".pptx" {
-			// Limite simples (20MB)
-			if fh.Size > 20*1024*1024 {
-				c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. Máximo 20MB."})
+			if err := storage.ValidateFileSize(int64(len(data)), "document"); err != nil {
+				c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": err.Error()})
 				return
 			}
 			tmp, err := os.CreateTemp("", "nufit-blog-*.pptx")
@@ -321,7 +319,8 @@ func uploadBlogAttachments(c *gin.Context) {
 			_ = tmp.Close()
 			defer os.Remove(tmpPath)
 
-			up, err := cloudinary.UploadRaw(ctx, tmpPath, "nufit/blog/pptx")
+			objectKey := storage.BuildBlogPptxKey(userID.(string), postID, sanitizedFilename+ext)
+			up, err := storage.UploadRaw(ctx, tmpPath, objectKey)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Erro ao fazer upload do .pptx: %s", err.Error())})
 				return
@@ -336,12 +335,13 @@ func uploadBlogAttachments(c *gin.Context) {
 			continue
 		}
 
-		if err := image.ValidateImage(data, image.MaxImageSize); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Imagem inválida. Use JPEG, PNG, GIF ou WebP (até 10MB)."})
+		if err := image.ValidateImage(data, image.MaxImageSizeBytes()); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Imagem inválida. Use JPEG, PNG, GIF ou WebP."})
 			return
 		}
 
-		up, err := cloudinary.UploadImage(ctx, data, publicID, "nufit/blog/images")
+		objectKey := storage.BuildBlogImageKey(userID.(string), postID, sanitizedFilename+ext)
+		up, err := storage.UploadImage(ctx, data, objectKey, "")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Erro ao fazer upload da imagem: %s", err.Error())})
 			return

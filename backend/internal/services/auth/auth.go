@@ -132,7 +132,7 @@ func Register(req *models.RegisterRequest) (*models.User, *TokenPair, error) {
 		return nil, nil, err
 	}
 
-	storageLimit := config.AppConfig.StorageLimitFree
+	storageLimit := config.StorageLimitForPlan(models.PlanFree)
 
 	user := &models.User{
 		ID:                        primitive.NewObjectID(),
@@ -253,7 +253,7 @@ func OAuthGoogle(code string) (*models.User, *TokenPair, error) {
 		err = database.UsersCollection.FindOne(ctx, bson.M{"email": googleUser.Email}).Decode(&user)
 		if err == mongo.ErrNoDocuments {
 			// Create new user
-			storageLimit := config.AppConfig.StorageLimitFree
+			storageLimit := config.StorageLimitForPlan(models.PlanFree)
 			user = models.User{
 				ID:           primitive.NewObjectID(),
 				Email:        googleUser.Email,

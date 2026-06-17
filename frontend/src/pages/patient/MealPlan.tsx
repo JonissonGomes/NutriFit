@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { useParams } from 'react-router-dom'
 import { mealPlanService } from '../../services'
 import type { MealPlan } from '../../types/api'
 import InlineAlert from '../../components/common/InlineAlert'
@@ -39,9 +38,6 @@ const MealPlanPage = () => {
   if (error) {
     return (
       <div className="space-y-4">
-        <Link to="/patient/meal-plans" className="inline-flex items-center gap-2 text-primary-700 font-semibold">
-          <ArrowLeft className="h-4 w-4" /> Voltar para planos
-        </Link>
         <InlineAlert variant="error">
           {error}
           <button
@@ -61,10 +57,7 @@ const MealPlanPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/patient/meal-plans" className="inline-flex items-center gap-2 text-primary-700 font-semibold">
-          <ArrowLeft className="h-4 w-4" /> Voltar para planos
-        </Link>
-        <h1 className="app-page-title mt-3">{mealPlan.title}</h1>
+        <h1 className="app-page-title">{mealPlan.title}</h1>
         {mealPlan.description && <p className="text-gray-600 mt-1">{mealPlan.description}</p>}
       </div>
 

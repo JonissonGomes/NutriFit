@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"nufit/backend/internal/api/dto"
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
-	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/storage"
 	"nufit/backend/internal/services/image"
 	"nufit/backend/internal/services/project"
 	"nufit/backend/internal/services/security"
@@ -226,7 +226,7 @@ func uploadProjectCover(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo inválido"})
 		return
 	}
-	if fileHeader.Size > image.MaxImageSize {
+	if fileHeader.Size > image.MaxImageSizeBytes() {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
 		return
 	}
@@ -238,7 +238,7 @@ func uploadProjectCover(c *gin.Context) {
 	}
 	defer src.Close()
 
-	data, err := image.ReadImageFromReader(src, image.MaxImageSize)
+	data, err := image.ReadImageFromReader(src, image.MaxImageSizeBytes())
 	if err != nil {
 		if err == image.ErrImageTooLarge {
 			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
@@ -248,7 +248,7 @@ func uploadProjectCover(c *gin.Context) {
 		return
 	}
 
-	if err := image.ValidateImage(data, image.MaxImageSize); err != nil {
+	if err := image.ValidateImage(data, image.MaxImageSizeBytes()); err != nil {
 		errMsg := "Erro ao validar imagem"
 		switch err {
 		case image.ErrInvalidFormat, image.ErrUnsupportedFormat:
@@ -267,12 +267,12 @@ func uploadProjectCover(c *gin.Context) {
 	}
 
 	ext := filepath.Ext(fileHeader.Filename)
-	publicID := "nufit/projects/" + projectID + "/cover" + ext
+	objectKey := storage.BuildProjectImageKey(userIDStr, projectID, "cover"+ext)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
-	up, err := cloudinary.UploadImage(ctx, data, publicID, "nufit/projects")
+	up, err := storage.UploadImage(ctx, data, objectKey, "")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao fazer upload da imagem"})
 		return

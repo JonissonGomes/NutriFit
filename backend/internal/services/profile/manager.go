@@ -1,4 +1,4 @@
-﻿package profile
+package profile
 
 import (
 	"context"
@@ -43,6 +43,7 @@ func GetProfileByUserID(ctx context.Context, userID string) (*models.PublicProfi
 		return nil, err
 	}
 
+	EnrichProfileMedia(ctx, &profile)
 	return &profile, nil
 }
 
@@ -59,6 +60,7 @@ func GetProfileByUsername(ctx context.Context, username string) (*models.PublicP
 		return nil, err
 	}
 
+	EnrichProfileMedia(ctx, &profile)
 	return &profile, nil
 }
 
@@ -328,6 +330,10 @@ func SearchProfiles(ctx context.Context, filters ProfileFilters) ([]*models.Publ
 		return nil, 0, err
 	}
 
+	for _, p := range profiles {
+		EnrichProfileMedia(ctx, p)
+	}
+
 	return profiles, total, nil
 }
 
@@ -366,6 +372,10 @@ func GetNearbyProfiles(ctx context.Context, lat, lng, radiusKm float64, limit in
 	var profiles []*models.PublicProfile
 	if err = cursor.All(ctx, &profiles); err != nil {
 		return nil, err
+	}
+
+	for _, p := range profiles {
+		EnrichProfileMedia(ctx, p)
 	}
 
 	return profiles, nil

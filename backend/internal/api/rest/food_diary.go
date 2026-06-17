@@ -11,7 +11,7 @@ import (
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/food_diary"
-	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/storage"
 	"nufit/backend/internal/services/security"
 	"nufit/backend/internal/services/ai"
 	"nufit/backend/internal/services/image"
@@ -188,6 +188,12 @@ func createFoodDiaryEntry(c *gin.Context) {
 }
 
 func uploadFoodDiaryPhoto(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Não autenticado"})
+		return
+	}
+
 	entryID := c.Param("id")
 
 	fileHeader, err := c.FormFile("file")
@@ -200,7 +206,7 @@ func uploadFoodDiaryPhoto(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo inválido"})
 		return
 	}
-	if fileHeader.Size > image.MaxImageSize {
+	if fileHeader.Size > image.MaxImageSizeBytes() {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
 		return
 	}
@@ -212,7 +218,7 @@ func uploadFoodDiaryPhoto(c *gin.Context) {
 	}
 	defer f.Close()
 
-	buf, err := image.ReadImageFromReader(f, image.MaxImageSize)
+	buf, err := image.ReadImageFromReader(f, image.MaxImageSizeBytes())
 	if err != nil {
 		if err == image.ErrImageTooLarge {
 			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
@@ -222,7 +228,7 @@ func uploadFoodDiaryPhoto(c *gin.Context) {
 		return
 	}
 
-	if err := image.ValidateImage(buf, image.MaxImageSize); err != nil {
+	if err := image.ValidateImage(buf, image.MaxImageSizeBytes()); err != nil {
 		errMsg := "Erro ao validar imagem"
 		switch err {
 		case image.ErrInvalidFormat, image.ErrUnsupportedFormat:
@@ -241,9 +247,9 @@ func uploadFoodDiaryPhoto(c *gin.Context) {
 	}
 
 	ext := filepath.Ext(fileHeader.Filename)
-	publicID := "nufit/food_diary/" + entryID + "/photo" + ext
+	objectKey := storage.BuildFoodDiaryPhotoKey(userID.(string), entryID, "photo"+ext)
 
-	up, err := cloudinary.UploadImage(c.Request.Context(), buf, publicID, "nufit/food_diary")
+	up, err := storage.UploadImage(c.Request.Context(), buf, objectKey, "")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao fazer upload da foto"})
 		return

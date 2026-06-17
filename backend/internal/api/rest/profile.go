@@ -12,7 +12,7 @@ import (
 
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
-	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/storage"
 	"nufit/backend/internal/services/image"
 	"nufit/backend/internal/services/profile"
 	"nufit/backend/internal/utils"
@@ -201,12 +201,12 @@ func uploadProfileAvatar(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo inválido"})
 		return
 	}
-	if file.Size > image.MaxImageSize {
+	if file.Size > image.MaxImageSizeBytes() {
 		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
 		return
 	}
 
-	fileData, err := image.ReadImageFromReader(src, image.MaxImageSize)
+	fileData, err := image.ReadImageFromReader(src, image.MaxImageSizeBytes())
 	if err != nil {
 		if err == image.ErrImageTooLarge {
 			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "Arquivo muito grande. O tamanho máximo é 10MB."})
@@ -217,7 +217,7 @@ func uploadProfileAvatar(c *gin.Context) {
 	}
 
 	// Validar imagem
-	if err := image.ValidateImage(fileData, image.MaxImageSize); err != nil {
+	if err := image.ValidateImage(fileData, image.MaxImageSizeBytes()); err != nil {
 		errMsg := "Erro ao validar imagem"
 		switch err {
 		case image.ErrInvalidFormat, image.ErrUnsupportedFormat:
@@ -231,19 +231,19 @@ func uploadProfileAvatar(c *gin.Context) {
 		return
 	}
 
-	// Upload para Cloudinary diretamente (sem passar pelo serviço de imagem que requer projectID)
+	// Upload para R2
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Gerar publicID único para o avatar usando função específica
 	sanitizedFilename := sanitizeFilename(file.Filename)
-	publicID := cloudinary.BuildPublicIDForAvatar(userID.(string), sanitizedFilename)
+	ext := filepath.Ext(file.Filename)
+	publicID := storage.BuildPublicIDForAvatar(userID.(string), sanitizedFilename+ext)
 
-	// Upload para Cloudinary
-	uploadResult, err := cloudinary.UploadImage(ctx, fileData, publicID, "")
+	uploadResult, err := storage.UploadImage(ctx, fileData, publicID, "")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Erro ao fazer upload para Cloudinary: %s", err.Error()),
+			"error": fmt.Sprintf("Erro ao fazer upload para o armazenamento: %s", err.Error()),
 		})
 		return
 	}
@@ -272,7 +272,10 @@ func uploadProfileAvatar(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Avatar atualizado com sucesso", "url": uploadResult.SecureURL})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Avatar atualizado com sucesso",
+		"url":     storage.ResolveMediaURL(uploadResult.SecureURL),
+	})
 }
 
 // uploadProfileCover faz upload da imagem de capa do perfil
@@ -322,19 +325,19 @@ func uploadProfileCover(c *gin.Context) {
 		return
 	}
 
-	// Upload para Cloudinary diretamente (sem passar pelo serviço de imagem que requer projectID)
+	// Upload para R2
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 
 	// Gerar publicID único para a capa usando função específica
 	sanitizedFilename := sanitizeFilename(file.Filename)
-	publicID := cloudinary.BuildPublicIDForCover(userID.(string), sanitizedFilename)
+	ext := filepath.Ext(file.Filename)
+	publicID := storage.BuildPublicIDForCover(userID.(string), sanitizedFilename+ext)
 
-	// Upload para Cloudinary
-	uploadResult, err := cloudinary.UploadImage(ctx, fileData, publicID, "")
+	uploadResult, err := storage.UploadImage(ctx, fileData, publicID, "")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprintf("Erro ao fazer upload para Cloudinary: %s", err.Error()),
+			"error": fmt.Sprintf("Erro ao fazer upload para o armazenamento: %s", err.Error()),
 		})
 		return
 	}
@@ -363,7 +366,10 @@ func uploadProfileCover(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Imagem de capa atualizada com sucesso", "url": uploadResult.SecureURL})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Imagem de capa atualizada com sucesso",
+		"url":     storage.ResolveMediaURL(uploadResult.SecureURL),
+	})
 }
 
 // checkUsernameAvailable verifica se username está disponível
@@ -547,7 +553,7 @@ func getNearbyProfiles(c *gin.Context) {
 }
 
 // sanitizeFilename sanitiza o nome do arquivo para uso seguro
-// Retorna apenas o nome sem extensão, pois o Cloudinary gerencia extensões automaticamente
+// Retorna apenas o nome sanitizado sem extensão.
 func sanitizeFilename(filename string) string {
 	// Remove extension
 	ext := filepath.Ext(filename)

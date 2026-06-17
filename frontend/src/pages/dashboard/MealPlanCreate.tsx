@@ -320,13 +320,6 @@ const MealPlanCreate = () => {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-lg hover:bg-gray-100"
-        >
-          <ArrowLeft className="h-5 w-5 text-gray-600" />
-        </button>
         <div className="flex-1">
           <h1 className="app-page-title">Novo plano alimentar</h1>
           <p className="text-gray-600 mt-1">Wizard: paciente, baseline, estratégia e revisão final.</p>

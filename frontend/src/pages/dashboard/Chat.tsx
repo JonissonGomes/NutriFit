@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, Send, Trash2, ArrowLeft } from 'lucide-react'
 import { Person } from '@mui/icons-material'
-import { useNavigate } from 'react-router-dom'
 import { messageService } from '../../services'
 import { useToast } from '../../contexts/ToastContext'
 import LoadingButton from '../../components/common/LoadingButton'
@@ -31,7 +30,6 @@ interface Message {
 }
 
 const Chat = () => {
-  const navigate = useNavigate()
   const { showToast } = useToast()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
@@ -251,17 +249,9 @@ const Chat = () => {
   return (
     <div className="h-[calc(100vh-8rem)] max-w-7xl mx-auto">
       {/* Header - apenas no desktop ou quando nenhuma conversa está selecionada no mobile */}
-      <div className={`flex items-center gap-4 mb-4 ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
-        <button
-          onClick={() => navigate('/nutritionist/dashboard')}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5 text-gray-600" />
-        </button>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Mensagens</h1>
-          <p className="text-gray-600 mt-1 text-xs md:text-sm hidden md:block">Converse com seus clientes</p>
-        </div>
+      <div className={`mb-4 ${selectedConversation ? 'hidden md:block' : 'block'}`}>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Mensagens</h1>
+        <p className="text-gray-600 mt-1 text-xs md:text-sm hidden md:block">Converse com seus clientes</p>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 h-[calc(100%-5rem)] md:h-[calc(100%-5rem)] flex overflow-hidden shadow-sm">

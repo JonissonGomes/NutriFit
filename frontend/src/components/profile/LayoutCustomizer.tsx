@@ -6,6 +6,7 @@ import StarIcon from '@mui/icons-material/Star'
 import CropSquareIcon from '@mui/icons-material/CropSquare'
 import WorkIcon from '@mui/icons-material/Work'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import SwitchField from '../common/SwitchField'
 import {
   type ProfileCustomization,
   type ProfileLayoutType,
@@ -155,21 +156,17 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
               { key: 'showReviews', label: 'Mostrar Avaliações', description: 'Exibe avaliações de clientes anteriores' },
               { key: 'showContact', label: 'Mostrar Contato', description: 'Exibe informações de contato (email, telefone, etc)' },
             ].map((item) => (
-              <label
+              <div
                 key={item.key}
-                className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+                className="rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition-colors"
               >
-                <input
-                  type="checkbox"
+                <SwitchField
+                  label={item.label}
+                  description={item.description}
                   checked={customization[item.key as keyof ProfileCustomization] as boolean}
-                  onChange={(e) => handleChange(item.key as keyof ProfileCustomization, e.target.checked as any)}
-                  className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500 mt-0.5"
+                  onChange={(checked) => handleChange(item.key as keyof ProfileCustomization, checked as any)}
                 />
-                <div>
-                  <span className="block font-medium text-gray-900 text-sm">{item.label}</span>
-                  <span className="text-xs text-gray-500">{item.description}</span>
-                </div>
-              </label>
+              </div>
             ))}
           </div>
         )}

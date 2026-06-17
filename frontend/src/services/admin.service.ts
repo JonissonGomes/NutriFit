@@ -83,5 +83,9 @@ export const adminService = {
   async updateUserStatus(userId: string, status: 'active' | 'suspended'): Promise<ApiResponse<{ message: string; status: string }>> {
     return api.put(`/admin/users/${encodeURIComponent(userId)}/status`, { status })
   },
+
+  async deleteUser(userId: string): Promise<ApiResponse<{ message: string }>> {
+    return api.delete(`/admin/users/${encodeURIComponent(userId)}`)
+  },
 }
 

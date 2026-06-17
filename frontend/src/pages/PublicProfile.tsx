@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import AddIcon from '@mui/icons-material/Add'
@@ -231,11 +230,7 @@ const PublicProfile = () => {
   if (!profile) {
     return (
       <div className="app-page app-section py-8">
-        <Link to="/explore" className="inline-flex items-center gap-2 text-sm text-primary-700 font-semibold">
-          <ArrowBackIcon sx={{ fontSize: 18 }} />
-          Voltar
-        </Link>
-        <div className="app-card mt-2 text-center">
+        <div className="app-card text-center">
           <p className="font-semibold text-gray-900">Nutricionista não encontrado.</p>
           <p className="text-gray-600 mt-2">Verifique o link e tente novamente.</p>
         </div>
@@ -289,14 +284,6 @@ const PublicProfile = () => {
       className={`min-h-screen ${customization.backgroundStyle === 'dark' ? 'bg-stone-950' : customization.backgroundStyle === 'gradient' ? 'bg-gradient-to-b from-primary-900/10 via-gray-50 to-gray-50' : 'bg-gray-50'}`}
     >
       <div className="app-page app-section py-8">
-        <Link
-          to="/explore"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-800"
-        >
-          <ArrowBackIcon sx={{ fontSize: 18 }} />
-          Voltar
-        </Link>
-
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
           <div
             className={`${coverHeightClass} bg-gradient-to-r from-primary-600 to-accent-600 relative z-0`}

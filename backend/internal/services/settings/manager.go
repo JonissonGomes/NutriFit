@@ -7,6 +7,7 @@ import (
 
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/storage"
 	"nufit/backend/internal/services/auth"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -212,7 +213,7 @@ func GetProfile(ctx context.Context, userID string) (*ProfileData, error) {
 		Email:  user.Email,
 		Phone:  user.Phone,
 		Bio:    user.Bio,
-		Avatar: user.Avatar,
+		Avatar: storage.ResolveMediaURL(user.Avatar),
 	}, nil
 }
 

@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"net/http"
@@ -10,7 +10,7 @@ import (
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/lab_exam"
 	"nufit/backend/internal/services/security"
-	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/storage"
 	"nufit/backend/internal/services/ai"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -87,11 +87,22 @@ func deleteLabExam(c *gin.Context) {
 }
 
 func uploadLabExamFile(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Não autenticado"})
+		return
+	}
+
 	id := c.Param("id")
 
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Arquivo não enviado (campo: file)"})
+		return
+	}
+
+	if err := storage.ValidateFileSize(fileHeader.Size, "document"); err != nil {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -104,7 +115,8 @@ func uploadLabExamFile(c *gin.Context) {
 	}
 	defer os.Remove(tmpPath)
 
-	up, err := cloudinary.UploadRaw(c.Request.Context(), tmpPath, "nufit/lab_exams")
+	objectKey := storage.BuildLabExamKey(userID.(string), id, filepath.Base(tmpPath))
+	up, err := storage.UploadRaw(c.Request.Context(), tmpPath, objectKey)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao fazer upload do exame"})
 		return

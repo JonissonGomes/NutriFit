@@ -4,6 +4,7 @@ import VerifiedIcon from '@mui/icons-material/Verified'
 import EmailIcon from '@mui/icons-material/Email'
 import PhoneIcon from '@mui/icons-material/Phone'
 import type { ProfileCustomization, PublicProfile } from '../../services/profile.service'
+import { getProfileAvatarUrl, getProfileCoverUrl } from '../../utils/mediaUrl'
 
 interface LayoutPreviewProps {
   profile: Partial<PublicProfile>
@@ -28,6 +29,28 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
   const borderClass = customization.backgroundStyle === 'dark' ? 'border-gray-700' : 'border-gray-200'
 
   const primaryColor = customization.primaryColor || '#2563eb'
+  const avatarUrl = getProfileAvatarUrl(profile)
+  const coverUrl = getProfileCoverUrl(profile)
+
+  const renderAvatar = (sizeClass: string, overlapClass = '') => {
+    if (avatarUrl) {
+      return (
+        <img
+          src={avatarUrl}
+          alt={profile.displayName || 'Avatar'}
+          className={`${sizeClass} ${overlapClass} rounded-full object-cover border-2 ${customization.backgroundStyle === 'dark' ? 'border-gray-800' : 'border-white'} shadow-lg`}
+        />
+      )
+    }
+    return (
+      <div
+        className={`${sizeClass} ${overlapClass} rounded-full flex items-center justify-center text-white font-bold border-2 ${customization.backgroundStyle === 'dark' ? 'border-gray-800' : 'border-white'} shadow-lg`}
+        style={{ backgroundColor: primaryColor }}
+      >
+        {profile.displayName?.charAt(0) || 'A'}
+      </div>
+    )
+  }
 
   // Render Hero Section based on style
   const renderHero = () => {
@@ -37,12 +60,7 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
       return (
         <div className={`p-4 ${cardBgClass} border-b ${borderClass}`}>
           <div className="flex items-center gap-3">
-            <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {profile.displayName?.charAt(0) || 'A'}
-            </div>
+            {renderAvatar('w-12 h-12')}
             <div>
               <h2 className={`font-bold text-sm ${textClass}`}>{profile.displayName || 'Nome do nutricionista'}</h2>
               <p className={`text-xs ${subtextClass}`}>{profile.specialty || 'Nutrição'}</p>
@@ -58,7 +76,7 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
         <div 
           className={`${heroHeight} bg-gradient-to-r from-gray-300 to-gray-400`}
           style={{ 
-            backgroundImage: profile.coverImage ? `url(${profile.coverImage})` : undefined,
+            backgroundImage: coverUrl ? `url(${coverUrl})` : undefined,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }}
@@ -67,12 +85,10 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
         {/* Profile Info */}
         <div className={`p-3 ${cardBgClass} ${customization.heroStyle === 'full' ? '-mt-6' : ''}`}>
           <div className="flex items-end gap-3">
-            <div 
-              className={`${customization.heroStyle === 'full' ? 'w-14 h-14 -mt-8' : 'w-10 h-10'} rounded-full flex items-center justify-center text-white font-bold border-2 ${customization.backgroundStyle === 'dark' ? 'border-gray-800' : 'border-white'} shadow-lg`}
-              style={{ backgroundColor: primaryColor }}
-            >
-              {profile.displayName?.charAt(0) || 'A'}
-            </div>
+            {renderAvatar(
+              customization.heroStyle === 'full' ? 'w-14 h-14' : 'w-10 h-10',
+              customization.heroStyle === 'full' ? '-mt-8' : ''
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
                 <h2 className={`font-bold text-sm ${textClass} truncate`}>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, DollarSign, Clock, ClipboardList, ArrowLeft, CheckCircle, X, Power, Loader2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Plus, Edit, Trash2, DollarSign, Clock, ClipboardList, CheckCircle, X, Power, Loader2 } from 'lucide-react'
 import { servicesService } from '../../services'
 import type { Service, CreateServiceRequest, ServiceCategory, ServiceStats } from '../../services/services.service'
 import { useToast } from '../../contexts/ToastContext'
@@ -10,7 +9,6 @@ import { sanitizeInput, sanitizeText, limitLength, INPUT_LIMITS } from '../../ut
 import { useConfirmDelete } from '../../hooks'
 
 const Services = () => {
-  const navigate = useNavigate()
   const { showToast } = useToast()
   const [services, setServices] = useState<Service[]>([])
   const [stats, setStats] = useState<ServiceStats | null>(null)
@@ -202,14 +200,7 @@ const Services = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header com botão voltar */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate('/nutritionist/dashboard')}
-          className="p-2 rounded-lg"
-        >
-          <ArrowLeft className="h-5 w-5 text-gray-600" />
-        </button>
         <div className="flex-1 app-page-header">
           <div className="app-page-header__content">
             <h1 className="app-title md:text-2xl">Meus Serviços</h1>

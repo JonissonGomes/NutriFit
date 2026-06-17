@@ -1,4 +1,4 @@
-﻿package image
+package image
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
-	"nufit/backend/internal/services/cloudinary"
+	"nufit/backend/internal/services/storage"
 )
 
 func UploadImage(ctx context.Context, fileData []byte, filename, projectID, userID string) (*models.Image, error) {
 	// Validate image
-	if err := ValidateImage(fileData, MaxImageSize); err != nil {
+	if err := ValidateImage(fileData, MaxImageSizeBytes()); err != nil {
 		return nil, err
 	}
 
@@ -50,20 +50,20 @@ func UploadImage(ctx context.Context, fileData []byte, filename, projectID, user
 
 	// Generate public ID
 	sanitizedFilename := sanitizeFilename(filename)
-	publicID := cloudinary.BuildPublicID(userID, projectID, sanitizedFilename)
+	publicID := storage.BuildPublicID(userID, projectID, sanitizedFilename)
 
-	// Upload to Cloudinary
-	uploadResult, err := cloudinary.UploadImage(ctx, compressedData, publicID, "")
+	// Upload para R2
+	uploadResult, err := storage.UploadImage(ctx, compressedData, publicID, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to upload to Cloudinary: %w", err)
+		return nil, fmt.Errorf("failed to upload to R2: %w", err)
 	}
 
 	// Build URLs
 	urls := &models.ImageURLs{
-		Original:   cloudinary.GetOriginalURL(uploadResult.PublicID),
-		Compressed: cloudinary.GetCompressedURL(uploadResult.PublicID),
-		Thumbnail:  cloudinary.GetThumbnailURL(uploadResult.PublicID),
-		Medium:     cloudinary.GetMediumURL(uploadResult.PublicID),
+		Original:   storage.GetOriginalURL(uploadResult.PublicID),
+		Compressed: storage.GetCompressedURL(uploadResult.PublicID),
+		Thumbnail:  storage.GetThumbnailURL(uploadResult.PublicID),
+		Medium:     storage.GetMediumURL(uploadResult.PublicID),
 	}
 
 	// Get position (count existing images)
@@ -105,16 +105,13 @@ func UploadImage(ctx context.Context, fileData []byte, filename, projectID, user
 	// Save to database
 	_, err = database.ImagesCollection.InsertOne(ctx, image)
 	if err != nil {
-		// Try to delete from Cloudinary if DB insert fails
-		_ = cloudinary.DeleteImage(ctx, uploadResult.PublicID)
+		// Try to delete from R2 if DB insert fails
+		_ = storage.DeleteImage(ctx, uploadResult.PublicID)
 		return nil, err
 	}
 
 	// Update project files count
 	_ = updateProjectFilesCount(projectObjID)
-
-	// Update user storage used
-	_ = updateUserStorageUsed(userObjID, int64(len(compressedData)))
 
 	return image, nil
 }
@@ -161,19 +158,6 @@ func updateProjectFilesCount(projectID primitive.ObjectID) error {
 		ctx,
 		bson.M{"_id": projectID},
 		bson.M{"$set": bson.M{"filesCount": int(count)}},
-	)
-
-	return err
-}
-
-func updateUserStorageUsed(userID primitive.ObjectID, size int64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err := database.UsersCollection.UpdateOne(
-		ctx,
-		bson.M{"_id": userID},
-		bson.M{"$inc": bson.M{"storageUsed": size}},
 	)
 
 	return err

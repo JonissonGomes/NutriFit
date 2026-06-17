@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { useParams } from 'react-router-dom'
 import { profileService } from '../services/profile.service'
 import { recipeService } from '../services/recipe.service'
 import type { Recipe } from '../services/recipe.service'
@@ -32,10 +31,6 @@ const PublicProfileRecipes = () => {
 
   return (
     <div className="app-page app-section py-8">
-      <Link to={`/profile/${username}`} className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700">
-        <ArrowBackIcon sx={{ fontSize: 18 }} />
-        Voltar ao perfil
-      </Link>
       <div>
         <h1 className="app-title">Receitas de {name || 'profissional'}</h1>
       </div>
