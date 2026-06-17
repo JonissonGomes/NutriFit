@@ -7,6 +7,7 @@ import type { Event, CreateEventRequest, EventType, EventLocation } from '../../
 import { useToast } from '../../contexts/ToastContext'
 import LoadingButton from '../../components/common/LoadingButton'
 import { useConfirmDelete } from '../../hooks'
+import { INPUT_LIMITS, limitLength, sanitizeInput, sanitizeText } from '../../utils/inputUtils'
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -278,16 +279,17 @@ const Calendar = () => {
             </div>
 
             {/* Day Names */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
+            <div className="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-2 mb-2">
               {dayNames.map((day) => (
-                <div key={day} className="text-center text-sm font-semibold text-gray-600 py-2">
-                  {day}
+                <div key={day} className="text-center text-[10px] sm:text-xs md:text-sm font-semibold text-gray-600 py-1 sm:py-2 truncate">
+                  <span className="sm:hidden">{day.charAt(0)}</span>
+                  <span className="hidden sm:inline">{day}</span>
                 </div>
               ))}
             </div>
 
             {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-2">
               {/* Empty cells for days before month starts */}
               {Array.from({ length: startingDayOfWeek }).map((_, index) => (
                 <div key={`empty-${index}`} className="aspect-square" />
@@ -434,7 +436,8 @@ const Calendar = () => {
                 <input
                   type="text"
                   value={newEvent.title}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, title: limitLength(sanitizeInput(e.target.value), INPUT_LIMITS.EVENT_TITLE) }))}
+                  maxLength={INPUT_LIMITS.EVENT_TITLE}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Ex: Reunião com cliente"
                 />
@@ -446,7 +449,8 @@ const Calendar = () => {
                 </label>
                 <textarea
                   value={newEvent.description}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, description: limitLength(sanitizeText(e.target.value, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';']), INPUT_LIMITS.EVENT_DESCRIPTION) }))}
+                  maxLength={INPUT_LIMITS.EVENT_DESCRIPTION}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   rows={2}
                   placeholder="Detalhes do evento..."
@@ -486,9 +490,14 @@ const Calendar = () => {
                   <input
                     type="number"
                     value={newEvent.duration}
-                    onChange={(e) => setNewEvent(prev => ({ ...prev, duration: parseInt(e.target.value) || 60 }))}
+                    onChange={(e) => {
+                      const parsed = parseInt(e.target.value, 10) || INPUT_LIMITS.EVENT_DURATION_MIN
+                      const clamped = Math.min(INPUT_LIMITS.EVENT_DURATION_MAX, Math.max(INPUT_LIMITS.EVENT_DURATION_MIN, parsed))
+                      setNewEvent(prev => ({ ...prev, duration: clamped }))
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    min={15}
+                    min={INPUT_LIMITS.EVENT_DURATION_MIN}
+                    max={INPUT_LIMITS.EVENT_DURATION_MAX}
                     step={15}
                   />
                 </div>
@@ -534,7 +543,8 @@ const Calendar = () => {
                 <input
                   type="text"
                   value={newEvent.locationAddress}
-                  onChange={(e) => setNewEvent(prev => ({ ...prev, locationAddress: e.target.value }))}
+                  onChange={(e) => setNewEvent(prev => ({ ...prev, locationAddress: limitLength(sanitizeInput(e.target.value), INPUT_LIMITS.EVENT_ADDRESS) }))}
+                  maxLength={INPUT_LIMITS.EVENT_ADDRESS}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Ex: Av. Paulista, 1000"
                 />

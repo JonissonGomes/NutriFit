@@ -3,7 +3,11 @@ import { Loader2, Upload, Sparkles, Trash2, Plus } from 'lucide-react'
 import { labExamService, patientService } from '../../services'
 import type { LabExam, LabExamType } from '../../services/labExam.service'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import InlineAlert from '../../components/common/InlineAlert'
+import LoadingState from '../../components/common/LoadingState'
 import { useConfirmDelete } from '../../hooks'
+import { useToast } from '../../contexts/ToastContext'
+import { FEEDBACK, getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 const typeLabel: Record<LabExamType, string> = {
   blood: 'Sangue',
@@ -15,6 +19,7 @@ const typeLabel: Record<LabExamType, string> = {
 }
 
 const LabExams = () => {
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [patients, setPatients] = useState<any[]>([])
   const [patientId, setPatientId] = useState<string>('')
@@ -77,7 +82,9 @@ const LabExams = () => {
     })
     const created = res.data?.data
     if (!created) {
-      setFormError(res.error || 'Não foi possível criar o exame')
+      const msg = getFriendlyErrorMessage(res.error, 'Não foi possível criar o exame.')
+      setFormError(msg)
+      showToast(msg, 'error')
       setCreating(false)
       return
     }
@@ -85,9 +92,12 @@ const LabExams = () => {
     if (newFile) {
       const up = await labExamService.uploadFile(created.id, newFile)
       if (up.error) {
-        setFormError(up.error || 'Exame criado, mas o upload falhou')
+        const msg = getFriendlyErrorMessage(up.error, 'Exame criado, mas o upload falhou.')
+        setFormError(msg)
+        showToast(msg, 'warning')
       }
     }
+    showToast(FEEDBACK.EXAM_CREATED, 'success')
     await loadExams(patientId)
     setShowCreateForm(false)
     setNewNotes('')
@@ -100,51 +110,67 @@ const LabExams = () => {
 
   const upload = async (id: string, file: File) => {
     setUploadingId(id)
-    await labExamService.uploadFile(id, file)
+    const res = await labExamService.uploadFile(id, file)
     setUploadingId(null)
+    if (res.error) {
+      showToast(getFriendlyErrorMessage(res.error, 'Falha no upload do arquivo.'), 'error')
+      return
+    }
+    showToast('Arquivo do exame enviado.', 'success')
     if (patientId) await loadExams(patientId)
   }
 
   const analyze = async (id: string) => {
     setAnalyzingId(id)
-    await labExamService.analyzeWithAI(id)
+    const res = await labExamService.analyzeWithAI(id)
     setAnalyzingId(null)
+    if (res.error) {
+      showToast(getFriendlyErrorMessage(res.error, 'Não foi possível analisar o exame.'), 'error')
+      return
+    }
+    showToast(FEEDBACK.EXAM_ANALYZED, 'success')
     if (patientId) await loadExams(patientId)
   }
 
   const saveRawText = async (id: string) => {
     const rawText = (rawTextDrafts[id] ?? '').trim()
     setSavingRawTextId(id)
-    await labExamService.update(id, { rawText: rawText || undefined })
+    const res = await labExamService.update(id, { rawText: rawText || undefined })
     setSavingRawTextId(null)
     setEditingRawTextId(null)
+    if (res.error) {
+      showToast(getFriendlyErrorMessage(res.error, 'Não foi possível salvar o texto.'), 'error')
+      return
+    }
+    showToast(FEEDBACK.EXAM_SAVED, 'success')
     if (patientId) await loadExams(patientId)
   }
 
   const remove = async (id: string) => {
     setDeletingId(id)
-    await labExamService.remove(id)
+    const res = await labExamService.remove(id)
     setDeletingId(null)
+    if (res.error) {
+      showToast(getFriendlyErrorMessage(res.error, 'Não foi possível remover o exame.'), 'error')
+      return
+    }
+    showToast(FEEDBACK.EXAM_REMOVED, 'success')
     if (patientId) await loadExams(patientId)
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[320px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
+    return <LoadingState message="Carregando exames…" />
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Exames laboratoriais</h1>
-          <p className="text-gray-600 mt-1">Upload do exame + análise por IA (quando houver `rawText`).</p>
+      <div className="app-page-header md:items-end">
+        <div className="app-page-header__content">
+          <h1 className="app-page-title">Exames laboratoriais</h1>
+          <p className="app-page-subtitle mt-1">Upload do exame + análise por IA (quando houver `rawText`).</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="app-page-header__actions app-toolbar">
           <select
             value={patientId}
             onChange={(e) => setPatientId(e.target.value)}
@@ -232,9 +258,13 @@ const LabExams = () => {
             />
           </div>
 
-          {formError ? <div className="text-sm text-red-700">{formError}</div> : null}
+          {formError ? (
+            <InlineAlert variant="error" onDismiss={() => setFormError('')}>
+              {formError}
+            </InlineAlert>
+          ) : null}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="app-toolbar">
             <button
               onClick={() => void createExam()}
               disabled={!patientId || creating}
@@ -285,7 +315,7 @@ const LabExams = () => {
                   {ex.notes && <div className="text-sm text-gray-600 mt-1">{ex.notes}</div>}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="app-toolbar">
                   <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer text-sm font-semibold text-gray-800">
                     <Upload className="h-4 w-4" />
                     {uploadingId === ex.id ? 'Enviando...' : 'Upload'}

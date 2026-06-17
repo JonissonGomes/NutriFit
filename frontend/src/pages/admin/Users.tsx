@@ -99,7 +99,7 @@ const UsersAdmin = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Usuários</h1>
+        <h1 className="app-page-title">Usuários</h1>
         <p className="text-gray-600">Liste, filtre e gerencie usuários da plataforma.</p>
       </div>
 

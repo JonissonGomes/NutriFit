@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Loader2, ArrowRight } from 'lucide-react'
+import { ArrowRight, UtensilsCrossed } from 'lucide-react'
 import { mealPlanService } from '../../services'
 import type { MealPlan } from '../../types/api'
+import EmptyState from '../../components/common/EmptyState'
+import InlineAlert from '../../components/common/InlineAlert'
+import LoadingState from '../../components/common/LoadingState'
+import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 const statusLabel: Record<string, string> = {
   draft: 'Rascunho',
@@ -21,25 +25,28 @@ const statusClass: Record<string, string> = {
 const MealPlans = () => {
   const [items, setItems] = useState<MealPlan[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      const res = await mealPlanService.list({ page: 1, limit: 20 })
-      // backend pode retornar {data:[], total...} ou {data:{data:[],...}}
+  const load = async () => {
+    setLoading(true)
+    setError('')
+    const res = await mealPlanService.list({ page: 1, limit: 20 })
+    if (res.error) {
+      setError(getFriendlyErrorMessage(res.error, 'Não foi possível carregar seus planos.'))
+      setItems([])
+    } else {
       const data = (res.data as any)?.data ?? (res.data as any)
       setItems(Array.isArray(data) ? data : [])
-      setLoading(false)
     }
-    load()
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    void load()
   }, [])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
+    return <LoadingState message="Carregando planos alimentares…" />
   }
 
   return (
@@ -49,12 +56,26 @@ const MealPlans = () => {
         <p className="app-subtitle mt-1">Acesse refeições, macros e orientações do seu nutricionista.</p>
       </div>
 
-      {items.length === 0 ? (
-        <div className="app-card text-center">
-          <p className="text-gray-700 font-semibold">Nenhum plano disponível ainda.</p>
-          <p className="text-gray-600 mt-2">Quando seu nutricionista publicar um plano, ele aparecerá aqui.</p>
-        </div>
-      ) : (
+      {error ? (
+        <InlineAlert variant="error">
+          {error}
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="block mt-2 text-sm font-semibold underline hover:no-underline"
+          >
+            Tentar novamente
+          </button>
+        </InlineAlert>
+      ) : null}
+
+      {items.length === 0 && !error ? (
+        <EmptyState
+          icon={<UtensilsCrossed className="h-10 w-10" />}
+          title="Nenhum plano disponível ainda"
+          description="Quando seu nutricionista publicar um plano, ele aparecerá aqui."
+        />
+      ) : items.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {items.map((mp) => (
             <Link
@@ -81,10 +102,9 @@ const MealPlans = () => {
             </Link>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
 
 export default MealPlans
-

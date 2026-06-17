@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/csv"
+	"fmt"
 	"net/http"
 	"strings"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/patient"
+	"nufit/backend/internal/services/plan"
 	"nufit/backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -58,6 +60,20 @@ func createPatient(c *gin.Context) {
 		Email: strings.TrimSpace(req.Email),
 		Phone: strings.TrimSpace(req.Phone),
 	}
+	if err := utils.ValidateName(p.Name); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if p.Email != "" {
+		if err := utils.ValidateEmail(p.Email); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+	if err := utils.ValidateOptionalPhone(p.Phone); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	if p.Name == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Nome é obrigatório"})
 		return
@@ -67,6 +83,11 @@ func createPatient(c *gin.Context) {
 		if oid, err := primitive.ObjectIDFromHex(req.UserID); err == nil {
 			p.PlatformUserID = &oid
 		}
+	}
+
+	if err := plan.CanAddPatient(c.Request.Context(), userIDStr); err != nil {
+		c.JSON(http.StatusPaymentRequired, gin.H{"error": err.Error()})
+		return
 	}
 
 	createdPatient, err := patient.CreatePatient(c.Request.Context(), userIDStr, p)
@@ -197,6 +218,12 @@ func importPatients(c *gin.Context) {
 		phone := get(row, "phone")
 
 		if name == "" {
+			skipped++
+			continue
+		}
+
+		if err := plan.CanAddPatient(c.Request.Context(), userIDStr); err != nil {
+			errorsList = append(errorsList, fmt.Sprintf("linha %d: %v", i+1, err))
 			skipped++
 			continue
 		}

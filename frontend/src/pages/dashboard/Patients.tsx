@@ -1,12 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2, MessageCircle, Search, Upload, UserPlus, Users } from 'lucide-react'
 import { messageService, patientService } from '../../services'
+import { api } from '../../services/api'
 import { useNavigate } from 'react-router-dom'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import InlineAlert from '../../components/common/InlineAlert'
+import EmptyState from '../../components/common/EmptyState'
+import LoadingState from '../../components/common/LoadingState'
 import { useConfirmDelete } from '../../hooks'
+import { useToast } from '../../contexts/ToastContext'
+import { FEEDBACK, getFriendlyErrorMessage } from '../../utils/feedbackMessages'
+import {
+  INPUT_LIMITS,
+  limitLength,
+  maskPhone,
+  sanitizeInput,
+  sanitizeName,
+  validateEmail,
+  validatePhone,
+} from '../../utils/inputUtils'
 
 const Patients = () => {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [patients, setPatients] = useState<any[]>([])
   const [importing, setImporting] = useState(false)
@@ -25,6 +41,17 @@ const Patients = () => {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [searchError, setSearchError] = useState('')
   const searchTimeoutRef = useRef<number | null>(null)
+  const [recordPatientId, setRecordPatientId] = useState<string | null>(null)
+  const [record, setRecord] = useState<any>(null)
+  const [recordLoading, setRecordLoading] = useState(false)
+
+  const loadRecord = async (patientId: string) => {
+    setRecordPatientId(patientId)
+    setRecordLoading(true)
+    const res = await api.get(`/medical-records/${encodeURIComponent(patientId)}`)
+    setRecord((res.data as any)?.data || null)
+    setRecordLoading(false)
+  }
 
   const load = async () => {
     setLoading(true)
@@ -54,7 +81,9 @@ const Patients = () => {
     searchTimeoutRef.current = window.setTimeout(async () => {
       const res = await patientService.searchPlatform(q, 10)
       if (res.error) {
-        setSearchError(res.error)
+        const msg = getFriendlyErrorMessage(res.error)
+        setSearchError(msg)
+        showToast(msg, 'error')
         setSearchResults([])
       } else {
         setSearchResults((res.data as any)?.data || [])
@@ -70,30 +99,65 @@ const Patients = () => {
     setImportResult(null)
     const res = await patientService.importCSV(file)
     if (res.data) {
-      setImportResult({
+      const result = {
         created: (res.data as any).created ?? 0,
         skipped: (res.data as any).skipped ?? 0,
         errors: (res.data as any).errors ?? [],
-      })
+      }
+      setImportResult(result)
+      if (result.errors.length > 0) {
+        showToast(
+          `Importação parcial: ${result.created} criado(s), ${result.errors.length} erro(s).`,
+          'warning'
+        )
+      } else {
+        showToast(
+          result.created > 0
+            ? `${result.created} paciente(s) importado(s) com sucesso.`
+            : FEEDBACK.IMPORT_DONE,
+          'success'
+        )
+      }
       await load()
     } else {
-      setImportResult({ created: 0, skipped: 0, errors: [res.error || 'Falha ao importar'] })
+      const msg = getFriendlyErrorMessage(res.error, 'Falha ao importar o arquivo CSV.')
+      setImportResult({ created: 0, skipped: 0, errors: [msg] })
+      showToast(msg, 'error')
     }
     setImporting(false)
   }
 
   const onCreateManual = async () => {
-    const name = createName.trim()
-    const email = createEmail.trim()
+    if (creating) return
+    const name = sanitizeName(createName).trim()
+    const email = sanitizeInput(createEmail.toLowerCase().trim())
     const phone = createPhone.trim()
-    if (!name) return
+    if (!name || name.length < 2) {
+      setActionError('Nome deve ter pelo menos 2 caracteres')
+      return
+    }
+    if (email && !validateEmail(email)) {
+      setActionError('E-mail inválido')
+      return
+    }
+    if (phone && !validatePhone(phone)) {
+      setActionError('Telefone inválido')
+      return
+    }
+    setActionError('')
     setCreating(true)
     try {
       const res = await patientService.create({ name, email: email || undefined, phone: phone || undefined })
-      if (res.error) return
+      if (res.error) {
+        const msg = getFriendlyErrorMessage(res.error, 'Não foi possível adicionar o paciente.')
+        setActionError(msg)
+        showToast(msg, 'error')
+        return
+      }
       setCreateName('')
       setCreateEmail('')
       setCreatePhone('')
+      showToast(FEEDBACK.PATIENT_CREATED, 'success')
       await load()
     } finally {
       setCreating(false)
@@ -113,7 +177,13 @@ const Patients = () => {
         email: email || undefined,
         phone: phone || undefined,
       })
-      if (res.error) return
+      if (res.error) {
+        const msg = getFriendlyErrorMessage(res.error, 'Não foi possível adicionar o paciente.')
+        setActionError(msg)
+        showToast(msg, 'error')
+        return
+      }
+      showToast(FEEDBACK.PATIENT_CREATED, 'success')
       await load()
     } finally {
       setCreating(false)
@@ -126,9 +196,15 @@ const Patients = () => {
     try {
       const res = await patientService.update(patientId, { isActive: nextActive })
       if (res.error) {
-        setActionError(res.error || 'Falha ao atualizar acompanhamento')
+        const msg = getFriendlyErrorMessage(res.error, 'Falha ao atualizar acompanhamento.')
+        setActionError(msg)
+        showToast(msg, 'error')
         return
       }
+      showToast(
+        nextActive ? 'Acompanhamento reativado.' : 'Acompanhamento suspenso.',
+        'success'
+      )
       await load()
     } finally {
       setUpdatingId(null)
@@ -141,9 +217,12 @@ const Patients = () => {
     try {
       const res = await patientService.remove(patientId)
       if (res.error) {
-        setActionError(res.error || 'Falha ao remover paciente')
+        const msg = getFriendlyErrorMessage(res.error, 'Falha ao remover paciente.')
+        setActionError(msg)
+        showToast(msg, 'error')
         return
       }
+      showToast(FEEDBACK.PATIENT_REMOVED, 'success')
       await load()
     } finally {
       setUpdatingId(null)
@@ -154,30 +233,29 @@ const Patients = () => {
     setActionError('')
     const res = await messageService.startConversation(platformUserId)
     if (res.error) {
-      setActionError(res.error || 'Falha ao iniciar conversa')
+      const msg = getFriendlyErrorMessage(res.error, 'Falha ao iniciar conversa.')
+      setActionError(msg)
+      showToast(msg, 'error')
       return
     }
+    showToast(FEEDBACK.CONVERSATION_STARTED, 'success')
     // Redireciona para a página de conversas; a lista já deve carregar a conversa criada.
     navigate('/messages')
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[320px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
+    return <LoadingState message="Carregando pacientes…" />
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Pacientes</h1>
-          <p className="text-gray-600 mt-1">Crie manualmente, busque por pacientes cadastrados ou importe via CSV.</p>
+      <div className="app-page-header">
+        <div className="app-page-header__content">
+          <h1 className="app-page-title">Pacientes</h1>
+          <p className="app-page-subtitle mt-1">Crie manualmente, busque por pacientes cadastrados ou importe via CSV.</p>
         </div>
 
-        <label className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-primary-700 cursor-pointer disabled:opacity-60">
+        <label className="app-btn bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 cursor-pointer disabled:opacity-60 w-full md:w-auto">
           <Upload className="h-4 w-4" />
           {importing ? 'Importando...' : 'Importar CSV'}
           <input
@@ -204,7 +282,8 @@ const Patients = () => {
               <label className="text-xs font-semibold text-gray-700">Nome</label>
               <input
                 value={createName}
-                onChange={(e) => setCreateName(e.target.value)}
+                onChange={(e) => setCreateName(limitLength(sanitizeName(e.target.value), INPUT_LIMITS.NAME))}
+                maxLength={INPUT_LIMITS.NAME}
                 className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="Nome do paciente"
               />
@@ -212,8 +291,10 @@ const Patients = () => {
             <div>
               <label className="text-xs font-semibold text-gray-700">Email (opcional)</label>
               <input
+                type="email"
                 value={createEmail}
-                onChange={(e) => setCreateEmail(e.target.value)}
+                onChange={(e) => setCreateEmail(limitLength(sanitizeInput(e.target.value.toLowerCase()), INPUT_LIMITS.EMAIL))}
+                maxLength={INPUT_LIMITS.EMAIL}
                 className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="email@exemplo.com"
               />
@@ -221,8 +302,11 @@ const Patients = () => {
             <div>
               <label className="text-xs font-semibold text-gray-700">Telefone (opcional)</label>
               <input
+                type="tel"
+                inputMode="tel"
                 value={createPhone}
-                onChange={(e) => setCreatePhone(e.target.value)}
+                onChange={(e) => setCreatePhone(limitLength(maskPhone(e.target.value), INPUT_LIMITS.PHONE))}
+                maxLength={INPUT_LIMITS.PHONE}
                 className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="(00) 00000-0000"
               />
@@ -249,7 +333,8 @@ const Patients = () => {
           <div className="mt-4 relative">
             <input
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(limitLength(sanitizeInput(e.target.value), INPUT_LIMITS.SEARCH_QUERY))}
+              maxLength={INPUT_LIMITS.SEARCH_QUERY}
               className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="Ex.: maria, joao@email.com"
             />
@@ -257,7 +342,9 @@ const Patients = () => {
           </div>
 
           {searchError ? (
-            <div className="mt-3 text-sm text-red-700">{searchError}</div>
+            <InlineAlert variant="error" className="mt-3" onDismiss={() => setSearchError('')}>
+              {searchError}
+            </InlineAlert>
           ) : searching ? (
             <div className="mt-3 text-sm text-gray-600 inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -307,28 +394,36 @@ const Patients = () => {
       )}
 
       {patients.length === 0 ? (
-        <div className="bg-white border border-primary-100 rounded-xl p-10 text-center">
-          <Users className="h-10 w-10 text-primary-600 mx-auto mb-3" />
-          <p className="text-gray-700 font-semibold">Nenhum paciente ainda.</p>
-          <p className="text-gray-600 mt-2">Você pode cadastrar manualmente ou importar via CSV.</p>
-        </div>
+        <EmptyState
+          icon={<Users className="h-10 w-10" />}
+          title="Nenhum paciente ainda"
+          description="Cadastre manualmente, busque na plataforma ou importe via CSV."
+        />
       ) : (
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-200 font-semibold text-gray-900">
             {patients.length} paciente(s)
           </div>
-          {actionError ? <div className="px-5 py-3 text-sm text-red-700 border-b border-gray-100">{actionError}</div> : null}
+          {actionError ? (
+            <div className="px-5 py-3 border-b border-gray-100">
+              <InlineAlert variant="error" onDismiss={() => setActionError('')}>
+                {actionError}
+              </InlineAlert>
+            </div>
+          ) : null}
           <div className="divide-y divide-gray-100">
             {patients.map((p) => (
-              <div key={p.id} className="px-5 py-4 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="font-semibold text-gray-900 truncate">{p.name}</div>
-                  <div className="text-sm text-gray-600 truncate">
-                    {p.email || 'Sem email'} · {p.phone || 'Sem telefone'}
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div key={p.id} className="px-4 sm:px-5 py-4 app-list-row">
+                <div className="app-list-row__content">
+                  <div className="flex flex-col md:flex-row md:items-center md:gap-3 min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-gray-900 truncate">{p.name}</div>
+                      <div className="text-sm text-gray-600 truncate">
+                        {p.email || 'Sem email'} · {p.phone || 'Sem telefone'}
+                      </div>
+                    </div>
                     <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                      className={`inline-flex w-fit shrink-0 whitespace-nowrap text-xs font-semibold px-2.5 py-1 rounded-full border ${
                         p.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-700 border-gray-200'
                       }`}
                     >
@@ -336,15 +431,22 @@ const Patients = () => {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="app-actions md:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => void loadRecord(p.id)}
+                    className="app-btn px-3 py-2 rounded-lg border border-primary-200 text-primary-700 hover:bg-primary-50"
+                  >
+                    Prontuário
+                  </button>
                   {p.userId ? (
                     <button
                       type="button"
                       onClick={() => void onStartConversation(String(p.userId))}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-semibold text-gray-900"
+                      className="app-btn px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-900"
                       title="Iniciar conversa"
                     >
-                      <MessageCircle className="h-4 w-4" />
+                      <MessageCircle className="h-4 w-4 shrink-0" />
                       Conversar
                     </button>
                   ) : null}
@@ -354,9 +456,9 @@ const Patients = () => {
                       type="button"
                       disabled={updatingId === p.id}
                       onClick={() => void onToggleFollowUp(p.id, false)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-sm font-semibold text-gray-900 disabled:opacity-60"
+                      className="app-btn px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-900 disabled:opacity-60"
                     >
-                      {updatingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {updatingId === p.id ? <Loader2 className="h-4 w-4 animate-spin shrink-0" /> : null}
                       Suspender
                     </button>
                   ) : (
@@ -364,9 +466,9 @@ const Patients = () => {
                       type="button"
                       disabled={updatingId === p.id}
                       onClick={() => void onToggleFollowUp(p.id, true)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 text-sm font-semibold disabled:opacity-60"
+                      className="app-btn px-3 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-60"
                     >
-                      {updatingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {updatingId === p.id ? <Loader2 className="h-4 w-4 animate-spin shrink-0" /> : null}
                       Iniciar acompanhamento
                     </button>
                   )}
@@ -375,7 +477,7 @@ const Patients = () => {
                     type="button"
                     disabled={updatingId === p.id}
                     onClick={() => deleteFlow.open({ id: p.id, name: p.name || 'paciente' })}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 text-sm font-semibold text-red-700 disabled:opacity-60"
+                    className="app-btn px-3 py-2 rounded-lg border border-red-200 hover:bg-red-50 text-red-700 disabled:opacity-60"
                     title="Remove o paciente da sua lista"
                   >
                     Encerrar/remover
@@ -386,6 +488,35 @@ const Patients = () => {
           </div>
         </div>
       )}
+
+      {recordPatientId ? (
+        <div className="app-card space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="app-title">Prontuário unificado</h2>
+            <button type="button" className="text-sm text-gray-600" onClick={() => { setRecordPatientId(null); setRecord(null) }}>Fechar</button>
+          </div>
+          {recordLoading ? (
+            <div className="text-sm text-gray-600">Carregando prontuário...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div className="border border-gray-200 rounded-lg p-3">
+                <div className="font-semibold text-gray-900">Anamnese</div>
+                <pre className="mt-2 text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-40">{record?.anamnesis ? JSON.stringify(record.anamnesis, null, 2) : 'Sem registro'}</pre>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <div className="font-semibold text-gray-900">Antropometria ({record?.anthropometric?.length || 0})</div>
+                <div className="mt-2 text-xs text-gray-600">Últimos registros agregados do paciente.</div>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <div className="font-semibold text-gray-900">Exames ({record?.labExams?.length || 0})</div>
+              </div>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <div className="font-semibold text-gray-900">Questionários ({record?.questionnaires?.length || 0})</div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <ConfirmModal
         isOpen={deleteFlow.isOpen}

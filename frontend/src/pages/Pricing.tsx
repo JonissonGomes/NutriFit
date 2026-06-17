@@ -2,6 +2,8 @@ import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import { Link } from 'react-router-dom'
+import { billingService } from '../services/billing.service'
+import { useToast } from '../contexts/ToastContext'
 
 interface PricingPlan {
   name: string
@@ -11,62 +13,85 @@ interface PricingPlan {
   features: { text: string; included: boolean }[]
   highlighted: boolean
   cta: string
+  planKey?: 'starter' | 'professional' | 'business'
 }
 
 const Pricing = () => {
+  const { showToast } = useToast()
+
+  const handleCheckout = async (planKey?: PricingPlan['planKey']) => {
+    if (!planKey) return
+    const res = await billingService.checkout(planKey)
+    const url = (res.data as any)?.data?.url
+    if (url) {
+      window.location.href = url
+      return
+    }
+    showToast(res.error || 'Configure o Stripe no servidor para assinaturas.', 'warning')
+  }
+
   const nutritionistPlans: PricingPlan[] = [
     {
       name: 'Grátis',
       price: 'R$ 0',
       period: '/mês',
-      description: 'Comece agora e fidelize pacientes com o básico do NuFit',
+      description: 'Para estudantes e recém-formados começarem no NuFit',
       highlighted: false,
       cta: 'Criar conta grátis',
       features: [
-        { text: 'Até 10 pacientes ativos', included: true },
+        { text: 'Até 5 pacientes ativos', included: true },
         { text: 'Planos alimentares básicos', included: true },
+        { text: 'Agenda e prontuário básico', included: true },
         { text: 'Diário alimentar (foto + comentário)', included: true },
-        { text: 'Metas e evolução (básico)', included: true },
-        { text: 'Lista de compras (por plano)', included: true },
-        { text: 'Mensagens e agenda (básico)', included: true },
         { text: 'Portfólio público', included: true },
-        { text: 'Suporte por email', included: true },
         { text: 'IA (resumos/análises)', included: false },
-        { text: 'Equipe (multiusuário)', included: false },
+        { text: 'App personalizado completo', included: false },
       ],
     },
     {
-      name: 'Inicial',
-      price: 'R$ 59',
+      name: 'Mensal',
+      price: 'R$ 89,90',
       period: '/mês',
-      description: 'Para atendimentos regulares com mais recursos e organização',
+      planKey: 'starter',
+      description: 'Para nutricionistas em início de carreira ou transição',
       highlighted: true,
-      cta: 'Começar teste grátis',
-      features: [
-        { text: 'Até 50 pacientes ativos', included: true },
-        { text: 'Planos alimentares completos + substituições', included: true },
-        { text: 'Anamnese + questionários', included: true },
-        { text: 'Diário alimentar com foto + IA (limitado)', included: true },
-        { text: 'Exames laboratoriais (upload)', included: true },
-        { text: 'Relatórios básicos e evolução', included: true },
-        { text: 'Agenda e lembretes', included: true },
-        { text: 'Suporte prioritário', included: true },
-        { text: 'Equipe (multiusuário)', included: false },
-      ],
-    },
-    {
-      name: 'Profissional',
-      price: 'R$ 129',
-      period: '/mês',
-      description: 'Para nutricionistas com alto volume e automações',
-      highlighted: false,
-      cta: 'Falar com vendas',
+      cta: 'Assinar mensal',
       features: [
         { text: 'Pacientes ilimitados', included: true },
-        { text: 'IA (resumos e análises) com limites maiores', included: true },
-        { text: 'Modelos de plano (biblioteca)', included: true },
-        { text: 'Relatórios avançados (aderência)', included: true },
-        { text: 'Equipe (até 3 usuários)', included: true },
+        { text: 'App completo para pacientes', included: true },
+        { text: 'IA limitada (resumos e análises)', included: true },
+        { text: 'Anamnese + questionários', included: true },
+        { text: 'Suporte prioritário', included: true },
+        { text: 'Integração WhatsApp', included: false },
+      ],
+    },
+    {
+      name: 'Anual',
+      price: 'R$ 799',
+      period: '/ano',
+      planKey: 'professional',
+      description: 'Economia de ~25% com bônus de templates de marketing',
+      highlighted: false,
+      cta: 'Assinar anual',
+      features: [
+        { text: 'Tudo do plano Mensal', included: true },
+        { text: 'Biblioteca de modelos de plano', included: true },
+        { text: 'Templates de marketing', included: true },
+        { text: 'Relatórios avançados', included: true },
+      ],
+    },
+    {
+      name: 'Elite',
+      price: 'R$ 149,90',
+      period: '/mês',
+      planKey: 'business',
+      description: 'IA avançada, domínio próprio e recursos premium',
+      highlighted: false,
+      cta: 'Assinar Elite',
+      features: [
+        { text: 'IA preditiva e transcrição (fases)', included: true },
+        { text: 'Domínio próprio incluso', included: true },
+        { text: 'Prioridade na busca', included: true },
         { text: 'Suporte dedicado', included: true },
       ],
     },
@@ -135,13 +160,13 @@ const Pricing = () => {
           <div className="max-w-7xl mx-auto space-y-10">
             <div>
               <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Planos para Nutricionistas</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 md:gap-8">
                 {nutritionistPlans.map((plan) => (
                   <div
                     key={plan.name}
                     className={`relative rounded-xl md:rounded-2xl overflow-hidden transition-all duration-300 ${
                       plan.highlighted
-                        ? 'bg-white shadow-2xl scale-105 border-2 border-primary-500'
+                        ? 'bg-white shadow-2xl border-2 border-primary-500 lg:ring-2 lg:ring-primary-200'
                         : 'bg-white shadow-lg hover:shadow-xl border border-gray-200'
                     }`}
                   >
@@ -169,16 +194,30 @@ const Pricing = () => {
                         </div>
                       </div>
 
-                      <Link
-                        to="/signup?role=nutricionista"
-                        className={`block w-full text-center py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 mb-6 ${
-                          plan.highlighted
-                            ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
-                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                        }`}
-                      >
-                        {plan.cta}
-                      </Link>
+                      {plan.planKey ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleCheckout(plan.planKey)}
+                          className={`block w-full text-center py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 mb-6 ${
+                            plan.highlighted
+                              ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
+                              : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                          }`}
+                        >
+                          {plan.cta}
+                        </button>
+                      ) : (
+                        <Link
+                          to="/signup?role=nutricionista"
+                          className={`block w-full text-center py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-200 mb-6 ${
+                            plan.highlighted
+                              ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
+                              : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                          }`}
+                        >
+                          {plan.cta}
+                        </Link>
+                      )}
 
                       <ul className="space-y-3">
                         {plan.features.map((feature, index) => (
@@ -212,7 +251,7 @@ const Pricing = () => {
                     key={plan.name}
                     className={`relative rounded-xl md:rounded-2xl overflow-hidden transition-all duration-300 ${
                       plan.highlighted
-                        ? 'bg-white shadow-2xl scale-105 border-2 border-sky-500'
+                        ? 'bg-white shadow-2xl border-2 border-sky-500 lg:ring-2 lg:ring-sky-200'
                         : 'bg-white shadow-lg hover:shadow-xl border border-gray-200'
                     }`}
                   >

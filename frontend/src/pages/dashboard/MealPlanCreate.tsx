@@ -272,6 +272,7 @@ const MealPlanCreate = () => {
   }
 
   const onSave = async () => {
+    if (saving) return
     if (!canSave) {
       showToast('Selecione paciente e informe um título (mínimo 3 caracteres).', 'warning')
       return
@@ -327,7 +328,7 @@ const MealPlanCreate = () => {
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Novo plano alimentar</h1>
+          <h1 className="app-page-title">Novo plano alimentar</h1>
           <p className="text-gray-600 mt-1">Wizard: paciente, baseline, estratégia e revisão final.</p>
         </div>
       </div>

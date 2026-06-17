@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ func chatWithAIAssistant(c *gin.Context) {
 	patientID := userID.(string)
 
 	var req struct {
-		Question string `json:"question" binding:"required"`
+		Question string `json:"question" binding:"required,max=1000"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {

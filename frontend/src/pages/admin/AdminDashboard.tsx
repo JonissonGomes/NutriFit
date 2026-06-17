@@ -1,36 +1,56 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Loader2, Users, Stethoscope, User, ArrowRight } from 'lucide-react'
+import { Users, Stethoscope, User, ArrowRight } from 'lucide-react'
 import { adminService } from '../../services'
+import InlineAlert from '../../components/common/InlineAlert'
+import LoadingState from '../../components/common/LoadingState'
+import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<{ totalUsers: number; totalNutritionists: number; totalPatients: number } | null>(null)
+  const [error, setError] = useState('')
+
+  const load = async () => {
+    setLoading(true)
+    setError('')
+    const res = await adminService.overview()
+    if (res.error) {
+      setError(getFriendlyErrorMessage(res.error, 'Não foi possível carregar a visão geral.'))
+      setData(null)
+    } else {
+      setData(res.data?.data || null)
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      const res = await adminService.overview()
-      setData(res.data?.data || null)
-      setLoading(false)
-    }
     void load()
   }, [])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[320px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
+    return <LoadingState message="Carregando painel admin…" />
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Admin</h1>
-        <p className="text-gray-600 mt-1">Visão geral da plataforma.</p>
+        <h1 className="app-page-title">Admin</h1>
+        <p className="app-page-subtitle mt-1">Visão geral da plataforma.</p>
       </div>
+
+      {error ? (
+        <InlineAlert variant="error">
+          {error}
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="block mt-2 text-sm font-semibold underline hover:no-underline"
+          >
+            Tentar novamente
+          </button>
+        </InlineAlert>
+      ) : null}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
@@ -63,7 +83,7 @@ const AdminDashboard = () => {
         </div>
         <div className="bg-white border border-gray-200 rounded-2xl p-5">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gray-100">
+            <div className="p-2 rounded-lg bg-gray-50">
               <User className="h-5 w-5 text-gray-700" />
             </div>
             <div>
@@ -78,4 +98,3 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
-

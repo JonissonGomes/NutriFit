@@ -8,7 +8,7 @@ import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import { useAuth } from '../../contexts/AuthContext'
-import RestaurantIcon from '@mui/icons-material/Restaurant'
+import { Logo } from '../brand/Logo'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -23,7 +23,7 @@ const Header = () => {
   const isActive = (path: string) => location.pathname === path
 
   const navLinkClass = (path: string) =>
-    `transition-colors text-sm ${
+    `whitespace-nowrap transition-colors text-sm ${
       isActive(path)
         ? 'text-primary-700 font-medium'
         : 'text-gray-600 hover:text-gray-900'
@@ -98,13 +98,12 @@ const Header = () => {
       <nav className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <RestaurantIcon sx={{ fontSize: 28, color: '#059669' }} className="text-primary-600" />
-            <span className="text-xl font-bold text-primary-600">NuFit</span>
+          <Link to="/" className="flex-shrink-0 hover:opacity-90 transition-opacity">
+            <Logo size="sm" textClassName="text-xl font-bold text-primary-600" />
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-6 xl:gap-8 flex-1 justify-center min-w-0">
             <Link to="/explore" className={navLinkClass('/explore')}>
               Descobrir
             </Link>
@@ -114,16 +113,16 @@ const Header = () => {
             <Link to="/conteudos/public" className={navLinkClass('/conteudos/public')}>
               Conteúdos
             </Link>
-            <a href="#como-funciona" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            <a href="#como-funciona" className="whitespace-nowrap text-sm text-gray-600 hover:text-gray-900 transition-colors">
               Como Funciona
             </a>
-            <a href="#comunidade" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            <a href="#comunidade" className="whitespace-nowrap text-sm text-gray-600 hover:text-gray-900 transition-colors">
               Comunidade
             </a>
           </div>
 
           {/* User Menu or CTA Buttons */}
-          <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+          <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
             {isAuthenticated && user ? (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -196,13 +195,13 @@ const Header = () => {
               <>
                 <Link
                   to="/login"
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors px-3 py-1.5"
+                  className="whitespace-nowrap text-sm text-gray-600 hover:text-gray-900 transition-colors px-3 py-1.5"
                 >
                   Entrar
                 </Link>
                 <Link
                   to="/signup"
-                  className="bg-primary-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-primary-700 transition-colors"
+                  className="whitespace-nowrap bg-primary-600 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-primary-700 transition-colors"
                 >
                   Começar
                 </Link>
@@ -212,7 +211,7 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-1.5 text-gray-600 hover:text-gray-900"
+            className="lg:hidden p-1.5 text-gray-600 hover:text-gray-900"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Abrir menu"
           >
@@ -226,7 +225,7 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 space-y-3 border-t border-gray-100">
+          <div className="lg:hidden py-4 space-y-3 border-t border-gray-100">
             <Link
               to="/explore"
               className="block text-sm text-gray-600 hover:text-gray-900 transition-colors py-2"

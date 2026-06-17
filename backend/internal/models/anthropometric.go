@@ -1,4 +1,4 @@
-﻿package models
+package models
 
 import (
 	"time"
@@ -30,6 +30,10 @@ type Anthropometric struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	PatientID     primitive.ObjectID `bson:"patientId" json:"patientId"`
 	Date          time.Time          `bson:"date" json:"date"`
+	Protocol      string             `bson:"protocol,omitempty" json:"protocol,omitempty"`
+	Skinfolds     map[string]float64 `bson:"skinfolds,omitempty" json:"skinfolds,omitempty"`
+	AgeAtMeasure  int                `bson:"ageAtMeasure,omitempty" json:"ageAtMeasure,omitempty"`
+	Gender        string             `bson:"gender,omitempty" json:"gender,omitempty"`
 	Weight        float64            `bson:"weight" json:"weight"` // kg
 	Height        float64            `bson:"height" json:"height"` // cm
 	BodyFat       float64            `bson:"bodyFat,omitempty" json:"bodyFat,omitempty"` // percentual

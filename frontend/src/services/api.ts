@@ -3,6 +3,7 @@
 // ============================================
 
 import type { ApiError, ApiResponse, AuthTokens } from '../types/api'
+import { getFriendlyErrorMessage } from '../utils/feedbackMessages'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
 
@@ -60,6 +61,9 @@ export const tokenManager = {
 
 let isRefreshing = false
 let refreshSubscribers: ((token: string) => void)[] = []
+
+/** Evita GETs idênticos simultâneos (ex.: loop de useEffect). */
+const inFlightGetRequests = new Map<string, Promise<ApiResponse<unknown>>>()
 
 const subscribeTokenRefresh = (callback: (token: string) => void): void => {
   refreshSubscribers.push(callback)
@@ -130,6 +134,31 @@ class ApiClient {
     config: RequestConfig = {}
   ): Promise<ApiResponse<T>> {
     const { requiresAuth = true, timeout = 30000, ...fetchConfig } = config
+    const method = (fetchConfig.method || 'GET').toUpperCase()
+    const dedupeKey = method === 'GET' ? `GET:${endpoint}:auth=${requiresAuth}` : ''
+
+    if (dedupeKey) {
+      const existing = inFlightGetRequests.get(dedupeKey)
+      if (existing) return existing as Promise<ApiResponse<T>>
+    }
+
+    const promise = this.executeRequest<T>(endpoint, { requiresAuth, timeout, ...fetchConfig })
+
+    if (dedupeKey) {
+      inFlightGetRequests.set(dedupeKey, promise as Promise<ApiResponse<unknown>>)
+      promise.finally(() => {
+        inFlightGetRequests.delete(dedupeKey)
+      })
+    }
+
+    return promise
+  }
+
+  private async executeRequest<T>(
+    endpoint: string,
+    config: RequestConfig & { requiresAuth: boolean; timeout: number }
+  ): Promise<ApiResponse<T>> {
+    const { requiresAuth, timeout, ...fetchConfig } = config
 
     // Preparar headers
     const headers = new Headers(fetchConfig.headers)
@@ -215,7 +244,7 @@ class ApiClient {
           return { error: 'Sessão expirada. Faça login novamente.' }
         }
 
-        return { error: errorData.error || 'Erro na requisição' }
+        return { error: getFriendlyErrorMessage(errorData.error, 'Erro na requisição') }
       }
 
       // Resposta vazia (204 No Content)
@@ -232,7 +261,7 @@ class ApiClient {
         if (error.name === 'AbortError') {
           return { error: 'Tempo limite da requisição excedido' }
         }
-        return { error: error.message }
+        return { error: getFriendlyErrorMessage(error.message) }
       }
 
       return { error: 'Erro desconhecido na requisição' }

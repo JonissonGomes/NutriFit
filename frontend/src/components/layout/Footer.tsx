@@ -1,4 +1,4 @@
-import { Utensils } from 'lucide-react'
+import { Logo } from '../brand/Logo'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
@@ -6,12 +6,11 @@ const Footer = () => {
   return (
     <footer className="bg-primary-900 text-primary-100">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-10 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <Utensils className="h-6 w-6 text-primary-400" />
-              <span className="text-xl font-bold text-white">NuFit</span>
+            <div className="mb-4">
+              <Logo size="sm" textClassName="text-xl font-bold text-white" />
             </div>
             <p className="text-primary-200 max-w-md">
               Plataforma completa para nutricionistas. Prescreva planos alimentares, acompanhe pacientes e gerencie sua prática com foco em saúde e nutrição.

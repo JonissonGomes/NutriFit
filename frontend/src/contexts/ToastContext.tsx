@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react'
 
 export interface Toast {
   id: string
@@ -23,26 +23,32 @@ export const useToast = () => {
   return context
 }
 
+const defaultDuration = (type: Toast['type']) => {
+  if (type === 'error') return 6000
+  if (type === 'warning') return 5000
+  return 4000
+}
+
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([])
 
-  const showToast = (message: string, type: Toast['type'] = 'info', duration: number = 4000) => {
-    const id = Date.now().toString()
-    const newToast: Toast = { id, message, type, duration }
-    
-    setToasts(prev => [...prev, newToast])
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id))
+  }, [])
 
-    // Auto remove after duration
-    if (duration > 0) {
-      setTimeout(() => {
+  const showToast = useCallback((message: string, type: Toast['type'] = 'info', duration?: number) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const resolvedDuration = duration ?? defaultDuration(type)
+    const newToast: Toast = { id, message, type, duration: resolvedDuration }
+
+    setToasts((prev) => [...prev, newToast])
+
+    if (resolvedDuration > 0) {
+      window.setTimeout(() => {
         removeToast(id)
-      }, duration)
+      }, resolvedDuration)
     }
-  }
-
-  const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
-  }
+  }, [removeToast])
 
   return (
     <ToastContext.Provider value={{ showToast, toasts, removeToast }}>
@@ -50,4 +56,3 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     </ToastContext.Provider>
   )
 }
-

@@ -1,18 +1,30 @@
 import { useEffect, useState } from 'react'
-import { Loader2, Search } from 'lucide-react'
+import { Search, Stethoscope } from 'lucide-react'
 import { adminService } from '../../services'
+import EmptyState from '../../components/common/EmptyState'
+import InlineAlert from '../../components/common/InlineAlert'
+import LoadingState from '../../components/common/LoadingState'
+import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 const NutritionistsAdmin = () => {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [items, setItems] = useState<any[]>([])
   const [total, setTotal] = useState(0)
+  const [error, setError] = useState('')
 
   const load = async () => {
     setLoading(true)
+    setError('')
     const res = await adminService.listNutritionists({ page: 1, limit: 50, search: search.trim() || undefined })
-    setItems(res.data?.data || [])
-    setTotal(res.data?.total || 0)
+    if (res.error) {
+      setError(getFriendlyErrorMessage(res.error, 'Não foi possível carregar nutricionistas.'))
+      setItems([])
+      setTotal(0)
+    } else {
+      setItems(res.data?.data || [])
+      setTotal(res.data?.total || 0)
+    }
     setLoading(false)
   }
 
@@ -31,7 +43,7 @@ const NutritionistsAdmin = () => {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Nutricionistas</h1>
+          <h1 className="app-page-title">Nutricionistas</h1>
           <p className="text-gray-600 mt-1">Controle dos nutricionistas cadastrados (super_admin).</p>
         </div>
 
@@ -46,11 +58,28 @@ const NutritionistsAdmin = () => {
         </div>
       </div>
 
+      {error ? (
+        <InlineAlert variant="error">
+          {error}
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="block mt-2 text-sm font-semibold underline hover:no-underline"
+          >
+            Tentar novamente
+          </button>
+        </InlineAlert>
+      ) : null}
+
       {loading ? (
-        <div className="flex items-center justify-center min-h-[320px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-        </div>
-      ) : (
+        <LoadingState message="Carregando nutricionistas…" />
+      ) : items.length === 0 && !error ? (
+        <EmptyState
+          icon={<Stethoscope className="h-10 w-10" />}
+          title="Nenhum nutricionista encontrado"
+          description={search.trim() ? 'Tente outro termo de busca.' : 'Ainda não há nutricionistas cadastrados.'}
+        />
+      ) : items.length > 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-200 font-semibold text-gray-900">
             {total} nutricionista(s)
@@ -67,10 +96,9 @@ const NutritionistsAdmin = () => {
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
 
 export default NutritionistsAdmin
-

@@ -6,7 +6,7 @@ import { messageService } from '../../services'
 import { useToast } from '../../contexts/ToastContext'
 import LoadingButton from '../../components/common/LoadingButton'
 import ConfirmModal from '../../components/common/ConfirmModal'
-import { sanitizeText, limitLength } from '../../utils/inputUtils'
+import { sanitizeText, limitLength, INPUT_LIMITS } from '../../utils/inputUtils'
 import { useConfirmDelete } from '../../hooks'
 
 interface Conversation {
@@ -159,7 +159,7 @@ const Chat = () => {
 
     // Sanitizar mensagem antes de enviar (permitir acentos e caracteres especiais)
     const sanitizedMessage = sanitizeText(messageText.trim(), ['\n', ' ', '.', ',', '!', '?', '-', ':', ';', '(', ')', '[', ']', '{', '}', '/', '\\', '@', '#', '$', '%', '*', '+', '=', '_', '|', '~', '`', '^', '´', '°', 'ª', 'º'])
-    const limitedMessage = limitLength(sanitizedMessage, 5000) // Limite de mensagem
+    const limitedMessage = limitLength(sanitizedMessage, INPUT_LIMITS.MESSAGE)
 
       const response = await messageService.sendMessage(conversation.otherUser.id, limitedMessage)
       if (response.data) {
@@ -279,7 +279,7 @@ const Chat = () => {
               <input
                 type="text"
                 placeholder="Buscar conversas..."
-                maxLength={100}
+                maxLength={INPUT_LIMITS.CONVERSATION_SUBJECT}
                 className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -470,7 +470,7 @@ const Chat = () => {
                     onChange={(e) => {
                       // Para mensagens, permitir todos os caracteres acentuados e especiais comuns
                       const sanitized = sanitizeText(e.target.value, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';', '(', ')', '[', ']', '{', '}', '/', '\\', '@', '#', '$', '%', '*', '+', '=', '_', '|', '~', '`', '^', '´', '°', 'ª', 'º'])
-                      setMessageText(limitLength(sanitized, 5000))
+                      setMessageText(limitLength(sanitized, INPUT_LIMITS.MESSAGE))
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey && !sendingMessage && messageText.trim()) {
@@ -480,7 +480,7 @@ const Chat = () => {
                     }}
                     placeholder="Digite uma mensagem..."
                     disabled={sendingMessage}
-                    maxLength={5000}
+                    maxLength={INPUT_LIMITS.MESSAGE}
                     rows={Math.min(Math.max(messageText.split('\n').length, 1), 4) || 1}
                     className="flex-1 px-3 md:px-4 py-2 md:py-2.5 text-sm border border-gray-300 rounded-full md:rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-50 resize-none min-h-[40px] md:min-h-[60px] max-h-[100px] md:max-h-[120px]"
                   />

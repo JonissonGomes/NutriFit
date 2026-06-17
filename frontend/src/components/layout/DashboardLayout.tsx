@@ -24,8 +24,10 @@ import ArticleIcon from '@mui/icons-material/Article'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
 import LoadingButton from '../common/LoadingButton'
-import RestaurantIcon from '@mui/icons-material/Restaurant'
+import { Logo } from '../brand/Logo'
 import MenuBookIcon from '@mui/icons-material/MenuBook'
+import AppSidebar from './AppSidebar'
+import { isNavItemActive, useSidebarCollapsed } from '../../hooks/useSidebarCollapsed'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -38,13 +40,14 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
   const { user, logout } = useAuth()
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, isLoading } = useNotifications()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const { collapsed: isSidebarCollapsed, toggleCollapsed: toggleSidebarCollapsed } = useSidebarCollapsed()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [, setMarkingAsReadId] = useState<string | null>(null)
   const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null)
   const [markingAllAsRead, setMarkingAllAsRead] = useState(false)
   const notificationRef = useRef<HTMLDivElement>(null)
 
-  const isActive = (path: string) => location.pathname === path
+  const isActive = (path: string) => isNavItemActive(location.pathname, path)
   const isAdminArea = location.pathname.startsWith('/admin')
   const effectiveBasePath =
     basePath ||
@@ -90,6 +93,15 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (!isSidebarOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isSidebarOpen])
 
   const handleNotificationClick = async (notification: any) => {
     if (!notification.read) {
@@ -182,9 +194,8 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
                 <MenuIcon sx={{ fontSize: 22 }} />
               )}
             </button>
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <RestaurantIcon sx={{ fontSize: 26, color: '#059669' }} />
-              <span className="font-bold text-primary-700">NuFit</span>
+            <Link to="/" className="hover:opacity-80 transition-opacity">
+              <Logo size="sm" textClassName="font-bold text-primary-700" />
             </Link>
           </div>
 
@@ -206,7 +217,7 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
 
               {/* Dropdown */}
               {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+                <div className="absolute right-0 mt-2 app-dropdown-panel bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
                   {/* Header */}
                   <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
                     <h3 className="font-semibold text-sm text-gray-900">Notificações</h3>
@@ -312,50 +323,41 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
         </div>
       </header>
 
-      {/* Sidebar - Refatorado */}
-      <aside
-        className={`fixed top-14 left-0 bottom-0 w-56 md:w-64 bg-white border-r border-gray-100 transform transition-transform duration-200 ease-in-out z-30 overflow-y-auto ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      {/* Sidebar */}
+      <AppSidebar
+        items={navItems.map((item) => ({
+          path: item.path,
+          label: item.label,
+          icon: <item.icon sx={{ fontSize: 20 }} />,
+        }))}
+        isMobileOpen={isSidebarOpen}
+        onMobileClose={() => setIsSidebarOpen(false)}
+        collapsed={isSidebarCollapsed}
+        onToggleCollapsed={toggleSidebarCollapsed}
+        isItemActive={isActive}
+        iconSet="mui"
+        footer={
+          <button
+            type="button"
+            onClick={handleLogout}
+            title={isSidebarCollapsed ? 'Sair' : undefined}
+            className={`w-full flex items-center rounded-lg text-red-100 hover:bg-red-500/25 hover:text-white transition-all text-sm ${
+              isSidebarCollapsed && !isSidebarOpen ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
+            }`}
+          >
+            <LogoutIcon sx={{ fontSize: 20 }} />
+            {(!isSidebarCollapsed || isSidebarOpen) && <span>Sair</span>}
+          </button>
+        }
+      />
+
+      {/* Main Content */}
+      <main
+        className={`pt-14 min-h-screen transition-[margin] duration-200 ease-in-out ${
+          isSidebarCollapsed ? 'lg:ml-[4.5rem]' : 'lg:ml-64'
         }`}
       >
-        <nav className="p-3 md:p-4 space-y-1">
-          {/* Navigation Items */}
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.path)
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setIsSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm ${
-                  active
-                    ? 'bg-primary-50 text-primary-700 font-semibold shadow-sm'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <Icon sx={{ fontSize: 20 }} />
-                <span>{item.label}</span>
-              </Link>
-            )
-          })}
-
-          {/* Divider */}
-          <div className="pt-3 mt-3 border-t border-gray-100 space-y-1">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-all text-sm"
-            >
-              <LogoutIcon sx={{ fontSize: 20 }} />
-              <span>Sair</span>
-            </button>
-          </div>
-        </nav>
-      </aside>
-
-      {/* Main Content - Refatorado */}
-      <main className="lg:ml-56 xl:ml-64 pt-14 min-h-screen">
-        <div className="p-3 md:p-5 lg:p-6">
+        <div className="w-full max-w-7xl mx-auto p-3 md:p-5 lg:p-6">
           {children}
         </div>
       </main>

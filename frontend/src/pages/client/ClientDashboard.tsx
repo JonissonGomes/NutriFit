@@ -1,42 +1,44 @@
 import { useEffect, useState } from 'react'
-import { FolderTree, Calendar, ArrowRight, Plus, Loader2, Heart, Search, MessageSquare } from 'lucide-react'
+import { FolderTree, Calendar, ArrowRight, Plus, Heart, Search, MessageSquare } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { dashboardService } from '../../services'
 import type { ClientStats, UpcomingEvent } from '../../services/dashboard.service'
+import EmptyState from '../../components/common/EmptyState'
+import InlineAlert from '../../components/common/InlineAlert'
+import LoadingState from '../../components/common/LoadingState'
+import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 const ClientDashboard = () => {
   const [stats, setStats] = useState<ClientStats | null>(null)
   const [projects, setProjects] = useState<any[]>([])
   const [appointments, setAppointments] = useState<UpcomingEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
-    loadDashboardData()
+    void loadDashboardData()
   }, [])
 
   const loadDashboardData = async () => {
     setIsLoading(true)
-    try {
-      const [statsRes, projectsRes, appointmentsRes] = await Promise.all([
-        dashboardService.getPatientStats(),
-        dashboardService.getPatientMealPlans(3),
-        dashboardService.getPatientAppointments(3),
-      ])
+    setLoadError('')
+    const [statsRes, projectsRes, appointmentsRes] = await Promise.all([
+      dashboardService.getPatientStats(),
+      dashboardService.getPatientMealPlans(3),
+      dashboardService.getPatientAppointments(3),
+    ])
 
-      if (statsRes.data) {
-        setStats(statsRes.data)
-      }
-      if (projectsRes.data) {
-        setProjects(projectsRes.data)
-      }
-      if (appointmentsRes.data) {
-        setAppointments(appointmentsRes.data)
-      }
-    } catch (error) {
-      console.error('Erro ao carregar dados do dashboard:', error)
-    } finally {
-      setIsLoading(false)
+    const errors = [statsRes.error, projectsRes.error, appointmentsRes.error].filter(Boolean)
+    if (errors.length === 3) {
+      setLoadError(getFriendlyErrorMessage(errors[0], 'Não foi possível carregar o painel.'))
+    } else if (errors.length > 0) {
+      setLoadError(getFriendlyErrorMessage(errors[0], 'Alguns dados não puderam ser carregados.'))
     }
+
+    if (statsRes.data) setStats(statsRes.data)
+    if (projectsRes.data) setProjects(projectsRes.data)
+    if (appointmentsRes.data) setAppointments(appointmentsRes.data)
+    setIsLoading(false)
   }
 
   const getStatusLabel = (status: string) => {
@@ -75,11 +77,7 @@ const ClientDashboard = () => {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
+    return <LoadingState message="Carregando seu painel…" className="min-h-[400px]" />
   }
 
   return (
@@ -89,6 +87,19 @@ const ClientDashboard = () => {
         <h1 className="text-3xl font-bold text-gray-900">Bem-vindo de volta!</h1>
         <p className="text-gray-600 mt-2">Acompanhe seu plano alimentar, metas e consultas</p>
       </div>
+
+      {loadError ? (
+        <InlineAlert variant="warning">
+          {loadError}
+          <button
+            type="button"
+            onClick={() => void loadDashboardData()}
+            className="block mt-2 text-sm font-semibold underline hover:no-underline"
+          >
+            Tentar novamente
+          </button>
+        </InlineAlert>
+      ) : null}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -249,17 +260,21 @@ const ClientDashboard = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <FolderTree className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">Você ainda não tem planos</p>
-            <Link
-              to="/explore"
-              className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold"
-            >
-              <Plus className="h-4 w-4" />
-              Encontrar um nutricionista
-            </Link>
-          </div>
+          <EmptyState
+            icon={<FolderTree className="h-12 w-12" />}
+            title="Você ainda não tem planos"
+            description="Encontre um nutricionista e comece seu acompanhamento."
+            action={
+              <Link
+                to="/explore"
+                className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold"
+              >
+                <Plus className="h-4 w-4" />
+                Encontrar um nutricionista
+              </Link>
+            }
+            className="border-0 shadow-none bg-transparent p-0"
+          />
         )}
       </div>
 
@@ -299,10 +314,20 @@ const ClientDashboard = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Nenhuma reunião agendada</p>
-          </div>
+          <EmptyState
+            icon={<Calendar className="h-12 w-12" />}
+            title="Nenhuma reunião agendada"
+            description="Suas próximas consultas aparecerão aqui."
+            action={
+              <Link
+                to="/patient/bookings"
+                className="text-primary-600 hover:text-primary-700 font-semibold text-sm"
+              >
+                Ver agenda
+              </Link>
+            }
+            className="border-0 shadow-none bg-transparent p-0"
+          />
         )}
       </div>
 

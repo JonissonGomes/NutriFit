@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 import { api } from '../../services'
+import EmptyState from '../../components/common/EmptyState'
+import InlineAlert from '../../components/common/InlineAlert'
+import LoadingState from '../../components/common/LoadingState'
+import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 interface AnthropometricRecord {
   id: string
@@ -15,37 +19,56 @@ interface AnthropometricRecord {
 const Progress = () => {
   const [items, setItems] = useState<AnthropometricRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const load = async () => {
+    setLoading(true)
+    setError('')
+    const res = await api.get<{ data: AnthropometricRecord[] }>(`/anthropometric/me?limit=50`)
+    if (res.error) {
+      setError(getFriendlyErrorMessage(res.error, 'Não foi possível carregar sua evolução.'))
+      setItems([])
+    } else {
+      setItems(res.data?.data || [])
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      const res = await api.get<{ data: AnthropometricRecord[] }>(`/anthropometric/me?limit=50`)
-      setItems(res.data?.data || [])
-      setLoading(false)
-    }
-    load()
+    void load()
   }, [])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
+    return <LoadingState message="Carregando evolução…" />
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Evolução</h1>
+        <h1 className="app-page-title">Evolução</h1>
         <p className="text-gray-600 mt-1">Histórico de peso e indicadores cadastrados.</p>
       </div>
 
-      {items.length === 0 ? (
-        <div className="bg-white border border-primary-100 rounded-xl p-8 text-center">
-          <p className="text-gray-700 font-semibold">Nenhum registro de evolução ainda.</p>
-        </div>
-      ) : (
+      {error ? (
+        <InlineAlert variant="error">
+          {error}
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="block mt-2 text-sm font-semibold underline hover:no-underline"
+          >
+            Tentar novamente
+          </button>
+        </InlineAlert>
+      ) : null}
+
+      {items.length === 0 && !error ? (
+        <EmptyState
+          icon={<TrendingUp className="h-10 w-10" />}
+          title="Nenhum registro de evolução ainda"
+          description="Quando seu nutricionista registrar medidas, elas aparecerão aqui."
+        />
+      ) : items.length > 0 ? (
         <div className="bg-white border border-primary-100 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-primary-100 font-semibold text-gray-900">
             Registros recentes
@@ -65,10 +88,9 @@ const Progress = () => {
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
 
 export default Progress
-

@@ -404,6 +404,7 @@ const PublicProfile = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSaving) return
     setIsSaving(true)
 
     try {

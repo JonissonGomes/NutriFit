@@ -18,11 +18,13 @@ import {
   LineChart,
   BookText,
   Bot,
-  Utensils,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
+import { Logo } from '../brand/Logo'
 import LoadingButton from '../common/LoadingButton'
+import AppSidebar from './AppSidebar'
+import { isNavItemActive, useSidebarCollapsed } from '../../hooks/useSidebarCollapsed'
 
 interface ClientLayoutProps {
   children: ReactNode
@@ -34,13 +36,14 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
   const { user, logout } = useAuth()
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, isLoading } = useNotifications()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const { collapsed: isSidebarCollapsed, toggleCollapsed: toggleSidebarCollapsed } = useSidebarCollapsed()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [, setMarkingAsReadId] = useState<string | null>(null)
   const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null)
   const [markingAllAsRead, setMarkingAllAsRead] = useState(false)
   const notificationRef = useRef<HTMLDivElement>(null)
 
-  const isActive = (path: string) => location.pathname === path
+  const isActive = (path: string) => isNavItemActive(location.pathname, path)
 
   const navItems = [
     { path: '/patient/dashboard', icon: LayoutDashboard, label: 'Painel' },
@@ -73,6 +76,15 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (!isSidebarOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isSidebarOpen])
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -152,24 +164,23 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
-      <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-40">
-        <div className="flex items-center justify-between px-4 h-16">
+      <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-40 shadow-sm">
+        <div className="flex items-center justify-between px-4 md:px-6 h-14">
           {/* Logo + Menu Toggle */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="lg:hidden p-2 text-gray-600 hover:text-gray-900"
             >
               {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
-            <Link to="/" className="flex items-center gap-2">
-              <Utensils className="h-6 w-6 text-primary-600" />
-              <span className="font-bold text-primary-700">NuFit</span>
+            <Link to="/">
+              <Logo size="sm" textClassName="font-bold text-primary-700" />
             </Link>
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
             {/* Notifications Dropdown */}
             <div className="relative" ref={notificationRef}>
               <button 
@@ -186,7 +197,7 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
 
               {/* Dropdown */}
               {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 app-dropdown-panel bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
                   {/* Header */}
                   <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
                     <h3 className="font-semibold text-sm text-gray-900">Notificações</h3>
@@ -267,7 +278,7 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
                 </div>
               )}
             </div>
-            <Link to="/client/dashboard" className="flex items-center gap-3">
+            <Link to="/patient/dashboard" className="flex items-center gap-2 min-w-0">
               {user?.avatar ? (
                 <img
                   src={user.avatar}
@@ -279,52 +290,39 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
               )}
-              <span className="hidden md:block text-sm font-medium text-gray-700">{user?.name}</span>
+              <span className="hidden lg:block text-sm font-medium text-gray-700 max-w-[120px] truncate">{user?.name}</span>
             </Link>
           </div>
         </div>
       </header>
 
       {/* Sidebar */}
-      <aside
-        className={`fixed top-16 left-0 bottom-0 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out z-30 overflow-y-auto ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <nav className="p-4 space-y-1 pb-32">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.path)
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setIsSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  active
-                    ? 'bg-primary-50 text-primary-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* Bottom Actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+      <AppSidebar
+        items={navItems.map((item) => ({
+          path: item.path,
+          label: item.label,
+          icon: <item.icon className="h-5 w-5" />,
+        }))}
+        isMobileOpen={isSidebarOpen}
+        onMobileClose={() => setIsSidebarOpen(false)}
+        collapsed={isSidebarCollapsed}
+        onToggleCollapsed={toggleSidebarCollapsed}
+        isItemActive={isActive}
+        iconSet="lucide"
+        footer={
           <button
+            type="button"
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            title={isSidebarCollapsed ? 'Sair' : undefined}
+            className={`w-full flex items-center rounded-lg text-red-100 hover:bg-red-500/25 hover:text-white transition-colors text-sm ${
+              isSidebarCollapsed && !isSidebarOpen ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'
+            }`}
           >
-            <LogOut className="h-5 w-5" />
-            <span>Sair</span>
+            <LogOut className="h-5 w-5 shrink-0" />
+            {(!isSidebarCollapsed || isSidebarOpen) && <span>Sair</span>}
           </button>
-        </div>
-      </aside>
+        }
+      />
 
       {/* Overlay for mobile */}
       {isSidebarOpen && (
@@ -335,7 +333,11 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
       )}
 
       {/* Main Content */}
-      <main className="lg:ml-64 mt-16 p-3 md:p-5 lg:p-6 min-h-screen">
+      <main
+        className={`pt-14 p-3 md:p-5 lg:p-6 min-h-screen transition-[margin] duration-200 ease-in-out ${
+          isSidebarCollapsed ? 'lg:ml-[4.5rem]' : 'lg:ml-64'
+        }`}
+      >
         <div className="w-full max-w-7xl mx-auto">
           {children}
         </div>

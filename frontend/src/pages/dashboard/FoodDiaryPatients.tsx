@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Calendar, Loader2, Sparkles, Send } from 'lucide-react'
+import { Calendar, Sparkles, Send } from 'lucide-react'
 import { foodDiaryService, patientService } from '../../services'
 import type { FoodDiaryEntry } from '../../types/api'
+import EmptyState from '../../components/common/EmptyState'
+import LoadingState from '../../components/common/LoadingState'
+import { useToast } from '../../contexts/ToastContext'
+import { FEEDBACK, getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 const mealTypeLabel: Record<string, string> = {
   'cafe-manha': 'Café da manhã',
@@ -13,6 +17,7 @@ const mealTypeLabel: Record<string, string> = {
 }
 
 const FoodDiaryPatients = () => {
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [patients, setPatients] = useState<any[]>([])
   const [patientId, setPatientId] = useState<string>('')
@@ -69,31 +74,37 @@ const FoodDiaryPatients = () => {
 
   const saveComment = async (entryId: string) => {
     setSavingId(entryId)
-    await foodDiaryService.addNutritionistComment(entryId, comment[entryId] || '')
+    const res = await foodDiaryService.addNutritionistComment(entryId, comment[entryId] || '')
     setSavingId(null)
+    if (res.error) {
+      showToast(getFriendlyErrorMessage(res.error, 'Não foi possível enviar o comentário.'), 'error')
+      return
+    }
+    showToast(FEEDBACK.COMMENT_SAVED, 'success')
     if (patientId) await loadEntries(patientId)
   }
 
   const analyze = async (entryId: string) => {
     setAnalyzingId(entryId)
-    await foodDiaryService.analyzePhoto(entryId)
+    const res = await foodDiaryService.analyzePhoto(entryId)
     setAnalyzingId(null)
+    if (res.error) {
+      showToast(getFriendlyErrorMessage(res.error, 'Não foi possível analisar a foto.'), 'error')
+      return
+    }
+    showToast(FEEDBACK.DIARY_ANALYZED, 'success')
     if (patientId) await loadEntries(patientId)
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[320px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
+    return <LoadingState message="Carregando diário dos pacientes…" />
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Diário alimentar</h1>
+          <h1 className="app-page-title">Diário alimentar</h1>
           <p className="text-gray-600 mt-1">Acompanhe registros, comente e rode análise por IA da foto.</p>
         </div>
 
@@ -136,10 +147,10 @@ const FoodDiaryPatients = () => {
       )}
 
       {items.length === 0 ? (
-        <div className="bg-white border border-primary-100 rounded-xl p-10 text-center">
-          <p className="text-gray-700 font-semibold">Nenhum registro no diário.</p>
-          <p className="text-gray-600 mt-2">Quando o paciente registrar refeições, aparecerão aqui.</p>
-        </div>
+        <EmptyState
+          title="Nenhum registro no diário"
+          description="Quando o paciente registrar refeições, elas aparecerão aqui."
+        />
       ) : (
         <div className="space-y-6">
           {grouped.map((g) => (

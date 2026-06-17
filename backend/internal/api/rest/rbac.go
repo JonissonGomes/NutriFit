@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"nufit/backend/internal/database"
 	"nufit/backend/internal/models"
+	"nufit/backend/internal/services/plan"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -126,6 +127,36 @@ func RequirePermission(resource, action string) gin.HandlerFunc {
 
 		if !allowed {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Sem permissão para esta ação"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+// RequirePlanFeature exige que o plano do usuário inclua a feature informada.
+// Deve ser usado após authMiddleware(). Admins têm bypass.
+func RequirePlanFeature(feature plan.Feature) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roleVal, _ := c.Get("userRole")
+		if roleStr, ok := roleVal.(string); ok && fullAdminRoles[roleStr] {
+			c.Next()
+			return
+		}
+		userIDVal, exists := c.Get("userID")
+		if !exists || userIDVal == nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Acesso restrito"})
+			c.Abort()
+			return
+		}
+		userID, ok := userIDVal.(string)
+		if !ok || userID == "" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Acesso restrito"})
+			c.Abort()
+			return
+		}
+		if err := plan.HasFeature(c.Request.Context(), userID, feature); err != nil {
+			c.JSON(http.StatusPaymentRequired, gin.H{"error": err.Error()})
 			c.Abort()
 			return
 		}

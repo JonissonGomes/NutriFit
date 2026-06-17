@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
-import { notificationService } from '../services'
+import { notificationService, tokenManager } from '../services'
 import type { Notification as NotificationType } from '../services/notification.service'
 
 // Usar o tipo do serviço
@@ -27,11 +27,18 @@ export const useNotifications = () => {
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<NotificationType[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+
+  const isAuthenticated = () => Boolean(tokenManager.getAccessToken())
 
   // Carregar notificações
   const loadNotifications = useCallback(async () => {
+    if (!isAuthenticated()) {
+      setNotifications([])
+      setIsLoading(false)
+      return
+    }
     setIsLoading(true)
     try {
       const response = await notificationService.listNotifications({ limit: 50 })
@@ -47,6 +54,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   // Carregar contagem de não lidas
   const loadUnreadCount = useCallback(async () => {
+    if (!isAuthenticated()) {
+      setUnreadCount(0)
+      return
+    }
     try {
       const response = await notificationService.getUnreadCount()
       if (response.data) {
@@ -57,17 +68,34 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [])
 
-  // Carregar dados iniciais
+  // Carregar dados iniciais (somente autenticado)
   useEffect(() => {
-    loadNotifications()
-    loadUnreadCount()
-    
-    // Atualizar a cada 30 segundos
-    const interval = setInterval(() => {
-      loadUnreadCount()
+    if (!isAuthenticated()) {
+      setNotifications([])
+      setUnreadCount(0)
+      setIsLoading(false)
+      return
+    }
+
+    void loadNotifications()
+    void loadUnreadCount()
+
+    const interval = window.setInterval(() => {
+      if (isAuthenticated()) {
+        void loadUnreadCount()
+      }
     }, 30000)
 
-    return () => clearInterval(interval)
+    const onLogout = () => {
+      setNotifications([])
+      setUnreadCount(0)
+    }
+    window.addEventListener('auth:logout', onLogout)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('auth:logout', onLogout)
+    }
   }, [loadNotifications, loadUnreadCount])
 
   const markAsRead = useCallback(async (id: string) => {
@@ -104,16 +132,18 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await notificationService.deleteNotification(id)
       if (!response.error) {
-        const notification = notifications.find(n => n.id === id)
-        setNotifications(prev => prev.filter(notif => notif.id !== id))
-        if (notification && !notification.read) {
-          setUnreadCount(prev => Math.max(0, prev - 1))
-        }
+        setNotifications(prev => {
+          const notification = prev.find(n => n.id === id)
+          if (notification && !notification.read) {
+            setUnreadCount(c => Math.max(0, c - 1))
+          }
+          return prev.filter(notif => notif.id !== id)
+        })
       }
     } catch (error) {
       console.error('Erro ao deletar notificação:', error)
     }
-  }, [notifications])
+  }, [])
 
   const refreshNotifications = useCallback(async () => {
     await loadNotifications()
@@ -136,4 +166,3 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     </NotificationContext.Provider>
   )
 }
-

@@ -78,6 +78,13 @@ type Config struct {
 	AppLoginURL     string
 	GmailSMTPHost   string
 	GmailSMTPPort   int
+
+	// Stripe
+	StripeSecretKey        string
+	StripeWebhookSecret    string
+	StripePriceStarter     string
+	StripePriceProfessional string
+	StripePriceBusiness    string
 }
 
 var AppConfig *Config
@@ -141,6 +148,12 @@ func LoadConfig() (*Config, error) {
 		AppLoginURL:   getEnv("APP_LOGIN_URL", "http://localhost:5173/login"),
 		GmailSMTPHost: getEnv("GMAIL_SMTP_HOST", "smtp.gmail.com"),
 		GmailSMTPPort: parseInt(getEnv("GMAIL_SMTP_PORT", "587")),
+
+		StripeSecretKey:         getEnv("STRIPE_SECRET_KEY", ""),
+		StripeWebhookSecret:     getEnv("STRIPE_WEBHOOK_SECRET", ""),
+		StripePriceStarter:      getEnv("STRIPE_PRICE_STARTER", ""),
+		StripePriceProfessional: getEnv("STRIPE_PRICE_PROFESSIONAL", ""),
+		StripePriceBusiness:     getEnv("STRIPE_PRICE_BUSINESS", ""),
 	}
 
 	AppConfig = cfg

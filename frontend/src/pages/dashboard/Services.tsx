@@ -6,7 +6,7 @@ import type { Service, CreateServiceRequest, ServiceCategory, ServiceStats } fro
 import { useToast } from '../../contexts/ToastContext'
 import LoadingButton from '../../components/common/LoadingButton'
 import ConfirmModal from '../../components/common/ConfirmModal'
-import { sanitizeInput, sanitizeText, limitLength } from '../../utils/inputUtils'
+import { sanitizeInput, sanitizeText, limitLength, INPUT_LIMITS } from '../../utils/inputUtils'
 import { useConfirmDelete } from '../../hooks'
 
 const Services = () => {
@@ -210,14 +210,14 @@ const Services = () => {
         >
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </button>
-        <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Meus Serviços</h1>
-            <p className="text-gray-600 mt-1 text-xs md:text-sm">Gerencie seus pacotes e preços</p>
+        <div className="flex-1 app-page-header">
+          <div className="app-page-header__content">
+            <h1 className="app-title md:text-2xl">Meus Serviços</h1>
+            <p className="app-subtitle mt-1">Gerencie seus pacotes e preços</p>
           </div>
           <button 
             onClick={openNewModal}
-            className="bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 w-fit"
+            className="app-btn bg-primary-600 text-white px-6 py-3 rounded-lg w-full md:w-auto"
           >
             <Plus className="h-5 w-5" />
             Novo Serviço
@@ -347,7 +347,7 @@ const Services = () => {
               )}
 
               {/* Price and Details */}
-              <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap md:flex-nowrap">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-primary-600" />
                   <span className="text-xl md:text-2xl font-bold text-gray-900">
@@ -385,7 +385,7 @@ const Services = () => {
       {services.length > 0 && (
         <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-6 border border-primary-100">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Categorias de Serviços</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3">
             {categories.map((category) => (
               <div
                 key={category}
@@ -427,9 +427,9 @@ const Services = () => {
                   value={formData.name}
                   onChange={(e) => {
                     const sanitized = sanitizeInput(e.target.value)
-                    setFormData(prev => ({ ...prev, name: limitLength(sanitized, 100) }))
+                    setFormData(prev => ({ ...prev, name: limitLength(sanitized, INPUT_LIMITS.SERVICE_NAME) }))
                   }}
-                  maxLength={100}
+                  maxLength={INPUT_LIMITS.SERVICE_NAME}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Ex: Consultoria Nutricional Personalizada"
                 />
@@ -443,9 +443,9 @@ const Services = () => {
                   value={formData.description}
                   onChange={(e) => {
                     const sanitized = sanitizeText(e.target.value, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';'])
-                    setFormData(prev => ({ ...prev, description: limitLength(sanitized, 1000) }))
+                    setFormData(prev => ({ ...prev, description: limitLength(sanitized, INPUT_LIMITS.DESCRIPTION) }))
                   }}
-                  maxLength={1000}
+                  maxLength={INPUT_LIMITS.DESCRIPTION}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Descreva o serviço..."
@@ -478,9 +478,9 @@ const Services = () => {
                     value={formData.duration}
                     onChange={(e) => {
                       const sanitized = sanitizeText(e.target.value, [' ', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'm', 'e', 's', 'a', 'o', 'd', 'i', 'a', 'h', 'r', 'M', 'E', 'S', 'A', 'O', 'D', 'I', 'A', 'H', 'R'])
-                      setFormData(prev => ({ ...prev, duration: limitLength(sanitized, 50) }))
+                      setFormData(prev => ({ ...prev, duration: limitLength(sanitized, INPUT_LIMITS.SERVICE_DURATION) }))
                     }}
-                    maxLength={50}
+                    maxLength={INPUT_LIMITS.SERVICE_DURATION}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Ex: 2-3 meses"
                   />
@@ -514,10 +514,10 @@ const Services = () => {
                     value={newFeature}
                     onChange={(e) => {
                       const sanitized = sanitizeInput(e.target.value)
-                      setNewFeature(limitLength(sanitized, 100))
+                      setNewFeature(limitLength(sanitized, INPUT_LIMITS.SERVICE_NAME))
                     }}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
-                    maxLength={100}
+                    maxLength={INPUT_LIMITS.SERVICE_NAME}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Ex: Plano alimentar personalizado"
                   />

@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"context"
@@ -67,10 +67,10 @@ func createService(c *gin.Context) {
 	}
 
 	var req struct {
-		Name        string   `json:"name" binding:"required"`
-		Description string   `json:"description"`
+		Name        string   `json:"name" binding:"required,max=100"`
+		Description string   `json:"description" binding:"max=1000"`
 		Price       float64  `json:"price" binding:"required,min=0"`
-		Duration    string   `json:"duration" binding:"required"`
+		Duration    string   `json:"duration" binding:"required,max=50"`
 		Category    string   `json:"category" binding:"required"`
 		Features    []string `json:"features"`
 	}

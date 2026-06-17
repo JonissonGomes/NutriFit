@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Mail, Lock, User, Building2, Eye, EyeOff, Briefcase, Ruler, AlertCircle, CheckCircle, Stethoscope } from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff, Briefcase, Ruler, AlertCircle, CheckCircle, Stethoscope } from 'lucide-react'
+import { Logo } from '../components/brand/Logo'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { isStrongPassword } from '../services'
@@ -239,11 +240,11 @@ const Signup = () => {
       <div className="max-w-md w-full relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-primary-600 rounded-xl shadow-lg">
-              <Building2 className="h-8 w-8 text-white" />
-            </div>
-            <span className="text-3xl font-bold text-white">NuFit</span>
+          <div className="flex items-center justify-center mb-4">
+            <Logo
+              size="lg"
+              textClassName="text-3xl font-bold text-white"
+            />
           </div>
           <h2 className="text-2xl font-bold text-white">
             Crie sua conta
@@ -254,7 +255,7 @@ const Signup = () => {
         </div>
 
         {/* Account Type Selection */}
-        <div className="mb-6 grid grid-cols-3 gap-3">
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <button
             type="button"
             onClick={() => setFormData({ ...formData, accountType: 'nutricionista' })}
@@ -393,14 +394,15 @@ const Signup = () => {
                     value={registrationBody}
                     onChange={(e) => {
                       const raw = sanitizeInput(e.target.value)
-                      setRegistrationBody(limitLength(raw, 32))
+                      setRegistrationBody(limitLength(raw, INPUT_LIMITS.REGISTRATION))
                       // manter compatibilidade: registrationNumber contém o valor formatado completo
                       const formatted =
                         formData.accountType === 'nutricionista'
                           ? formatCrn(raw)
                           : formatCrm(raw)
-                      setRegistrationNumber(limitLength(formatted, 32))
+                      setRegistrationNumber(limitLength(formatted, INPUT_LIMITS.REGISTRATION))
                     }}
+                    maxLength={INPUT_LIMITS.REGISTRATION}
                     onBlur={() => void checkRegistration()}
                     className={`flex-1 px-4 py-3 bg-transparent text-white focus:ring-2 outline-none transition-all placeholder-stone-500 ${
                       registrationAvailable === false ? 'focus:ring-red-500' : 'focus:ring-primary-500'

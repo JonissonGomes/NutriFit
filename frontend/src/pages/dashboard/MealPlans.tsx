@@ -50,7 +50,7 @@ const MealPlans = () => {
       setLoading(false)
     }
     load()
-  }, [showToast])
+  }, [])
 
   const onDelete = async (target: MealPlan) => {
     const res = await mealPlanService.remove(target.id)

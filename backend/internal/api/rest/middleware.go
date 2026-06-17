@@ -3,6 +3,8 @@ package rest
 import (
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"nufit/backend/internal/services/auth"
@@ -34,6 +36,83 @@ func corsMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		c.Next()
+	}
+}
+
+func securityHeadersMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		c.Next()
+	}
+}
+
+type slidingWindowLimiter struct {
+	mu   sync.Mutex
+	hits map[string][]time.Time
+}
+
+func newSlidingWindowLimiter() *slidingWindowLimiter {
+	return &slidingWindowLimiter{hits: make(map[string][]time.Time)}
+}
+
+func (l *slidingWindowLimiter) allow(key string, maxRequests int, window time.Duration) bool {
+	if maxRequests <= 0 {
+		return true
+	}
+
+	now := time.Now()
+	cutoff := now.Add(-window)
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	times := l.hits[key]
+	filtered := times[:0]
+	for _, t := range times {
+		if t.After(cutoff) {
+			filtered = append(filtered, t)
+		}
+	}
+
+	if len(filtered) >= maxRequests {
+		l.hits[key] = filtered
+		return false
+	}
+
+	filtered = append(filtered, now)
+	l.hits[key] = filtered
+	return true
+}
+
+var (
+	globalRateLimiter = newSlidingWindowLimiter()
+	authRateLimiter   = newSlidingWindowLimiter()
+)
+
+func rateLimitMiddleware(maxRequests int, window time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		key := c.ClientIP()
+		if !globalRateLimiter.allow(key, maxRequests, window) {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Muitas requisições. Tente novamente em instantes."})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+func authRateLimitMiddleware(maxRequests int, window time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		key := c.ClientIP() + ":" + c.FullPath()
+		if !authRateLimiter.allow(key, maxRequests, window) {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Muitas tentativas. Aguarde um momento e tente novamente."})
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 }

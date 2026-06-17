@@ -52,6 +52,7 @@ var (
 	ShoppingListsCollection      *mongo.Collection
 	RecipesCollection            *mongo.Collection
 	PredefinedMealsCollection    *mongo.Collection
+	MealPlanTemplatesCollection  *mongo.Collection
 )
 
 func ConnectMongoDB() error {
@@ -115,6 +116,7 @@ func ConnectMongoDB() error {
 	ShoppingListsCollection = MongoDB.Collection("shopping_lists")
 	RecipesCollection = MongoDB.Collection("recipes")
 	PredefinedMealsCollection = MongoDB.Collection("predefined_meals")
+	MealPlanTemplatesCollection = MongoDB.Collection("meal_plan_templates")
 
 	return nil
 }

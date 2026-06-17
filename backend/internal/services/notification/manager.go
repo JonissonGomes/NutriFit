@@ -333,5 +333,29 @@ func getDefaultPreferences(userID primitive.ObjectID) *models.NotificationPrefer
 	return prefs
 }
 
+func RegisterPushToken(ctx context.Context, userID, token string) error {
+	userObjID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return err
+	}
+	now := time.Now()
+	_, err = database.NotificationPrefsCollection.UpdateOne(
+		ctx,
+		bson.M{"userId": userObjID},
+		bson.M{
+			"$set": bson.M{
+				"globalChannels.push.enabled": true,
+				"globalChannels.push.token":   token,
+				"updatedAt":                   now,
+			},
+			"$setOnInsert": bson.M{
+				"userId":    userObjID,
+				"createdAt": now,
+			},
+		},
+		options.Update().SetUpsert(true),
+	)
+	return err
+}
 
 

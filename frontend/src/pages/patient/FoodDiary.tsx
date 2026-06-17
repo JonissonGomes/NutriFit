@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Loader2, Plus, Upload } from 'lucide-react'
 import { foodDiaryService, mealPlanService, predefinedMealService } from '../../services'
+import { INPUT_LIMITS, limitLength, sanitizeInput, sanitizeText } from '../../utils/inputUtils'
 import type { FoodDiaryEntry, Meal, MealPlan, MealType } from '../../types/api'
 import type { PredefinedMeal } from '../../services/predefinedMeal.service'
+import EmptyState from '../../components/common/EmptyState'
+import LoadingState from '../../components/common/LoadingState'
+import { useToast } from '../../contexts/ToastContext'
+import { FEEDBACK, getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 const mealTypeLabel: Record<MealType, string> = {
   'cafe-manha': 'Café da manhã',
@@ -14,6 +19,7 @@ const mealTypeLabel: Record<MealType, string> = {
 }
 
 const FoodDiary = () => {
+  const { showToast } = useToast()
   const [items, setItems] = useState<FoodDiaryEntry[]>([])
   const [activePlan, setActivePlan] = useState<MealPlan | null>(null)
   const [planMeals, setPlanMeals] = useState<Meal[]>([])
@@ -89,9 +95,21 @@ const FoodDiary = () => {
         description: composedDescription || undefined,
       } as any)
 
+      if (res.error) {
+        showToast(getFriendlyErrorMessage(res.error, 'Não foi possível registrar a refeição.'), 'error')
+        return
+      }
+
       const created = (res.data as any)?.data as FoodDiaryEntry | undefined
       if (created && newPhoto) {
-        await foodDiaryService.uploadPhoto(created.id, newPhoto)
+        const up = await foodDiaryService.uploadPhoto(created.id, newPhoto)
+        if (up.error) {
+          showToast(getFriendlyErrorMessage(up.error, 'Refeição salva, mas a foto não foi enviada.'), 'warning')
+        } else {
+          showToast(FEEDBACK.PHOTO_UPLOADED, 'success')
+        }
+      } else {
+        showToast(FEEDBACK.DIARY_ENTRY_CREATED, 'success')
       }
 
       setNewDescription('')
@@ -107,24 +125,25 @@ const FoodDiary = () => {
 
   const onUpload = async (entryId: string, file: File) => {
     setUploadingId(entryId)
-    await foodDiaryService.uploadPhoto(entryId, file)
+    const res = await foodDiaryService.uploadPhoto(entryId, file)
     setUploadingId(null)
+    if (res.error) {
+      showToast(getFriendlyErrorMessage(res.error, 'Não foi possível enviar a foto.'), 'error')
+      return
+    }
+    showToast(FEEDBACK.PHOTO_UPLOADED, 'success')
     await load()
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
+    return <LoadingState message="Carregando diário alimentar…" />
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Diário alimentar</h1>
-        <p className="text-gray-600 mt-1">Registre refeições (com horário e foto) e acompanhe feedback do seu nutricionista.</p>
+        <h1 className="app-page-title">Diário alimentar</h1>
+        <p className="app-page-subtitle mt-1">Registre refeições (com horário e foto) e acompanhe feedback do seu nutricionista.</p>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl p-5">
@@ -216,7 +235,8 @@ const FoodDiary = () => {
           <label className="text-xs font-semibold text-gray-700">Alimentos adicionais (opcional)</label>
           <input
             value={customFoods}
-            onChange={(e) => setCustomFoods(e.target.value)}
+            onChange={(e) => setCustomFoods(limitLength(sanitizeInput(e.target.value), INPUT_LIMITS.FOOD_CUSTOM))}
+            maxLength={INPUT_LIMITS.FOOD_CUSTOM}
             className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white"
             placeholder="Ex.: 1 banana, 2 torradas"
           />
@@ -227,11 +247,12 @@ const FoodDiary = () => {
           <input
             value={catalogQuery}
             onChange={async (e) => {
-              const q = e.target.value
+              const q = limitLength(sanitizeInput(e.target.value), INPUT_LIMITS.SEARCH_QUERY)
               setCatalogQuery(q)
               const res = await predefinedMealService.list(q)
               setCatalogItems((res.data as any)?.data || [])
             }}
+            maxLength={INPUT_LIMITS.SEARCH_QUERY}
             className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white"
             placeholder="Buscar no catálogo (ex.: abacate, açaí...)"
           />
@@ -262,10 +283,12 @@ const FoodDiary = () => {
           <label className="text-xs font-semibold text-gray-700">Descrição (opcional)</label>
           <textarea
             value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
+            onChange={(e) => setNewDescription(limitLength(sanitizeText(e.target.value, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';']), INPUT_LIMITS.FOOD_NOTES))}
+            maxLength={INPUT_LIMITS.FOOD_NOTES}
             className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 bg-white min-h-[90px]"
             placeholder="Ex.: arroz, feijão, frango, salada..."
           />
+          <p className="text-xs text-gray-500 mt-1">{newDescription.length}/{INPUT_LIMITS.FOOD_NOTES}</p>
         </div>
         <button
           type="button"
@@ -279,10 +302,10 @@ const FoodDiary = () => {
       </div>
 
       {items.length === 0 ? (
-        <div className="bg-white border border-primary-100 rounded-xl p-8 text-center">
-          <p className="text-gray-700 font-semibold">Nenhum registro ainda.</p>
-          <p className="text-gray-600 mt-2">Quando você criar registros, eles aparecem aqui.</p>
-        </div>
+        <EmptyState
+          title="Nenhum registro ainda"
+          description="Registre sua primeira refeição usando o formulário acima."
+        />
       ) : (
         <div className="space-y-6">
           {grouped.map((g) => (

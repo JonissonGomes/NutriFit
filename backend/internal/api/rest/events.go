@@ -1,4 +1,4 @@
-﻿package rest
+package rest
 
 import (
 	"context"
@@ -90,13 +90,13 @@ func createEvent(c *gin.Context) {
 	var req struct {
 		ClientID        string `json:"clientId"`
 		ProjectID       string `json:"projectId"`
-		Title           string `json:"title" binding:"required"`
-		Description     string `json:"description"`
+		Title           string `json:"title" binding:"required,max=200"`
+		Description     string `json:"description" binding:"max=2000"`
 		Date            string `json:"date" binding:"required"` // YYYY-MM-DD
 		Time            string `json:"time" binding:"required"` // HH:MM
-		Duration        int    `json:"duration" binding:"required,min=15"`
+		Duration        int    `json:"duration" binding:"required,min=15,max=480"`
 		Location        string `json:"location" binding:"required"`
-		LocationAddress string `json:"locationAddress"`
+		LocationAddress string `json:"locationAddress" binding:"max=300"`
 		Type            string `json:"type" binding:"required"`
 		Reminder        *models.EventReminder `json:"reminder"`
 	}

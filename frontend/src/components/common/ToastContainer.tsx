@@ -1,4 +1,5 @@
 import { useToast } from '../../contexts/ToastContext'
+import { TOAST_TITLES } from '../../utils/feedbackMessages'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ErrorIcon from '@mui/icons-material/Error'
 import WarningIcon from '@mui/icons-material/Warning'
@@ -54,26 +55,42 @@ const ToastContainer = () => {
     }
   }
 
+  if (toasts.length === 0) return null
+
   return (
-    <div className="fixed top-20 right-4 z-50 space-y-2 max-w-md w-full sm:w-auto">
+    <div
+      className="fixed top-16 sm:top-20 left-4 right-4 sm:left-auto sm:right-4 z-50 space-y-2 max-w-md sm:w-full pointer-events-none"
+      role="region"
+      aria-label="Notificações"
+    >
       {toasts.map((toast) => {
         const colors = getColors(toast.type)
+        const title = TOAST_TITLES[toast.type]
+        const isUrgent = toast.type === 'error' || toast.type === 'warning'
+
         return (
           <div
             key={toast.id}
-            className={`${colors.bg} ${colors.border} border-2 rounded-lg shadow-lg p-3 md:p-4 flex items-start gap-3 animate-slide-in-right`}
+            role="alert"
+            aria-live={isUrgent ? 'assertive' : 'polite'}
+            className={`${colors.bg} ${colors.border} border-2 rounded-lg shadow-lg p-3 md:p-4 flex items-start gap-3 animate-slide-in-right pointer-events-auto`}
           >
-            <div className={`${colors.icon} flex-shrink-0 mt-0.5`}>
+            <div className={`${colors.icon} flex-shrink-0 mt-0.5`} aria-hidden>
               {getIcon(toast.type)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`${colors.text} text-sm font-medium`}>
+              <p className={`${colors.text} text-xs font-semibold uppercase tracking-wide`}>
+                {title}
+              </p>
+              <p className={`${colors.text} text-sm mt-0.5`}>
                 {toast.message}
               </p>
             </div>
             <button
+              type="button"
               onClick={() => removeToast(toast.id)}
               className={`${colors.icon} hover:opacity-70 transition-opacity flex-shrink-0`}
+              aria-label="Fechar notificação"
             >
               <CloseIcon sx={{ fontSize: 18 }} />
             </button>
@@ -85,4 +102,3 @@ const ToastContainer = () => {
 }
 
 export default ToastContainer
-

@@ -1,4 +1,4 @@
-﻿package goal
+package goal
 
 import (
 	"context"
@@ -129,6 +129,13 @@ func AddCheckIn(ctx context.Context, goalID string, checkIn models.GoalCheckIn) 
 	// Adicionar check-in
 	if goal.CheckIns == nil {
 		goal.CheckIns = []models.GoalCheckIn{}
+	}
+	if checkIn.Points == 0 {
+		if checkIn.Completed {
+			checkIn.Points = 10
+		} else if checkIn.Value > 0 {
+			checkIn.Points = 5
+		}
 	}
 	goal.CheckIns = append(goal.CheckIns, checkIn)
 

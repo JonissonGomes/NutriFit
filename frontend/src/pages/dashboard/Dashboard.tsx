@@ -13,6 +13,8 @@ import LocationOnIcon from '@mui/icons-material/LocationOn'
 import { Link } from 'react-router-dom'
 import { dashboardService } from '../../services'
 import type { ArchitectStats, RecentProject, UpcomingEvent } from '../../services/dashboard.service'
+import InlineAlert from '../../components/common/InlineAlert'
+import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 interface StatCard {
   title: string
@@ -29,34 +31,32 @@ const Dashboard = () => {
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
-    loadDashboardData()
+    void loadDashboardData()
   }, [])
 
   const loadDashboardData = async () => {
     setIsLoading(true)
-    try {
-      const [statsRes, projectsRes, eventsRes] = await Promise.all([
-        dashboardService.getArchitectStats(),
-        dashboardService.getArchitectRecentProjects(3),
-        dashboardService.getArchitectUpcomingEvents(3),
-      ])
+    setLoadError('')
+    const [statsRes, projectsRes, eventsRes] = await Promise.all([
+      dashboardService.getArchitectStats(),
+      dashboardService.getArchitectRecentProjects(3),
+      dashboardService.getArchitectUpcomingEvents(3),
+    ])
 
-      if (statsRes.data) {
-        setStats(statsRes.data)
-      }
-      if (projectsRes.data) {
-        setRecentProjects(projectsRes.data)
-      }
-      if (eventsRes.data) {
-        setUpcomingEvents(eventsRes.data)
-      }
-    } catch (error) {
-      console.error('Erro ao carregar dados do dashboard:', error)
-    } finally {
-      setIsLoading(false)
+    const errors = [statsRes.error, projectsRes.error, eventsRes.error].filter(Boolean)
+    if (errors.length === 3) {
+      setLoadError(getFriendlyErrorMessage(errors[0], 'Não foi possível carregar o dashboard.'))
+    } else if (errors.length > 0) {
+      setLoadError(getFriendlyErrorMessage(errors[0], 'Alguns dados não puderam ser carregados.'))
     }
+
+    if (statsRes.data) setStats(statsRes.data)
+    if (projectsRes.data) setRecentProjects(projectsRes.data)
+    if (eventsRes.data) setUpcomingEvents(eventsRes.data)
+    setIsLoading(false)
   }
 
   const formatNumber = (num: number): string => {
@@ -181,21 +181,34 @@ const Dashboard = () => {
     <div className="w-full max-w-7xl mx-auto">
       <div className="space-y-8">
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 text-base md:text-lg">
+        <div className="app-page-header">
+          <div className="app-page-header__content space-y-1">
+            <h1 className="app-page-title">Dashboard</h1>
+            <p className="app-page-subtitle">
               Bem-vindo de volta! Aqui está um resumo do seu escritório.
             </p>
           </div>
           <Link
             to="/nutritionist/meal-plans"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all font-semibold text-base shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="app-btn px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-lg"
           >
             <AddIcon sx={{ fontSize: 22 }} />
             Novo Plano
           </Link>
         </div>
+
+        {loadError ? (
+          <InlineAlert variant="warning">
+            {loadError}
+            <button
+              type="button"
+              onClick={() => void loadDashboardData()}
+              className="block mt-2 text-sm font-semibold underline hover:no-underline"
+            >
+              Tentar novamente
+            </button>
+          </InlineAlert>
+        ) : null}
 
         {/* Stats Grid */}
         {statCards.length > 0 && (
@@ -306,7 +319,7 @@ const Dashboard = () => {
                           <h3 className="font-bold text-lg md:text-xl text-gray-900 mb-1.5 line-clamp-1 group-hover:text-primary-600 transition-colors">
                             {project.title}
                           </h3>
-                          <div className="flex items-center gap-3 flex-wrap">
+                          <div className="flex items-center gap-3 flex-wrap md:flex-nowrap">
                             <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border ${getStatusColor(project.status)}`}>
                               {getStatusLabel(project.status)}
                             </span>

@@ -46,7 +46,7 @@ echo Comando desconhecido: %~1
 goto help
 
 :setup
-call :check-node
+call :ensure-deps
 call :install
 echo.
 echo [OK] Setup concluido com sucesso!
@@ -94,15 +94,13 @@ if exist "%BACKEND_DIR%\go.mod" (
 )
 goto end
 
+:ensure-deps
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\ensure-deps.ps1"
+if errorlevel 1 exit /b 1
+goto end
+
 :check-node
-echo [INFO] Verificando Node.js...
-where node >nul 2>&1
-if errorlevel 1 (
-    echo [ERRO] Node.js nao encontrado. Por favor, instale Node.js %NODE_VERSION%+
-    exit /b 1
-)
-for /f "tokens=*" %%i in ('node --version') do set NODE_VER=%%i
-echo [OK] Node.js encontrado: %NODE_VER%
+call :ensure-deps
 goto end
 
 :dev
@@ -121,14 +119,7 @@ cd ..
 goto end
 
 :dev-backend
-if exist "%BACKEND_DIR%\go.mod" (
-    echo [INFO] Iniciando servidor de desenvolvimento do backend Go...
-    cd %BACKEND_DIR%
-    go run cmd/server/main.go
-    cd ..
-) else (
-    echo [ERRO] Backend ainda nao possui go.mod. Certifique-se de que o backend esta configurado corretamente.
-)
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\backend.ps1" dev
 goto end
 
 :build
@@ -289,7 +280,7 @@ echo   make.bat setup              Instala todas as dependencias do projeto
 echo   make.bat install            Instala dependencias do frontend e backend
 echo   make.bat install-frontend   Instala dependencias do frontend
 echo   make.bat install-backend    Instala dependencias do backend
-echo   make.bat check-node         Verifica se Node.js esta instalado
+echo   make.bat check-node         Verifica/instala Node.js e Go automaticamente
 echo.
 echo Desenvolvimento:
 echo   make.bat dev                Inicia servidor de desenvolvimento do frontend

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Mail, Lock, Building2, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Logo } from '../components/brand/Logo'
 import { useAuth } from '../contexts/AuthContext'
 import LoadingButton from '../components/common/LoadingButton'
 import { sanitizeInput, validateEmail, INPUT_LIMITS, limitLength } from '../utils/inputUtils'
@@ -98,11 +99,11 @@ const Login = () => {
       <div className="max-w-md w-full mx-auto relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-primary-600 rounded-xl shadow-lg">
-              <Building2 className="h-8 w-8 text-white" />
-            </div>
-            <span className="text-3xl font-bold text-white">NuFit</span>
+          <div className="flex items-center justify-center mb-4">
+            <Logo
+              size="lg"
+              textClassName="text-3xl font-bold text-white"
+            />
           </div>
           <h2 className="text-2xl font-bold text-white">
             Bem-vindo de volta
@@ -174,7 +175,7 @@ const Login = () => {
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:flex-nowrap">
               <label className="flex items-center">
                 <input
                   type="checkbox"

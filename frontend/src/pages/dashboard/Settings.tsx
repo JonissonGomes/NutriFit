@@ -5,6 +5,7 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { settingsService, type NotificationSettings, type Preferences, type PrivacySettings, type UserProfile } from '../../services/settings.service'
+import { billingService } from '../../services/billing.service'
 import LoadingButton from '../../components/common/LoadingButton'
 import { sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, maskCNPJ, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
 
@@ -196,8 +197,12 @@ const Settings = () => {
       return
     }
 
-    if (passwordData.newPassword.length < 8) {
-      showToast('A senha deve ter pelo menos 8 caracteres', 'error')
+    if (passwordData.newPassword.length < INPUT_LIMITS.PASSWORD_MIN) {
+      showToast(`A senha deve ter pelo menos ${INPUT_LIMITS.PASSWORD_MIN} caracteres`, 'error')
+      return
+    }
+    if (passwordData.newPassword.length > INPUT_LIMITS.PASSWORD_MAX) {
+      showToast(`A senha deve ter no máximo ${INPUT_LIMITS.PASSWORD_MAX} caracteres`, 'error')
       return
     }
 
@@ -567,7 +572,8 @@ const Settings = () => {
                   <input
                     type="password"
                     value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                    onChange={(e) => setPasswordData({...passwordData, currentPassword: limitLength(e.target.value, INPUT_LIMITS.PASSWORD_MAX)})}
+                    maxLength={INPUT_LIMITS.PASSWORD_MAX}
                     placeholder="••••••••"
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
@@ -580,7 +586,8 @@ const Settings = () => {
                   <input
                     type="password"
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    onChange={(e) => setPasswordData({...passwordData, newPassword: limitLength(e.target.value, INPUT_LIMITS.PASSWORD_MAX)})}
+                    maxLength={INPUT_LIMITS.PASSWORD_MAX}
                     placeholder="••••••••"
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
@@ -593,7 +600,8 @@ const Settings = () => {
                   <input
                     type="password"
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: limitLength(e.target.value, INPUT_LIMITS.PASSWORD_MAX)})}
+                    maxLength={INPUT_LIMITS.PASSWORD_MAX}
                     placeholder="••••••••"
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
@@ -623,17 +631,61 @@ const Settings = () => {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Plano Atual</p>
                     <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white capitalize">
-                      {user?.plan === 'free' ? 'Grátis' : user?.plan === 'starter' ? 'Inicial' : user?.plan === 'professional' ? 'Profissional' : user?.plan === 'business' ? 'Empresarial' : (user?.plan ? String(user.plan) : 'Grátis')}
+                      {user?.plan === 'free' ? 'Grátis' : user?.plan === 'starter' ? 'Mensal' : user?.plan === 'professional' ? 'Anual' : user?.plan === 'business' ? 'Elite' : (user?.plan ? String(user.plan) : 'Grátis')}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">
-                      {user?.plan === 'free' ? 'Gratuito' : 
-                       user?.plan === 'starter' ? 'R$ 49/mês' :
-                       user?.plan === 'professional' ? 'R$ 149/mês' :
-                       user?.plan === 'business' ? 'R$ 399/mês' : 'Gratuito'}
+                      {user?.plan === 'free' ? 'Até 5 pacientes · sem IA' :
+                       user?.plan === 'starter' ? 'R$ 89,90/mês' :
+                       user?.plan === 'professional' ? 'R$ 799/ano' :
+                       user?.plan === 'business' ? 'R$ 149,90/mês' : 'Gratuito'}
                     </p>
                   </div>
-                  <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => void (async () => {
+                      const res = await billingService.checkout('starter')
+                      const url = (res.data as any)?.data?.url
+                      if (url) window.location.href = url
+                      else showToast(res.error || 'Configure o Stripe no servidor.', 'warning')
+                    })()}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  >
                     Fazer Upgrade
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Assinatura</h3>
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => void (async () => {
+                      const res = await billingService.portal()
+                      const url = (res.data as any)?.data?.url
+                      if (url) window.location.href = url
+                      else showToast(res.error || 'Nenhuma assinatura ativa.', 'info')
+                    })()}
+                    className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                  >
+                    Gerenciar assinatura no Stripe
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void (async () => {
+                      const res = await billingService.exportData()
+                      if (res.data) {
+                        const blob = new Blob([JSON.stringify((res.data as any).data, null, 2)], { type: 'application/json' })
+                        const a = document.createElement('a')
+                        a.href = URL.createObjectURL(blob)
+                        a.download = 'nufit-dados.json'
+                        a.click()
+                        showToast('Exportação concluída.', 'success')
+                      } else showToast(res.error || 'Erro na exportação', 'error')
+                    })()}
+                    className="block text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400"
+                  >
+                    Exportar meus dados (LGPD)
                   </button>
                 </div>
               </div>
@@ -642,11 +694,8 @@ const Settings = () => {
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Método de Pagamento</h3>
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                   <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    Nenhum método de pagamento cadastrado
+                    Gerenciado pelo portal Stripe após a primeira assinatura.
                   </p>
-                  <button className="mt-3 text-primary-600 hover:text-primary-700 text-sm font-medium">
-                    Adicionar cartão
-                  </button>
                 </div>
               </div>
             </div>

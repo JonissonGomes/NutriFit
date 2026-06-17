@@ -1,4 +1,4 @@
-﻿package models
+package models
 
 import (
 	"time"
@@ -22,17 +22,17 @@ type AuthPayload struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Email    string `json:"email" binding:"required,email,max=255"`
+	Password string `json:"password" binding:"required,max=128"`
 	// Type opcional: login único; se informado, valida correspondência com o role do usuário.
 	Type string `json:"type,omitempty"`
 }
 
 type RegisterRequest struct {
-	Email                    string                           `json:"email" binding:"required,email"`
-	Password                 string                           `json:"password" binding:"required,min=6"`
-	Name                     string                           `json:"name" binding:"required,min=2"`
-	Role                     string                           `json:"role" binding:"required,oneof=nutricionista medico paciente"`
+	Email                    string                    `json:"email" binding:"required,email,max=255"`
+	Password                 string                    `json:"password" binding:"required,min=8,max=128"`
+	Name                     string                    `json:"name" binding:"required,min=2,max=100"`
+	Role                     string                    `json:"role" binding:"required,oneof=nutricionista medico paciente"`
 	ProfessionalRegistration *ProfessionalRegistration `json:"professionalRegistration,omitempty"`
 }
 

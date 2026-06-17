@@ -1,4 +1,4 @@
-.PHONY: help setup install install-frontend install-backend dev dev-frontend dev-backend build build-frontend build-backend preview lint lint-frontend clean clean-frontend clean-backend check-node
+.PHONY: help setup ensure-deps install install-frontend install-backend dev dev-frontend dev-backend build build-frontend build-backend preview lint lint-frontend clean clean-frontend clean-backend check-node
 
 # Variáveis
 NODE_VERSION := 18
@@ -6,6 +6,18 @@ NPM := npm
 NODE := node
 FRONTEND_DIR := frontend
 BACKEND_DIR := backend
+SCRIPTS_DIR := scripts
+
+# Detecção de SO (make no Windows não suporta which/grep/rm nativamente)
+ifeq ($(OS),Windows_NT)
+    RUN_ENSURE_DEPS := powershell -NoProfile -ExecutionPolicy Bypass -File $(SCRIPTS_DIR)/ensure-deps.ps1
+    RUN_BACKEND := powershell -NoProfile -ExecutionPolicy Bypass -File $(SCRIPTS_DIR)/backend.ps1
+    RM_RF := powershell -NoProfile -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+else
+    RUN_ENSURE_DEPS := bash $(SCRIPTS_DIR)/ensure-deps.sh
+    RUN_BACKEND :=
+    RM_RF := rm -rf
+endif
 
 # Cores para output
 GREEN := \033[0;32m
@@ -18,9 +30,12 @@ NC := \033[0m # No Color
 
 ##@ Setup
 
-setup: check-node install ## Instala todas as dependências do projeto (frontend e backend)
+setup: ensure-deps install ## Instala todas as dependências do projeto (frontend e backend)
 	@echo "$(GREEN)✓ Setup concluído com sucesso!$(NC)"
 	@echo "$(YELLOW)Execute 'make dev' para iniciar o servidor de desenvolvimento$(NC)"
+
+ensure-deps: ## Verifica e instala Node.js/Go automaticamente se necessário
+	@$(RUN_ENSURE_DEPS)
 
 install: install-frontend install-backend ## Instala dependências do frontend e backend
 	@echo "$(GREEN)✓ Todas as dependências instaladas$(NC)"
@@ -31,6 +46,9 @@ install-frontend: ## Instala dependências do frontend
 	@echo "$(GREEN)✓ Dependências do frontend instaladas$(NC)"
 
 install-backend: ## Instala dependências do backend (Go)
+ifeq ($(OS),Windows_NT)
+	@$(RUN_BACKEND) install
+else
 	@if [ -f "$(BACKEND_DIR)/go.mod" ]; then \
 		echo "$(YELLOW)Instalando dependências do backend (Go)...$(NC)"; \
 		cd $(BACKEND_DIR) && go mod download; \
@@ -38,12 +56,9 @@ install-backend: ## Instala dependências do backend (Go)
 	else \
 		echo "$(YELLOW)⚠ Backend ainda não possui go.mod. Pulando instalação do backend.$(NC)"; \
 	fi
+endif
 
-check-node: ## Verifica se Node.js está instalado e na versão correta
-	@echo "$(YELLOW)Verificando Node.js...$(NC)"
-	@which $(NODE) > /dev/null || (echo "$(RED)✗ Node.js não encontrado. Por favor, instale Node.js $(NODE_VERSION)+$(NC)" && exit 1)
-	@$(NODE) --version | grep -q "v$(NODE_VERSION)\|v19\|v20\|v21" || (echo "$(YELLOW)⚠ Aviso: Versão do Node.js pode não ser compatível. Recomendado: $(NODE_VERSION)+$(NC)")
-	@echo "$(GREEN)✓ Node.js encontrado: $$($(NODE) --version)$(NC)"
+check-node: ensure-deps ## Verifica Node.js (instala automaticamente via winget/brew/apt se faltar)
 
 ##@ Desenvolvimento
 
@@ -55,12 +70,16 @@ dev-frontend: ## Inicia o servidor de desenvolvimento do frontend
 	@cd $(FRONTEND_DIR) && $(NPM) run dev
 
 dev-backend: ## Inicia o servidor de desenvolvimento do backend (Go)
+ifeq ($(OS),Windows_NT)
+	@$(RUN_BACKEND) dev
+else
 	@if [ -f "$(BACKEND_DIR)/go.mod" ]; then \
 		echo "$(YELLOW)Iniciando servidor de desenvolvimento do backend (Go)...$(NC)"; \
 		cd $(BACKEND_DIR) && go run cmd/server/main.go; \
 	else \
 		echo "$(RED)✗ Backend ainda não possui go.mod. Certifique-se de que o backend está configurado corretamente.$(NC)"; \
 	fi
+endif
 
 dev-all: dev-frontend dev-backend ## Inicia frontend e backend em paralelo (requer package.json no backend)
 
@@ -75,6 +94,9 @@ build-frontend: ## Cria o build de produção do frontend
 	@echo "$(GREEN)✓ Build do frontend concluído! Arquivos em $(FRONTEND_DIR)/dist$(NC)"
 
 build-backend: ## Cria o build de produção do backend (Go)
+ifeq ($(OS),Windows_NT)
+	@$(RUN_BACKEND) build
+else
 	@if [ -f "$(BACKEND_DIR)/go.mod" ]; then \
 		echo "$(YELLOW)Gerando build de produção do backend (Go)...$(NC)"; \
 		cd $(BACKEND_DIR) && go build -o server ./cmd/server; \
@@ -82,6 +104,7 @@ build-backend: ## Cria o build de produção do backend (Go)
 	else \
 		echo "$(YELLOW)⚠ Backend ainda não possui go.mod. Pulando build do backend.$(NC)"; \
 	fi
+endif
 
 preview: ## Preview do build de produção do frontend
 	@echo "$(YELLOW)Iniciando preview do build do frontend...$(NC)"
@@ -107,23 +130,27 @@ clean: clean-frontend clean-backend ## Remove node_modules e arquivos de build d
 
 clean-frontend: ## Remove node_modules e arquivos de build do frontend
 	@echo "$(YELLOW)Limpando frontend...$(NC)"
-	@rm -rf $(FRONTEND_DIR)/node_modules
-	@rm -rf $(FRONTEND_DIR)/dist
-	@rm -rf $(FRONTEND_DIR)/dist-ssr
-	@rm -rf $(FRONTEND_DIR)/.vite
+	@$(RM_RF) $(FRONTEND_DIR)/node_modules
+	@$(RM_RF) $(FRONTEND_DIR)/dist
+	@$(RM_RF) $(FRONTEND_DIR)/dist-ssr
+	@$(RM_RF) $(FRONTEND_DIR)/.vite
 	@echo "$(GREEN)✓ Frontend limpo$(NC)"
 
 clean-backend: ## Remove arquivos de build do backend (Go)
+ifeq ($(OS),Windows_NT)
+	@$(RUN_BACKEND) clean
+else
 	@echo "$(YELLOW)Limpando backend...$(NC)"
 	@rm -f $(BACKEND_DIR)/server
 	@rm -f $(BACKEND_DIR)/server.exe
 	@rm -f $(BACKEND_DIR)/*.exe
 	@echo "$(GREEN)✓ Backend limpo$(NC)"
+endif
 
 clean-cache: ## Limpa apenas o cache do Vite
 	@echo "$(YELLOW)Limpando cache do Vite...$(NC)"
-	@rm -rf $(FRONTEND_DIR)/.vite
-	@rm -rf $(FRONTEND_DIR)/dist
+	@$(RM_RF) $(FRONTEND_DIR)/.vite
+	@$(RM_RF) $(FRONTEND_DIR)/dist
 	@echo "$(GREEN)✓ Cache limpo$(NC)"
 
 ##@ Utilitários

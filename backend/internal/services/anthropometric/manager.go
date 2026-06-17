@@ -1,4 +1,4 @@
-﻿package anthropometric
+package anthropometric
 
 import (
 	"context"
@@ -51,6 +51,12 @@ func Create(ctx context.Context, rec models.Anthropometric) (*models.Anthropomet
 	if rec.Height > 0 && rec.Weight > 0 {
 		h := rec.Height / 100.0
 		rec.BMI = rec.Weight / (h * h)
+	}
+	if rec.Protocol != "" && rec.Protocol != ProtocolManual && len(rec.Skinfolds) > 0 {
+		bf := CalculateBodyFatPercent(rec.Protocol, rec.AgeAtMeasure, rec.Gender, rec.Skinfolds)
+		if bf > 0 {
+			rec.BodyFat = bf
+		}
 	}
 	_, err := database.AnthropometricCollection.InsertOne(ctx, rec)
 	if err != nil {

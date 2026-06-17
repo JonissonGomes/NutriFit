@@ -22,6 +22,9 @@ import Pricing from './pages/Pricing'
 import PublicProfile from './pages/PublicProfile'
 import PublicProfileContents from './pages/PublicProfileContents'
 import PublicProfileRecipes from './pages/PublicProfileRecipes'
+import PublicBio from './pages/PublicBio'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 import Contents from './pages/Contents'
 import ContentPost from './pages/ContentPost'
 import NotFound from './pages/NotFound'
@@ -84,6 +87,8 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<Signup />} />
                             <Route path="/pricing" element={<Pricing />} />
+                            <Route path="/privacidade" element={<Privacy />} />
+                            <Route path="/termos" element={<Terms />} />
                             <Route path="/conteudos" element={<Navigate to="/conteudos/public" replace />} />
                             <Route path="/conteudos/public" element={<Contents />} />
                             <Route path="/conteudos/public/:slug" element={<ContentPost />} />
@@ -102,6 +107,7 @@ function App() {
                             <Route path="/profile/:username" element={<PublicProfile />} />
                             <Route path="/profile/:username/conteudos" element={<PublicProfileContents />} />
                             <Route path="/profile/:username/receitas" element={<PublicProfileRecipes />} />
+                            <Route path="/bio/:username" element={<PublicBio />} />
                             <Route path="*" element={<NotFound />} />
                           </Routes>
                         </main>

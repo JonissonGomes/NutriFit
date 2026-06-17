@@ -1,4 +1,4 @@
-﻿package models
+package models
 
 import (
 	"time"
@@ -47,5 +47,6 @@ type GoalCheckIn struct {
 	Date        time.Time `bson:"date" json:"date"`
 	Value       float64   `bson:"value,omitempty" json:"value,omitempty"`
 	Completed   bool      `bson:"completed" json:"completed"` // para hábitos
+	Points      int       `bson:"points,omitempty" json:"points,omitempty"`
 	Notes       string    `bson:"notes,omitempty" json:"notes,omitempty"`
 }

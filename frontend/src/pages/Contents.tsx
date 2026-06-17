@@ -1,27 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { FileText } from 'lucide-react'
 import { blogService } from '../services/blog.service'
 import type { BlogPost } from '../services/blog.service'
+import EmptyState from '../components/common/EmptyState'
+import InlineAlert from '../components/common/InlineAlert'
+import LoadingState from '../components/common/LoadingState'
+import { getFriendlyErrorMessage } from '../utils/feedbackMessages'
 
 const Contents = () => {
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      setError('')
-      const res = await blogService.list({ published: true, page: 1, limit: 20 })
-      if (res.error) {
-        setError(res.error)
-        setPosts([])
-        setLoading(false)
-        return
-      }
+  const load = async () => {
+    setLoading(true)
+    setError('')
+    const res = await blogService.list({ published: true, page: 1, limit: 20 })
+    if (res.error) {
+      setError(getFriendlyErrorMessage(res.error, 'Não foi possível carregar os conteúdos.'))
+      setPosts([])
+    } else {
       setPosts(res.data?.data ?? [])
-      setLoading(false)
     }
+    setLoading(false)
+  }
+
+  useEffect(() => {
     void load()
   }, [])
 
@@ -32,24 +37,31 @@ const Contents = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Conteúdos</h1>
+          <h1 className="app-page-title">Conteúdos</h1>
           <p className="text-gray-600 mt-1">
             Artigos e materiais publicados por nutricionistas no NuFit.
           </p>
         </div>
 
         {loading ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-6 text-sm text-gray-600">
-            Carregando...
-          </div>
+          <LoadingState message="Carregando conteúdos…" className="min-h-[200px]" />
         ) : error ? (
-          <div className="bg-white border border-red-200 rounded-xl p-6 text-sm text-red-700">
+          <InlineAlert variant="error">
             {error}
-          </div>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="block mt-2 text-sm font-semibold underline hover:no-underline"
+            >
+              Tentar novamente
+            </button>
+          </InlineAlert>
         ) : posts.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-6 text-sm text-gray-600">
-            Nenhum conteúdo publicado ainda.
-          </div>
+          <EmptyState
+            icon={<FileText className="h-10 w-10" />}
+            title="Nenhum conteúdo publicado ainda"
+            description="Novos artigos de nutricionistas aparecerão aqui em breve."
+          />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {featured && (
@@ -109,4 +121,3 @@ const Contents = () => {
 }
 
 export default Contents
-

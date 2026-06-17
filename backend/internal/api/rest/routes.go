@@ -1,8 +1,11 @@
 package rest
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"nufit/backend/internal/config"
+	"nufit/backend/internal/services/plan"
 	"nufit/backend/internal/services/websocket"
 	"nufit/backend/internal/utils"
 )
@@ -25,6 +28,11 @@ func SetupRouter() *gin.Engine {
 
 	// CORS middleware
 	router.Use(corsMiddleware())
+	router.Use(securityHeadersMiddleware())
+
+	if config.AppConfig != nil {
+		router.Use(rateLimitMiddleware(config.AppConfig.RateLimitRequests, config.AppConfig.RateLimitWindow))
+	}
 
 	// Health check
 	router.GET("/health", healthCheck)
@@ -38,11 +46,11 @@ func SetupRouter() *gin.Engine {
 		// Auth routes
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/register", register)
-			auth.POST("/login", login)
-			auth.GET("/check-registration", checkRegistrationAvailable)
-			auth.GET("/validate-crm", validateCRM)
-			auth.POST("/refresh", refreshToken)
+			auth.POST("/register", authRateLimitMiddleware(10, time.Minute), register)
+			auth.POST("/login", authRateLimitMiddleware(15, time.Minute), login)
+			auth.GET("/check-registration", authRateLimitMiddleware(30, time.Minute), checkRegistrationAvailable)
+			auth.GET("/validate-crm", authRateLimitMiddleware(30, time.Minute), validateCRM)
+			auth.POST("/refresh", authRateLimitMiddleware(30, time.Minute), refreshToken)
 			auth.POST("/logout", logout)
 			auth.GET("/me", authMiddleware(), getMe)
 		}
@@ -61,8 +69,8 @@ func SetupRouter() *gin.Engine {
 				mealPlans.DELETE("/:id", RequireRole("nutricionista"), deleteMealPlan)
 				mealPlans.PUT("/:id/status", RequireRole("nutricionista"), updateMealPlanStatus)
 				mealPlans.GET("/:id/stats", getMealPlanStats)
-				mealPlans.POST("/ai-generate", RequireRole("nutricionista"), generateMealPlanWithAI)
-				mealPlans.POST("/:id/ai-analyze", RequireRole("nutricionista"), analyzeMealPlanWithAI)
+				mealPlans.POST("/ai-generate", RequireRole("nutricionista"), RequirePlanFeature(plan.FeatureAI), generateMealPlanWithAI)
+				mealPlans.POST("/:id/ai-analyze", RequireRole("nutricionista"), RequirePlanFeature(plan.FeatureAI), analyzeMealPlanWithAI)
 				mealPlans.GET("/:id/substitutions/:foodId", RequireRole("nutricionista"), getFoodSubstitutions)
 			}
 
@@ -166,7 +174,7 @@ func SetupRouter() *gin.Engine {
 				anamnesis.GET("/:patientId", getAnamnesis)
 				anamnesis.POST("/:patientId/answers", submitAnamnesisAnswers)
 				// AI summary da última anamnese registrada do paciente
-				anamnesis.POST("/:patientId/ai-summary", RequireRole("nutricionista"), generateAnamnesisAISummary)
+				anamnesis.POST("/:patientId/ai-summary", RequireRole("nutricionista"), RequirePlanFeature(plan.FeatureAI), generateAnamnesisAISummary)
 			}
 
 			// Food Diary
@@ -175,7 +183,7 @@ func SetupRouter() *gin.Engine {
 				foodDiary.GET("/:patientId", getFoodDiaryEntries)
 				foodDiary.POST("", RequireRole("nutricionista", "paciente"), createFoodDiaryEntry)
 				foodDiary.POST("/:id/photo", uploadFoodDiaryPhoto)
-				foodDiary.POST("/:id/ai-analyze", RequireRole("nutricionista"), analyzeFoodDiaryPhoto)
+				foodDiary.POST("/:id/ai-analyze", RequireRole("nutricionista"), RequirePlanFeature(plan.FeatureAI), analyzeFoodDiaryPhoto)
 				foodDiary.PUT("/:id/comment", RequireRole("nutricionista"), addNutritionistComment)
 			}
 
@@ -192,6 +200,25 @@ func SetupRouter() *gin.Engine {
 			{
 				predefinedMeals.GET("", listPredefinedMeals)
 			}
+
+			foodsGroup := protected.Group("/foods")
+			{
+				foodsGroup.GET("", searchFoods)
+			}
+
+			medicalRecords := protected.Group("/medical-records")
+			{
+				medicalRecords.GET("/:patientId", getMedicalRecord)
+			}
+
+			mealPlanTemplates := protected.Group("/meal-plan-templates")
+			{
+				mealPlanTemplates.GET("", listMealPlanTemplates)
+				mealPlanTemplates.POST("", RequireRole("nutricionista"), createMealPlanTemplate)
+				mealPlanTemplates.GET("/:id", getMealPlanTemplate)
+			}
+
+			protected.POST("/notifications/push-token", registerPushToken)
 
 			// Goals
 			goals := protected.Group("/goals")
@@ -220,7 +247,7 @@ func SetupRouter() *gin.Engine {
 				labExams.PUT("/:id", updateLabExam)
 				labExams.DELETE("/:id", deleteLabExam)
 				labExams.POST("/:id/upload", uploadLabExamFile)
-				labExams.POST("/:id/ai-analyze", analyzeLabExamWithAI)
+				labExams.POST("/:id/ai-analyze", RequirePlanFeature(plan.FeatureAI), analyzeLabExamWithAI)
 			}
 
 			// Questionnaires
@@ -243,13 +270,13 @@ func SetupRouter() *gin.Engine {
 			// AI Assistant
 			aiAssistant := protected.Group("/ai-assistant")
 			{
-				aiAssistant.POST("/chat", chatWithAIAssistant)
+				aiAssistant.POST("/chat", RequirePlanFeature(plan.FeatureAI), chatWithAIAssistant)
 			}
 
 			// Body3D
 			body3d := protected.Group("/body3d")
 			{
-				body3d.POST("/analyze", analyzeBody3D)
+				body3d.POST("/analyze", RequirePlanFeature(plan.FeatureAI), analyzeBody3D)
 			}
 
 			// Settings
@@ -261,6 +288,14 @@ func SetupRouter() *gin.Engine {
 				settingsGroup.PUT("/privacy", updatePrivacy)
 			}
 
+			// Billing e plano
+			billingGroup := protected.Group("/billing")
+			{
+				billingGroup.GET("/plan", getPlanSummary)
+				billingGroup.POST("/checkout", createCheckoutSession)
+				billingGroup.POST("/portal", createBillingPortal)
+			}
+
 			// Account
 			account := protected.Group("/account")
 			{
@@ -268,6 +303,7 @@ func SetupRouter() *gin.Engine {
 				account.PUT("/profile", updateProfile)
 				account.PUT("/password", changePassword)
 				account.DELETE("", deleteAccount)
+				account.GET("/data-export", exportAccountData)
 			}
 
 			// Notifications
@@ -368,6 +404,8 @@ func SetupRouter() *gin.Engine {
 				}
 			}
 		}
+
+		v1.POST("/billing/webhook", stripeWebhook)
 
 		// Public routes (no auth required)
 		public := v1.Group("/public")

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
@@ -13,6 +13,7 @@ import LanguageIcon from '@mui/icons-material/Language'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import { favoritesService, mealPlanService, profileService, reviewService } from '../services'
+import { INPUT_LIMITS, limitLength, sanitizeText } from '../utils/inputUtils'
 import { blogService } from '../services/blog.service'
 import { recipeService } from '../services/recipe.service'
 import { useAuth } from '../contexts/AuthContext'
@@ -57,58 +58,69 @@ const PublicProfile = () => {
     return { avg, count }
   }, [profile])
 
+  const loadErrorShownRef = useRef(false)
+
   useEffect(() => {
+    if (!username) return
+    let cancelled = false
+    loadErrorShownRef.current = false
+
     const load = async () => {
-      if (!username) return
       setLoading(true)
 
       const res = await profileService.getPublicProfile(username)
+      if (cancelled) return
+
       if (!res.data) {
         setProfile(null)
         setLoading(false)
-        if (res.error) showToast(res.error, 'error')
+        if (res.error && !loadErrorShownRef.current) {
+          loadErrorShownRef.current = true
+          showToast(res.error, 'error')
+        }
         return
       }
 
       setProfile(res.data)
 
-      // Reviews (se habilitado)
       if (res.data.customization?.showReviews !== false) {
         const r = await reviewService.getByNutritionist(res.data.userId, 1, 10)
-        if (r.data?.data) setReviews(r.data.data)
+        if (!cancelled && r.data?.data) setReviews(r.data.data)
       }
 
-      // Conteúdos do autor (público)
       const bp = await blogService.getByAuthor(res.data.userId, 6)
-      if (bp.data) setPosts(bp.data)
+      if (!cancelled && bp.data) setPosts(bp.data)
       const rec = await recipeService.listPublicByNutritionist(res.data.userId)
-      setRecipes((rec.data as any)?.data || [])
+      if (!cancelled) setRecipes((rec.data as any)?.data || [])
 
-      // Favorito (somente paciente)
       if (isAuthenticated && user?.role === 'paciente') {
         const fav = await favoritesService.checkFavorite(res.data.userId)
-        setIsFavorite(Boolean((fav.data as any)?.isFavorite))
+        if (!cancelled) setIsFavorite(Boolean((fav.data as any)?.isFavorite))
 
-        // Carregar planos concluídos do paciente para permitir avaliação (quando aplicável).
         const mp = await mealPlanService.list({ status: 'completed', page: 1, limit: 50 })
-        const plans = (mp.data as any)?.data || (mp.data as any)?.data?.data || []
-        const filtered = Array.isArray(plans)
-          ? plans.filter((p: any) => String(p?.nutritionistId || '').trim() === String(res.data?.userId || '').trim())
-          : []
-        setCompletedMealPlans(filtered)
-        if (filtered.length > 0) {
-          setReviewMealPlanId(String(filtered[0].id))
+        if (!cancelled) {
+          const plans = (mp.data as any)?.data || (mp.data as any)?.data?.data || []
+          const filtered = Array.isArray(plans)
+            ? plans.filter((p: any) => String(p?.nutritionistId || '').trim() === String(res.data?.userId || '').trim())
+            : []
+          setCompletedMealPlans(filtered)
+          if (filtered.length > 0) {
+            setReviewMealPlanId(String(filtered[0].id))
+          }
         }
-      } else {
+      } else if (!cancelled) {
         setIsFavorite(false)
         setCompletedMealPlans([])
       }
 
-      setLoading(false)
+      if (!cancelled) setLoading(false)
     }
 
-    load()
-  }, [username, isAuthenticated, user?.role, showToast])
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [username, isAuthenticated, user?.role])
 
   const handleToggleFavorite = async () => {
     if (!profile?.userId) return
@@ -147,6 +159,7 @@ const PublicProfile = () => {
   }
 
   const onSubmitReview = async () => {
+    if (submittingReview) return
     if (!profile?.userId) return
     if (!isAuthenticated) {
       navigate('/login')
@@ -158,7 +171,7 @@ const PublicProfile = () => {
     }
 
     const comment = reviewComment.trim()
-    if (comment.length < 20) {
+    if (comment.length < INPUT_LIMITS.REVIEW_COMMENT_MIN) {
       showToast('Comentário obrigatório (mínimo de 20 caracteres).', 'warning')
       return
     }
@@ -312,7 +325,7 @@ const PublicProfile = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 truncate">
+                      <h1 className="app-page-title truncate">
                         {profile.displayName}
                       </h1>
                       {profile.verification?.verified && (
@@ -381,9 +394,9 @@ const PublicProfile = () => {
         </div>
 
         <div className="app-card rounded-2xl">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 md:flex-nowrap min-w-0">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Conteúdos</h2>
+              <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap truncate">Conteúdos</h2>
               <p className="text-sm text-gray-600 mt-1">Artigos e materiais publicados no NuFit.</p>
             </div>
             <Link
@@ -394,6 +407,13 @@ const PublicProfile = () => {
             >
               <AddIcon sx={{ fontSize: 18 }} />
             </Link>
+            <Link
+              to={`/bio/${username}`}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-semibold"
+              title="Link na bio"
+            >
+              @
+            </Link>
           </div>
           {posts.length === 0 ? (
             <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
@@ -401,7 +421,7 @@ const PublicProfile = () => {
             </div>
           ) : (
             <div className={`mt-3 ${shouldScrollPosts ? 'overflow-x-auto' : 'overflow-hidden'}`}>
-              <div className={shouldScrollPosts ? 'flex gap-3 min-w-max pb-1' : 'grid grid-cols-3 gap-3'}>
+              <div className={shouldScrollPosts ? 'flex gap-3 min-w-max pb-1' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'}>
                 {posts.slice(0, 10).map((p) => {
                   const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
                   return (
@@ -424,9 +444,9 @@ const PublicProfile = () => {
         </div>
 
         <div className="app-card rounded-2xl">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 md:flex-nowrap min-w-0">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Receitas</h2>
+              <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap truncate">Receitas</h2>
               <p className="text-sm text-gray-600 mt-1">Receitas compartilhadas publicamente por este profissional.</p>
             </div>
             <Link
@@ -444,7 +464,7 @@ const PublicProfile = () => {
             </div>
           ) : (
             <div className={`mt-3 ${shouldScrollRecipes ? 'overflow-x-auto' : 'overflow-hidden'}`}>
-              <div className={shouldScrollRecipes ? 'flex gap-3 min-w-max pb-1' : 'grid grid-cols-3 gap-3'}>
+              <div className={shouldScrollRecipes ? 'flex gap-3 min-w-max pb-1' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'}>
                 {recipes.slice(0, 10).map((r) => (
                   <div
                     key={r.id}
@@ -463,7 +483,7 @@ const PublicProfile = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {showReviews ? (
             <div className="md:col-span-2 bg-white border border-gray-200 rounded-2xl p-6">
-              <h2 className="text-lg font-bold text-gray-900">Avaliações</h2>
+              <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap truncate">Avaliações</h2>
               {isAuthenticated && user?.role === 'paciente' ? (
                 <div className="mt-3 border border-gray-200 rounded-xl p-4 bg-gray-50">
                   <div className="text-sm font-semibold text-gray-900">Deixe sua avaliação</div>
@@ -510,14 +530,16 @@ const PublicProfile = () => {
                     </div>
                   </div>
                   <div className="mt-3">
-                    <label className="text-xs font-semibold text-gray-700">Comentário (mínimo 20 caracteres)</label>
+                    <label className="text-xs font-semibold text-gray-700">Comentário (mínimo {INPUT_LIMITS.REVIEW_COMMENT_MIN} caracteres)</label>
                     <textarea
                       value={reviewComment}
-                      onChange={(e) => setReviewComment(e.target.value)}
+                      onChange={(e) => setReviewComment(limitLength(sanitizeText(e.target.value, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';']), INPUT_LIMITS.REVIEW_COMMENT))}
+                      maxLength={INPUT_LIMITS.REVIEW_COMMENT}
                       rows={3}
                       className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
                       placeholder="Conte como foi sua experiência..."
                     />
+                    <p className="text-xs text-gray-500 mt-1">{reviewComment.length}/{INPUT_LIMITS.REVIEW_COMMENT}</p>
                   </div>
                   <button
                     type="button"
@@ -570,7 +592,7 @@ const PublicProfile = () => {
 
           {showContact ? (
             <div className={showReviews ? 'bg-white border border-gray-200 rounded-2xl p-6' : 'bg-white border border-gray-200 rounded-2xl p-6 md:col-span-3'}>
-              <h2 className="text-lg font-bold text-gray-900">Contato</h2>
+              <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap truncate">Contato</h2>
               <div className="mt-4 space-y-3 text-sm text-gray-700">
                 {contactEmail && (
                   <div className="flex items-center gap-2">

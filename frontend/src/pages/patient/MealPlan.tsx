@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Loader2, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { mealPlanService } from '../../services'
 import type { MealPlan } from '../../types/api'
+import InlineAlert from '../../components/common/InlineAlert'
+import LoadingState from '../../components/common/LoadingState'
+import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 const MealPlanPage = () => {
   const { id } = useParams()
@@ -10,39 +13,45 @@ const MealPlanPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const load = async () => {
-      if (!id) return
-      setLoading(true)
-      setError(null)
-      const res = await mealPlanService.get(id)
-      const data = (res.data as any)?.data ?? res.data
-      if (!data) {
-        setError(res.error || 'Plano não encontrado')
-        setMealPlan(null)
-      } else {
-        setMealPlan(data as MealPlan)
-      }
-      setLoading(false)
+  const load = async () => {
+    if (!id) return
+    setLoading(true)
+    setError(null)
+    const res = await mealPlanService.get(id)
+    const data = (res.data as any)?.data ?? res.data
+    if (!data) {
+      setError(getFriendlyErrorMessage(res.error, 'Plano não encontrado.'))
+      setMealPlan(null)
+    } else {
+      setMealPlan(data as MealPlan)
     }
-    load()
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    void load()
   }, [id])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
+    return <LoadingState message="Carregando plano alimentar…" />
   }
 
   if (error) {
     return (
-      <div className="bg-white border border-primary-100 rounded-xl p-8">
+      <div className="space-y-4">
         <Link to="/patient/meal-plans" className="inline-flex items-center gap-2 text-primary-700 font-semibold">
-          <ArrowLeft className="h-4 w-4" /> Voltar
+          <ArrowLeft className="h-4 w-4" /> Voltar para planos
         </Link>
-        <p className="mt-4 text-gray-700 font-semibold">{error}</p>
+        <InlineAlert variant="error">
+          {error}
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="block mt-2 text-sm font-semibold underline hover:no-underline"
+          >
+            Tentar novamente
+          </button>
+        </InlineAlert>
       </div>
     )
   }
@@ -55,7 +64,7 @@ const MealPlanPage = () => {
         <Link to="/patient/meal-plans" className="inline-flex items-center gap-2 text-primary-700 font-semibold">
           <ArrowLeft className="h-4 w-4" /> Voltar para planos
         </Link>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mt-3">{mealPlan.title}</h1>
+        <h1 className="app-page-title mt-3">{mealPlan.title}</h1>
         {mealPlan.description && <p className="text-gray-600 mt-1">{mealPlan.description}</p>}
       </div>
 
@@ -108,4 +117,3 @@ const MealPlanPage = () => {
 }
 
 export default MealPlanPage
-

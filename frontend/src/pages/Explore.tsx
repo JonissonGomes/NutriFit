@@ -3,6 +3,7 @@ import { CheckCircle } from '@mui/icons-material'
 import { Search, MapPin, Star, Building2, Filter, ChevronDown, ArrowLeft } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { exploreService } from '../services'
+import { INPUT_LIMITS, limitLength, sanitizeInput } from '../utils/inputUtils'
 import { useToast } from '../contexts/ToastContext'
 import type { PublicProfile } from '../types/api'
 
@@ -71,7 +72,7 @@ const Explore = () => {
         clearTimeout(searchTimeout)
       }
     }
-  }, [searchTerm, selectedCategory, selectedLocation])
+  }, [searchTerm, selectedCategory, selectedLocation, showToast])
 
   // Formatar localização
   const formatLocation = (profile: PublicProfile): string => {
@@ -143,7 +144,8 @@ const Explore = () => {
               type="text"
               placeholder="Buscar por nome, especialidade ou área de atuação..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(limitLength(sanitizeInput(e.target.value), INPUT_LIMITS.SEARCH_QUERY))}
+              maxLength={INPUT_LIMITS.SEARCH_QUERY}
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>

@@ -10,6 +10,7 @@ import (
 	"nufit/backend/internal/models"
 	"nufit/backend/internal/services/review"
 	"nufit/backend/internal/services/security"
+	"nufit/backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -30,7 +31,7 @@ func createReview(c *gin.Context) {
 		NutritionistID string `json:"nutritionistId" binding:"required"`
 		MealPlanID     string `json:"mealPlanId,omitempty"`
 		Rating         int    `json:"rating" binding:"required,min=1,max=5"`
-		Comment        string `json:"comment" binding:"required"`
+		Comment        string `json:"comment" binding:"required,max=2000"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -39,8 +40,8 @@ func createReview(c *gin.Context) {
 	}
 
 	comment := strings.TrimSpace(req.Comment)
-	if len([]rune(comment)) < 20 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Comentário obrigatório (mínimo de 20 caracteres)"})
+	if err := utils.ValidateReviewComment(comment); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	lower := strings.ToLower(comment)

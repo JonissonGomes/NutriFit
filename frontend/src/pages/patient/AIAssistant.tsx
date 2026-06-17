@@ -1,6 +1,9 @@
 import { useState } from 'react'
-import { Send } from 'lucide-react'
+import { Loader2, Send } from 'lucide-react'
 import { api } from '../../services'
+import { INPUT_LIMITS, limitLength, sanitizeText } from '../../utils/inputUtils'
+import { useToast } from '../../contexts/ToastContext'
+import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -8,28 +11,42 @@ interface ChatMessage {
 }
 
 const AIAssistant = () => {
+  const { showToast } = useToast()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
 
   const send = async () => {
-    const q = input.trim()
+    const q = limitLength(sanitizeText(input.trim(), ['?', '!', '.', ',', ' ']), INPUT_LIMITS.AI_QUESTION)
     if (!q) return
 
     setMessages((m) => [...m, { role: 'user', content: q }])
     setInput('')
     setLoading(true)
 
-    const res = await api.post<{ data?: { answer?: string } }>(`/ai-assistant/chat`, { question: q })
-    const answer = (res.data as any)?.answer || (res.data as any)?.data?.answer || res.error || 'Não foi possível responder agora.'
-    setMessages((m) => [...m, { role: 'assistant', content: answer }])
-    setLoading(false)
+    try {
+      const res = await api.post<{ data?: { answer?: string } }>(`/ai-assistant/chat`, { question: q })
+
+      if (res.error) {
+        showToast(getFriendlyErrorMessage(res.error, 'Não foi possível obter uma resposta agora.'), 'error')
+        return
+      }
+
+      const answer =
+        (res.data as any)?.answer ||
+        (res.data as any)?.data?.answer ||
+        'Não encontrei uma resposta para essa pergunta. Tente reformular.'
+
+      setMessages((m) => [...m, { role: 'assistant', content: answer }])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Assistente</h1>
+        <h1 className="app-page-title">Assistente</h1>
         <p className="text-gray-600 mt-1">Tire dúvidas rápidas (não substitui orientação do seu nutricionista).</p>
       </div>
 
@@ -50,24 +67,32 @@ const AIAssistant = () => {
             </div>
           ))
         )}
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-gray-500" role="status" aria-live="polite">
+            <Loader2 className="h-4 w-4 animate-spin text-primary-600" />
+            Pensando…
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-2">
         <input
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="flex-1 bg-white border border-primary-100 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500/20"
+          onChange={(e) => setInput(limitLength(sanitizeText(e.target.value, ['?', '!', '.', ',', ' ']), INPUT_LIMITS.AI_QUESTION))}
+          maxLength={INPUT_LIMITS.AI_QUESTION}
+          disabled={loading}
+          className="flex-1 bg-white border border-primary-100 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary-500/20 disabled:opacity-60"
           placeholder="Digite sua pergunta..."
           onKeyDown={(e) => {
-            if (e.key === 'Enter') void send()
+            if (e.key === 'Enter' && !loading) void send()
           }}
         />
         <button
           onClick={() => void send()}
-          disabled={loading}
+          disabled={loading || !input.trim()}
           className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-60"
         >
-          <Send className="h-4 w-4" />
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Enviar
         </button>
       </div>
@@ -76,4 +101,3 @@ const AIAssistant = () => {
 }
 
 export default AIAssistant
-

@@ -1,38 +1,65 @@
 import { useEffect, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { ChefHat } from 'lucide-react'
 import { recipeService } from '../../services'
 import type { Recipe } from '../../services/recipe.service'
+import EmptyState from '../../components/common/EmptyState'
+import InlineAlert from '../../components/common/InlineAlert'
+import LoadingState from '../../components/common/LoadingState'
+import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
 
 const Recipes = () => {
   const [items, setItems] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const load = async () => {
+    setLoading(true)
+    setError('')
+    const res = await recipeService.listMine()
+    if (res.error) {
+      setError(getFriendlyErrorMessage(res.error, 'Não foi possível carregar as receitas.'))
+      setItems([])
+    } else {
+      setItems((res.data as any)?.data || [])
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      const res = await recipeService.listMine()
-      setItems((res.data as any)?.data || [])
-      setLoading(false)
-    }
     void load()
   }, [])
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-[280px]"><Loader2 className="h-8 w-8 animate-spin text-primary-600" /></div>
+    return <LoadingState message="Carregando receitas…" />
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Receitas</h1>
+        <h1 className="app-page-title">Receitas</h1>
         <p className="text-gray-600 mt-1">Receitas públicas e receitas liberadas para você.</p>
       </div>
 
-      {items.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-gray-600">
-          Nenhuma receita disponível no momento.
-        </div>
-      ) : (
+      {error ? (
+        <InlineAlert variant="error">
+          {error}
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="block mt-2 text-sm font-semibold underline hover:no-underline"
+          >
+            Tentar novamente
+          </button>
+        </InlineAlert>
+      ) : null}
+
+      {items.length === 0 && !error ? (
+        <EmptyState
+          icon={<ChefHat className="h-10 w-10" />}
+          title="Nenhuma receita disponível"
+          description="Receitas liberadas pelo seu nutricionista aparecerão aqui."
+        />
+      ) : items.length > 0 ? (
         <div className="space-y-3">
           {items.map((r) => (
             <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4">
@@ -41,10 +68,9 @@ const Recipes = () => {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
 
 export default Recipes
-
