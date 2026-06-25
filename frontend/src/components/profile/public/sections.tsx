@@ -58,7 +58,7 @@ function TimelineEntry({
   isLast?: boolean
 }) {
   return (
-    <div className="relative flex gap-4 pb-8 last:pb-0">
+    <div className="relative flex gap-3 md:gap-4 pb-6 last:pb-0">
       {!isLast ? (
         <div className="absolute left-5 top-10 bottom-0 w-px bg-gray-200" aria-hidden />
       ) : null}
@@ -85,13 +85,13 @@ function TimelineEntry({
   )
 }
 
-function WorkTimeline({ entries }: { entries: WorkExperienceEntry[] }) {
+function WorkTimeline({ entries, compact = false }: { entries: WorkExperienceEntry[]; compact?: boolean }) {
   const valid = entries.filter((e) => e.title?.trim() || e.organization?.trim())
   if (!valid.length) return null
 
   return (
-    <div className="mb-8 last:mb-0">
-      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+    <div className={compact ? 'mb-0' : 'mb-6 lg:mb-0'}>
+      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-3 md:mb-4">
         <WorkIcon sx={{ fontSize: 20 }} className="text-primary-600" />
         Experiência
       </h3>
@@ -112,13 +112,13 @@ function WorkTimeline({ entries }: { entries: WorkExperienceEntry[] }) {
   )
 }
 
-function EducationTimeline({ entries }: { entries: EducationEntry[] }) {
+function EducationTimeline({ entries, compact = false }: { entries: EducationEntry[]; compact?: boolean }) {
   const valid = entries.filter((e) => e.degree?.trim() || e.institution?.trim())
   if (!valid.length) return null
 
   return (
-    <div className="mb-8 last:mb-0">
-      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+    <div className={compact ? 'mb-0' : ''}>
+      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-3 md:mb-4">
         <SchoolIcon sx={{ fontSize: 20 }} className="text-primary-600" />
         Formação acadêmica
       </h3>
@@ -139,13 +139,13 @@ function EducationTimeline({ entries }: { entries: EducationEntry[] }) {
   )
 }
 
-function RecognitionTimeline({ entries }: { entries: RecognitionEntry[] }) {
+function RecognitionTimeline({ entries, compact = false }: { entries: RecognitionEntry[]; compact?: boolean }) {
   const valid = entries.filter((e) => e.title?.trim())
   if (!valid.length) return null
 
   return (
-    <div className="mb-8 last:mb-0">
-      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+    <div className={compact ? 'mb-0' : ''}>
+      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-3 md:mb-4">
         <EmojiEventsIcon sx={{ fontSize: 20 }} className="text-primary-600" />
         Prêmios e reconhecimentos
       </h3>
@@ -176,11 +176,17 @@ export function ProfileProfessionalSection({ state }: { state: PublicProfileView
 
   if (!showWork && !showEdu && !showRec) return null
 
+  const secondaryColumns = showEdu && showRec
+
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-      <WorkTimeline entries={showWork ? career.workExperiences : []} />
-      <EducationTimeline entries={showEdu ? career.educations : []} />
-      <RecognitionTimeline entries={showRec ? career.recognitions : []} />
+    <div className="space-y-6 lg:space-y-8">
+      {showWork ? <WorkTimeline entries={career.workExperiences} /> : null}
+      {(showEdu || showRec) ? (
+        <div className={secondaryColumns ? 'grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 lg:items-start' : ''}>
+          {showEdu ? <EducationTimeline entries={career.educations} compact={secondaryColumns} /> : null}
+          {showRec ? <RecognitionTimeline entries={career.recognitions} compact={secondaryColumns} /> : null}
+        </div>
+      ) : null}
     </div>
   )
 }

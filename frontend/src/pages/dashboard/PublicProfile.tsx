@@ -19,7 +19,7 @@ import { DEFAULT_CUSTOMIZATION } from '../../services/profile.service'
 import { mergeCustomization } from '../../utils/profileCustomization'
 import { geolocationService } from '../../services/geolocation.service'
 import LoadingButton from '../../components/common/LoadingButton'
-import { sanitizeName, sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, validateUsername, validateUrl, validatePhone, unmask, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
+import { sanitizeName, sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, validateUsername, validateUrl, validatePhone, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
 import { resolveMediaUrl } from '../../utils/mediaUrl'
 
 type PublicProfileType = ProfileServicePublicProfile
@@ -35,13 +35,19 @@ import {
   createRecognition,
   createWorkExperience,
   resolveCareer,
-  sanitizeEducations,
-  sanitizeRecognitions,
-  sanitizeWorkExperiences,
   type EducationEntry,
   type RecognitionEntry,
   type WorkExperienceEntry,
 } from '../../utils/profileCareer'
+import {
+  areProfileSnapshotsEqual,
+  buildProfileSnapshot,
+  EMPTY_CAREER,
+  getProfileChangeSummaries,
+  type ProfileDraftForm,
+  type ProfileDraftSnapshot,
+} from '../../utils/profileDraft'
+import FormModal from '../../components/common/FormModal'
 
 const PROFESSIONAL_SPECIALTIES = [
   'Alergias alimentares',
@@ -72,6 +78,38 @@ const PROFESSIONAL_SPECIALTIES = [
   'Transtornos alimentares',
   'Vegetariana',
 ] as const
+
+function toDraftForm(form: {
+  displayName: string
+  username: string
+  bio: string
+  location: string
+  specialty: string
+  experience: string
+  website: string
+  phone: string
+  instagram: string
+  instagramUrl: string
+  facebook: string
+  facebookUrl: string
+  specialties: string[]
+}): ProfileDraftForm {
+  return {
+    displayName: form.displayName,
+    username: form.username,
+    bio: form.bio,
+    location: form.location,
+    specialty: form.specialty,
+    experience: form.experience,
+    website: form.website,
+    phone: form.phone,
+    instagram: form.instagram,
+    instagramUrl: form.instagramUrl,
+    facebook: form.facebook,
+    facebookUrl: form.facebookUrl,
+    specialties: form.specialties,
+  }
+}
 
 const PublicProfile = () => {
   const navigate = useNavigate()
@@ -130,6 +168,8 @@ const PublicProfile = () => {
   const specialtySearchRef = useRef<HTMLDivElement>(null)
   
   const [customization, setCustomization] = useState<ProfileCustomization>(DEFAULT_CUSTOMIZATION)
+  const [savedSnapshot, setSavedSnapshot] = useState<ProfileDraftSnapshot | null>(null)
+  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
@@ -197,8 +237,7 @@ const PublicProfile = () => {
       
       if (response.data) {
         const profile = response.data
-        setProfileExists(true)
-        setFormData({
+        const nextForm = {
           displayName: profile.displayName || '',
           username: profile.username || '',
           bio: profile.bio || '',
@@ -209,7 +248,7 @@ const PublicProfile = () => {
           experience: profile.experience || '',
           website: profile.website || '',
           email: profile.email || '',
-          phone: profile.phone || '',
+          phone: profile.phone ? maskPhone(profile.phone) : '',
           instagram: profile.social?.instagram?.username || '',
           instagramUrl: profile.social?.instagram?.url || '',
           facebook: profile.social?.facebook?.username || '',
@@ -217,31 +256,48 @@ const PublicProfile = () => {
           specialties: profile.specialties || [],
           avatar: profile.avatar || '',
           coverImage: profile.coverImage || '',
-        })
-        setCareer(resolveCareer(profile))
+        }
+        const nextCareer = resolveCareer(profile)
+        const nextCustomization = profile.customization
+          ? mergeCustomization(profile.customization)
+          : mergeCustomization()
+
+        setProfileExists(true)
+        setFormData(nextForm)
+        setCareer(nextCareer)
+        setCustomization(nextCustomization)
+        setSavedSnapshot(buildProfileSnapshot(toDraftForm(nextForm), nextCareer, nextCustomization))
         setLocationQuery(
           profile.location?.address?.city
             ? `${profile.location.address.city}, ${profile.location.address.state}`
             : ''
         )
-        
-        if (profile.customization) {
-          setCustomization(mergeCustomization(profile.customization))
-        } else {
-          setCustomization(mergeCustomization())
-        }
       } else {
         // Perfil não existe (404) ou outro erro - preencher com dados do usuário para criação
         setProfileExists(false)
-        if (user) {
-          setFormData(prev => ({
-            ...prev,
-            displayName: user.name || '',
-            email: user.email || '',
-            username: user.name?.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '') || '',
-          }))
-          setLocationQuery(prev => prev || '')
+        const nextForm = {
+          displayName: user?.name || '',
+          username: user?.name?.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '') || '',
+          bio: '',
+          location: '',
+          specialty: '',
+          experience: '',
+          website: '',
+          email: user?.email || '',
+          phone: '',
+          instagram: '',
+          instagramUrl: '',
+          facebook: '',
+          facebookUrl: '',
+          specialties: [] as string[],
+          avatar: '',
+          coverImage: '',
         }
+        setFormData(nextForm)
+        setCareer(EMPTY_CAREER)
+        setCustomization(mergeCustomization())
+        setSavedSnapshot(buildProfileSnapshot(toDraftForm(nextForm), EMPTY_CAREER, mergeCustomization()))
+        setLocationQuery('')
         
         // Log para debug - perfil não encontrado é esperado para novos usuários
         if (response.error?.includes('não encontrado') || response.error?.includes('not found')) {
@@ -254,14 +310,28 @@ const PublicProfile = () => {
       console.error('Erro ao carregar perfil:', error)
       // Em caso de erro de rede, ainda permitir criar perfil
       setProfileExists(false)
-      if (user) {
-        setFormData(prev => ({
-          ...prev,
-          displayName: user.name || '',
-          email: user.email || '',
-          username: user.name?.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '') || '',
-        }))
+      const nextForm = {
+        displayName: user?.name || '',
+        username: user?.name?.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '') || '',
+        bio: '',
+        location: '',
+        specialty: '',
+        experience: '',
+        website: '',
+        email: user?.email || '',
+        phone: '',
+        instagram: '',
+        instagramUrl: '',
+        facebook: '',
+        facebookUrl: '',
+        specialties: [] as string[],
+        avatar: '',
+        coverImage: '',
       }
+      setFormData(nextForm)
+      setCareer(EMPTY_CAREER)
+      setCustomization(mergeCustomization())
+      setSavedSnapshot(buildProfileSnapshot(toDraftForm(nextForm), EMPTY_CAREER, mergeCustomization()))
     } finally {
       setIsLoading(false)
     }
@@ -450,69 +520,86 @@ const PublicProfile = () => {
   const avatarPreviewUrl = resolveMediaUrl(formData.avatar)
   const coverPreviewUrl = resolveMediaUrl(formData.coverImage)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const draftForm = useMemo(() => toDraftForm(formData), [formData])
+
+  const currentSnapshot = useMemo(
+    () => buildProfileSnapshot(draftForm, career, customization),
+    [draftForm, career, customization]
+  )
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!savedSnapshot) return false
+    return !areProfileSnapshotsEqual(savedSnapshot, currentSnapshot)
+  }, [savedSnapshot, currentSnapshot])
+
+  const pendingChanges = useMemo(() => {
+    if (!savedSnapshot) return []
+    return getProfileChangeSummaries(savedSnapshot, currentSnapshot)
+  }, [savedSnapshot, currentSnapshot])
+
+  const validateForm = (): boolean => {
+    if (!formData.username) {
+      showToast('Nome de usuário é obrigatório', 'error')
+      return false
+    }
+    if (!validateUsername(formData.username)) {
+      showToast('Nome de usuário inválido. Use apenas letras minúsculas, números, pontos e underscores (3-30 caracteres)', 'error')
+      return false
+    }
+    if (formData.website && !validateUrl(formData.website)) {
+      showToast('URL do website inválida', 'error')
+      return false
+    }
+    if (formData.phone && !validatePhone(formData.phone)) {
+      showToast('Telefone inválido. Use o formato (00) 00000-0000', 'error')
+      return false
+    }
+    return true
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSaving) return
+    if (profileExists && !hasUnsavedChanges) return
+    if (!validateForm()) return
+    setSaveConfirmOpen(true)
+  }
+
+  const executeSave = async () => {
     if (isSaving) return
     setIsSaving(true)
 
     try {
-      // Validar username
-      if (!formData.username) {
-        showToast('Nome de usuário é obrigatório', 'error')
-        setIsSaving(false)
-        return
-      }
-      
-      if (!validateUsername(formData.username)) {
-        showToast('Nome de usuário inválido. Use apenas letras minúsculas, números, pontos e underscores (3-30 caracteres)', 'error')
-        setIsSaving(false)
-        return
-      }
-      
-      if (formData.website && !validateUrl(formData.website)) {
-        showToast('URL do website inválida', 'error')
-        setIsSaving(false)
-        return
-      }
-      
-      if (formData.phone && !validatePhone(formData.phone)) {
-        showToast('Telefone inválido. Use o formato (00) 00000-0000', 'error')
-        setIsSaving(false)
-        return
-      }
-
-      // Montar objeto de perfil (dados já sanitizados pelo handleChange, mas garantir antes de enviar)
+      const snap = currentSnapshot
       const profileData: Partial<PublicProfileType> = {
-        displayName: sanitizeName(formData.displayName).trim(),
-        username: formData.username.toLowerCase().trim(),
+        displayName: sanitizeName(snap.form.displayName).trim(),
+        username: snap.form.username,
         bio: sanitizeText(formData.bio, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';', '(', ')', '[', ']', '{', '}', '/', '\\', '@', '#', '$', '%', '*', '+', '=', '_', '|', '~', '`', '^', '´', '°', 'ª', 'º']),
-        specialty: sanitizeName(formData.specialty).trim(),
-        experience: sanitizeText(formData.experience, ['+', ' ', 'a', 'n', 'o', 's', 'A', 'N', 'O', 'S']),
-        website: formData.website ? sanitizeUrl(formData.website) : undefined,
+        specialty: sanitizeName(snap.form.specialty).trim(),
+        experience: sanitizeText(snap.form.experience, ['+', ' ', 'a', 'n', 'o', 's', 'A', 'N', 'O', 'S']),
+        website: snap.form.website ? sanitizeUrl(snap.form.website) : undefined,
         email: formData.email.toLowerCase().trim(),
-        phone: formData.phone ? unmask(formData.phone) : undefined,
-        specialties: formData.specialties,
-        workExperiences: sanitizeWorkExperiences(career.workExperiences),
-        educations: sanitizeEducations(career.educations),
-        recognitions: sanitizeRecognitions(career.recognitions),
-        education: '',
-        awards: '',
-        customization: mergeCustomization(customization),
-        location: formData.location ? {
+        phone: snap.form.phone || undefined,
+        specialties: snap.form.specialties,
+        workExperiences: snap.career.workExperiences,
+        educations: snap.career.educations,
+        recognitions: snap.career.recognitions,
+        customization: snap.customization,
+        location: snap.form.location ? {
           address: {
-            city: formData.location.split(',')[0]?.trim() || '',
-            state: formData.location.split(',')[1]?.trim() || '',
+            city: snap.form.location.split(',')[0]?.trim() || '',
+            state: snap.form.location.split(',')[1]?.trim() || '',
             country: 'Brasil',
           },
         } : undefined,
         social: {
-          instagram: formData.instagram ? {
-            username: formData.instagram,
-            url: formData.instagramUrl || `https://instagram.com/${formData.instagram.replace('@', '')}`,
+          instagram: snap.form.instagram ? {
+            username: snap.form.instagram,
+            url: snap.form.instagramUrl || `https://instagram.com/${snap.form.instagram.replace('@', '')}`,
           } : undefined,
-          facebook: formData.facebook ? {
-            username: formData.facebook,
-            url: formData.facebookUrl || `https://facebook.com/${formData.facebook}`,
+          facebook: snap.form.facebook ? {
+            username: snap.form.facebook,
+            url: snap.form.facebookUrl || `https://facebook.com/${snap.form.facebook}`,
           } : undefined,
         },
       }
@@ -526,10 +613,35 @@ const PublicProfile = () => {
 
       if (response.data) {
         setProfileExists(true)
-        if (response.data.customization) {
-          setCustomization(mergeCustomization(response.data.customization))
+        const p = response.data
+        const syncedForm = {
+          displayName: p.displayName || '',
+          username: p.username || '',
+          bio: p.bio || '',
+          location: p.location?.address?.city
+            ? `${p.location.address.city}, ${p.location.address.state}`
+            : '',
+          specialty: p.specialty || '',
+          experience: p.experience || '',
+          website: p.website || '',
+          email: p.email || '',
+          phone: p.phone ? maskPhone(p.phone) : '',
+          instagram: p.social?.instagram?.username || '',
+          instagramUrl: p.social?.instagram?.url || '',
+          facebook: p.social?.facebook?.username || '',
+          facebookUrl: p.social?.facebook?.url || '',
+          specialties: p.specialties || [],
+          avatar: p.avatar || formData.avatar,
+          coverImage: p.coverImage || formData.coverImage,
         }
-        setCareer(resolveCareer(response.data))
+        const syncedCareer = resolveCareer(p)
+        const syncedCustomization = mergeCustomization(p.customization)
+
+        setFormData(syncedForm)
+        setCareer(syncedCareer)
+        setCustomization(syncedCustomization)
+        setSavedSnapshot(buildProfileSnapshot(toDraftForm(syncedForm), syncedCareer, syncedCustomization))
+        setSaveConfirmOpen(false)
         showToast('Perfil salvo com sucesso!', 'success')
       } else {
         showToast(response.error || 'Erro ao salvar perfil', 'error')
@@ -1119,7 +1231,15 @@ const PublicProfile = () => {
             />
 
             {/* Save Button */}
-            <div className="flex items-center justify-end gap-3 md:gap-4 bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
+              <p className="text-xs md:text-sm text-gray-500">
+                {hasUnsavedChanges
+                  ? `${pendingChanges.length} alteração(ões) pendente(s)`
+                  : profileExists
+                    ? 'Nenhuma alteração para salvar'
+                    : 'Preencha os dados e salve para criar seu perfil'}
+              </p>
+              <div className="flex items-center justify-end gap-3 md:gap-4">
               <button
                 type="button"
                 onClick={() => navigate(dashboardPath)}
@@ -1130,6 +1250,7 @@ const PublicProfile = () => {
               <LoadingButton
                 type="submit"
                 loading={isSaving}
+                disabled={!hasUnsavedChanges}
                 variant="primary"
                 size="lg"
                 icon={<SaveIcon sx={{ fontSize: 18 }} />}
@@ -1137,6 +1258,7 @@ const PublicProfile = () => {
               >
                 {profileExists ? 'Salvar Alterações' : 'Criar Perfil'}
               </LoadingButton>
+              </div>
             </div>
           </form>
         </div>
@@ -1155,6 +1277,47 @@ const PublicProfile = () => {
           </div>
         </div>
       </div>
+
+      <FormModal
+        isOpen={saveConfirmOpen}
+        onClose={() => !isSaving && setSaveConfirmOpen(false)}
+        title={profileExists ? 'Confirmar alterações' : 'Criar perfil público'}
+        description="Revise o que será atualizado antes de continuar."
+        size="md"
+      >
+        {pendingChanges.length > 0 ? (
+          <ul className="list-disc pl-5 space-y-1.5 text-sm text-gray-700">
+            {pendingChanges.map((change) => (
+              <li key={change}>{change}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-600">Nenhuma alteração detectada.</p>
+        )}
+        <p className="mt-4 text-sm text-gray-600">
+          Deseja realmente {profileExists ? 'salvar estas alterações' : 'criar seu perfil público'}?
+        </p>
+        <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setSaveConfirmOpen(false)}
+            disabled={isSaving}
+            className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
+          >
+            Voltar
+          </button>
+          <LoadingButton
+            type="button"
+            onClick={() => void executeSave()}
+            loading={isSaving}
+            disabled={pendingChanges.length === 0}
+            variant="primary"
+            className="px-4 py-2.5 font-semibold text-sm"
+          >
+            {profileExists ? 'Salvar alterações' : 'Criar perfil'}
+          </LoadingButton>
+        </div>
+      </FormModal>
     </div>
   )
 }
