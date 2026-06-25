@@ -10,6 +10,12 @@ import {
   projectCardClasses,
   isEnabled,
 } from '../utils/profileCustomization'
+import {
+  hasEducations,
+  hasRecognitions,
+  hasWorkExperiences,
+  resolveCareer,
+} from '../utils/profileCareer'
 import { blogService } from '../services/blog.service'
 import { recipeService } from '../services/recipe.service'
 import { useAuth } from '../contexts/AuthContext'
@@ -176,7 +182,11 @@ const PublicProfile = () => {
     const primaryColor = customization.primaryColor?.trim() || undefined
     const primaryColorSolid = primaryColor?.startsWith('#') && primaryColor.length === 7 ? primaryColor : undefined
     const primaryColorHexAlpha = primaryColorSolid ? `${primaryColorSolid}20` : undefined
+    const career = resolveCareer(profile)
     const canSubmitReview = isAuthenticated && user?.role === 'paciente'
+    const showExperience = isEnabled(customization.showExperience) && hasWorkExperiences(career)
+    const showEducation = isEnabled(customization.showEducation) && hasEducations(career)
+    const showAwards = isEnabled(customization.showAwards) && hasRecognitions(career)
 
     return {
       profile,
@@ -190,13 +200,10 @@ const PublicProfile = () => {
       showBio: isEnabled(customization.showBio) && Boolean(profile.bio?.trim()),
       showStats: isEnabled(customization.showStats) && (rating.count > 0 || patientsCount > 0),
       showServices: isEnabled(customization.showServices) && Boolean(profile.specialties?.length),
-      showExperience: isEnabled(customization.showExperience) && Boolean(profile.experience?.trim()),
-      showEducation: isEnabled(customization.showEducation) && Boolean(profile.education?.trim()),
-      showAwards: isEnabled(customization.showAwards) && Boolean(profile.awards?.trim()),
-      showProfessionalInfo:
-        (isEnabled(customization.showExperience) && Boolean(profile.experience?.trim())) ||
-        (isEnabled(customization.showEducation) && Boolean(profile.education?.trim())) ||
-        (isEnabled(customization.showAwards) && Boolean(profile.awards?.trim())),
+      showExperience,
+      showEducation,
+      showAwards,
+      showProfessionalInfo: showExperience || showEducation || showAwards,
       showContents: isEnabled(customization.showContents) && posts.length > 0,
       showRecipes: isEnabled(customization.showRecipes) && recipes.length > 0,
       showReviews: isEnabled(customization.showReviews) && (reviews.length > 0 || canSubmitReview),

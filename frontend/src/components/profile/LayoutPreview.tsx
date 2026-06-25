@@ -16,6 +16,13 @@ import {
   contentLayoutClass,
   projectCardClasses,
 } from '../../utils/profileCustomization'
+import {
+  formatCareerPeriod,
+  hasEducations,
+  hasRecognitions,
+  hasWorkExperiences,
+  resolveCareer,
+} from '../../utils/profileCareer'
 
 interface LayoutPreviewProps {
   profile: Partial<PublicProfile>
@@ -51,13 +58,14 @@ const PREVIEW_RECIPE_ITEMS = [
 const LayoutPreview = ({ profile, customization: rawCustomization }: LayoutPreviewProps) => {
   const customization = mergeCustomization(rawCustomization)
   const cardClasses = projectCardClasses(customization.projectCardStyle ?? 'simple')
+  const career = resolveCareer(profile as PublicProfile)
 
   const showBio = isEnabled(customization.showBio) && Boolean(profile.bio?.trim())
   const showStats = isEnabled(customization.showStats)
   const showServices = isEnabled(customization.showServices) && Boolean(profile.specialties?.length)
-  const showExperience = isEnabled(customization.showExperience) && Boolean(profile.experience?.trim())
-  const showEducation = isEnabled(customization.showEducation) && Boolean(profile.education?.trim())
-  const showAwards = isEnabled(customization.showAwards) && Boolean(profile.awards?.trim())
+  const showExperience = isEnabled(customization.showExperience) && hasWorkExperiences(career)
+  const showEducation = isEnabled(customization.showEducation) && hasEducations(career)
+  const showAwards = isEnabled(customization.showAwards) && hasRecognitions(career)
   const showProfessionalInfo = showExperience || showEducation || showAwards
   const showContents = isEnabled(customization.showContents)
   const showRecipes = isEnabled(customization.showRecipes)
@@ -239,28 +247,39 @@ const LayoutPreview = ({ profile, customization: rawCustomization }: LayoutPrevi
 
   const renderProfessionalInfo = () => {
     if (!showProfessionalInfo) return null
+    const work = career.workExperiences.filter((e) => e.title?.trim() || e.organization?.trim()).slice(0, 2)
+    const edu = career.educations.filter((e) => e.degree?.trim() || e.institution?.trim()).slice(0, 2)
+    const rec = career.recognitions.filter((e) => e.title?.trim()).slice(0, 2)
+
     return (
       <div className={`p-3 border-t ${borderClass}`}>
         <h3 className={`font-semibold text-xs ${textClass} mb-2`}>Trajetória profissional</h3>
         <div className="space-y-2">
-          {showExperience && (
-            <div className={`flex items-start gap-1.5 text-[10px] ${subtextClass}`}>
+          {showExperience && work.map((entry) => (
+            <div key={entry.id} className={`flex items-start gap-1.5 text-[10px] ${subtextClass}`}>
               <WorkIcon sx={{ fontSize: 12 }} />
-              <span className="line-clamp-2">{profile.experience}</span>
+              <span className="line-clamp-2">
+                <span className={`font-medium ${textClass}`}>{entry.title || entry.organization}</span>
+                {entry.organization && entry.title ? ` · ${entry.organization}` : ''}
+                {formatCareerPeriod(entry.startYear, entry.endYear) ? ` · ${formatCareerPeriod(entry.startYear, entry.endYear)}` : ''}
+              </span>
             </div>
-          )}
-          {showEducation && (
-            <div className={`flex items-start gap-1.5 text-[10px] ${subtextClass}`}>
+          ))}
+          {showEducation && edu.map((entry) => (
+            <div key={entry.id} className={`flex items-start gap-1.5 text-[10px] ${subtextClass}`}>
               <SchoolIcon sx={{ fontSize: 12 }} />
-              <span className="line-clamp-2">{profile.education}</span>
+              <span className="line-clamp-2">
+                <span className={`font-medium ${textClass}`}>{entry.degree || entry.institution}</span>
+                {entry.institution && entry.degree ? ` · ${entry.institution}` : ''}
+              </span>
             </div>
-          )}
-          {showAwards && (
-            <div className={`flex items-start gap-1.5 text-[10px] ${subtextClass}`}>
+          ))}
+          {showAwards && rec.map((entry) => (
+            <div key={entry.id} className={`flex items-start gap-1.5 text-[10px] ${subtextClass}`}>
               <EmojiEventsIcon sx={{ fontSize: 12 }} />
-              <span className="line-clamp-2">{profile.awards}</span>
+              <span className="line-clamp-2">{entry.title}{entry.year ? ` · ${entry.year}` : ''}</span>
             </div>
-          )}
+          ))}
         </div>
       </div>
     )

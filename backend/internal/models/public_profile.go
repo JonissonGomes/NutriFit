@@ -111,6 +111,35 @@ type ProfileCustomization struct {
 	ProjectCardStyle string            `bson:"projectCardStyle,omitempty" json:"projectCardStyle,omitempty"` // simple, detailed, overlay
 }
 
+// WorkExperienceItem experiência profissional estruturada (estilo LinkedIn)
+type WorkExperienceItem struct {
+	ID           string `bson:"id,omitempty" json:"id,omitempty"`
+	Title        string `bson:"title" json:"title"`
+	Organization string `bson:"organization,omitempty" json:"organization,omitempty"`
+	StartYear    string `bson:"startYear,omitempty" json:"startYear,omitempty"`
+	EndYear      string `bson:"endYear,omitempty" json:"endYear,omitempty"`
+	Description  string `bson:"description,omitempty" json:"description,omitempty"`
+}
+
+// EducationItem formação acadêmica estruturada
+type EducationItem struct {
+	ID          string `bson:"id,omitempty" json:"id,omitempty"`
+	Degree      string `bson:"degree" json:"degree"`
+	Institution string `bson:"institution,omitempty" json:"institution,omitempty"`
+	StartYear   string `bson:"startYear,omitempty" json:"startYear,omitempty"`
+	EndYear     string `bson:"endYear,omitempty" json:"endYear,omitempty"`
+	Description string `bson:"description,omitempty" json:"description,omitempty"`
+}
+
+// RecognitionItem prêmio ou reconhecimento estruturado
+type RecognitionItem struct {
+	ID          string `bson:"id,omitempty" json:"id,omitempty"`
+	Title       string `bson:"title" json:"title"`
+	Issuer      string `bson:"issuer,omitempty" json:"issuer,omitempty"`
+	Year        string `bson:"year,omitempty" json:"year,omitempty"`
+	Description string `bson:"description,omitempty" json:"description,omitempty"`
+}
+
 type PublicProfile struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	UserID        primitive.ObjectID `bson:"userId" json:"userId"`
@@ -125,8 +154,11 @@ type PublicProfile struct {
 	CAU           string             `bson:"cau,omitempty" json:"cau,omitempty"`
 	Specialties   []string           `bson:"specialties,omitempty" json:"specialties,omitempty"`
 	Boost         *Boost             `bson:"boost,omitempty" json:"boost,omitempty"`
-	Education     string             `bson:"education,omitempty" json:"education,omitempty"`
-	Awards        string             `bson:"awards,omitempty" json:"awards,omitempty"`
+	Education         string               `bson:"education,omitempty" json:"education,omitempty"`
+	Awards            string               `bson:"awards,omitempty" json:"awards,omitempty"`
+	WorkExperiences   []WorkExperienceItem `bson:"workExperiences,omitempty" json:"workExperiences,omitempty"`
+	Educations        []EducationItem      `bson:"educations,omitempty" json:"educations,omitempty"`
+	Recognitions      []RecognitionItem    `bson:"recognitions,omitempty" json:"recognitions,omitempty"`
 	Website       string             `bson:"website,omitempty" json:"website,omitempty"`
 	Email         string             `bson:"email,omitempty" json:"email,omitempty"`
 	Phone         string             `bson:"phone,omitempty" json:"phone,omitempty"`

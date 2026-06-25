@@ -15,6 +15,14 @@ import FavoriteIcon from '@mui/icons-material/Favorite'
 import { INPUT_LIMITS, limitLength, sanitizeText } from '../../../utils/inputUtils'
 import { resolveMediaUrl } from '../../../utils/mediaUrl'
 import { contentItemClass } from '../../../utils/profileCustomization'
+import {
+  formatCareerPeriod,
+  formatRecognitionYear,
+  resolveCareer,
+  type EducationEntry,
+  type RecognitionEntry,
+  type WorkExperienceEntry,
+} from '../../../utils/profileCareer'
 import type { PublicProfileViewState } from './types'
 
 export function ProfileFavoriteButton({ state, className = '' }: { state: PublicProfileViewState; className?: string }) {
@@ -34,36 +42,145 @@ export function ProfileFavoriteButton({ state, className = '' }: { state: Public
   )
 }
 
-export function ProfileProfessionalSection({ state }: { state: PublicProfileViewState }) {
-  if (!state.showProfessionalInfo) return null
-  const { profile, showExperience, showEducation, showAwards } = state
+function TimelineEntry({
+  icon,
+  title,
+  subtitle,
+  period,
+  description,
+  isLast,
+}: {
+  icon: React.ReactNode
+  title: string
+  subtitle?: string
+  period?: string
+  description?: string
+  isLast?: boolean
+}) {
+  return (
+    <div className="relative flex gap-4 pb-8 last:pb-0">
+      {!isLast ? (
+        <div className="absolute left-5 top-10 bottom-0 w-px bg-gray-200" aria-hidden />
+      ) : null}
+      <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary-100 bg-primary-50 text-primary-700">
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1 pt-0.5">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h4 className="font-semibold text-gray-900 leading-snug">{title}</h4>
+            {subtitle ? <p className="text-sm text-gray-600 mt-0.5">{subtitle}</p> : null}
+          </div>
+          {period ? (
+            <span className="text-sm text-gray-500 shrink-0 sm:ml-4 sm:text-right whitespace-nowrap">
+              {period}
+            </span>
+          ) : null}
+        </div>
+        {description ? (
+          <p className="mt-2 text-sm text-gray-700 leading-relaxed whitespace-pre-line">{description}</p>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function WorkTimeline({ entries }: { entries: WorkExperienceEntry[] }) {
+  const valid = entries.filter((e) => e.title?.trim() || e.organization?.trim())
+  if (!valid.length) return null
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {showExperience && (
-        <div className="rounded-xl border border-gray-200 p-4 bg-white">
-          <div className="flex items-center gap-2 text-primary-700 font-semibold text-sm">
-            <WorkIcon sx={{ fontSize: 18 }} /> Experiência
-          </div>
-          <p className="mt-2 text-sm text-gray-700 leading-relaxed">{profile.experience}</p>
-        </div>
-      )}
-      {showEducation && (
-        <div className="rounded-xl border border-gray-200 p-4 bg-white">
-          <div className="flex items-center gap-2 text-primary-700 font-semibold text-sm">
-            <SchoolIcon sx={{ fontSize: 18 }} /> Formação
-          </div>
-          <p className="mt-2 text-sm text-gray-700 leading-relaxed">{profile.education}</p>
-        </div>
-      )}
-      {showAwards && (
-        <div className="rounded-xl border border-gray-200 p-4 bg-white">
-          <div className="flex items-center gap-2 text-primary-700 font-semibold text-sm">
-            <EmojiEventsIcon sx={{ fontSize: 18 }} /> Reconhecimentos
-          </div>
-          <p className="mt-2 text-sm text-gray-700 leading-relaxed whitespace-pre-line">{profile.awards}</p>
-        </div>
-      )}
+    <div className="mb-8 last:mb-0">
+      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+        <WorkIcon sx={{ fontSize: 20 }} className="text-primary-600" />
+        Experiência
+      </h3>
+      <div>
+        {valid.map((entry, index) => (
+          <TimelineEntry
+            key={entry.id}
+            icon={<WorkIcon sx={{ fontSize: 18 }} />}
+            title={entry.title?.trim() || entry.organization?.trim() || ''}
+            subtitle={entry.title?.trim() && entry.organization?.trim() ? entry.organization : undefined}
+            period={formatCareerPeriod(entry.startYear, entry.endYear)}
+            description={entry.description?.trim()}
+            isLast={index === valid.length - 1}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function EducationTimeline({ entries }: { entries: EducationEntry[] }) {
+  const valid = entries.filter((e) => e.degree?.trim() || e.institution?.trim())
+  if (!valid.length) return null
+
+  return (
+    <div className="mb-8 last:mb-0">
+      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+        <SchoolIcon sx={{ fontSize: 20 }} className="text-primary-600" />
+        Formação acadêmica
+      </h3>
+      <div>
+        {valid.map((entry, index) => (
+          <TimelineEntry
+            key={entry.id}
+            icon={<SchoolIcon sx={{ fontSize: 18 }} />}
+            title={entry.degree?.trim() || entry.institution?.trim() || ''}
+            subtitle={entry.degree?.trim() && entry.institution?.trim() ? entry.institution : undefined}
+            period={formatCareerPeriod(entry.startYear, entry.endYear)}
+            description={entry.description?.trim()}
+            isLast={index === valid.length - 1}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function RecognitionTimeline({ entries }: { entries: RecognitionEntry[] }) {
+  const valid = entries.filter((e) => e.title?.trim())
+  if (!valid.length) return null
+
+  return (
+    <div className="mb-8 last:mb-0">
+      <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 mb-4">
+        <EmojiEventsIcon sx={{ fontSize: 20 }} className="text-primary-600" />
+        Prêmios e reconhecimentos
+      </h3>
+      <div>
+        {valid.map((entry, index) => (
+          <TimelineEntry
+            key={entry.id}
+            icon={<EmojiEventsIcon sx={{ fontSize: 18 }} />}
+            title={entry.title.trim()}
+            subtitle={entry.issuer?.trim()}
+            period={formatRecognitionYear(entry.year)}
+            description={entry.description?.trim()}
+            isLast={index === valid.length - 1}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function ProfileProfessionalSection({ state }: { state: PublicProfileViewState }) {
+  if (!state.showProfessionalInfo) return null
+
+  const career = resolveCareer(state.profile)
+  const showWork = state.showExperience && career.workExperiences.some((e) => e.title?.trim() || e.organization?.trim())
+  const showEdu = state.showEducation && career.educations.some((e) => e.degree?.trim() || e.institution?.trim())
+  const showRec = state.showAwards && career.recognitions.some((e) => e.title?.trim())
+
+  if (!showWork && !showEdu && !showRec) return null
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+      <WorkTimeline entries={showWork ? career.workExperiences : []} />
+      <EducationTimeline entries={showEdu ? career.educations : []} />
+      <RecognitionTimeline entries={showRec ? career.recognitions : []} />
     </div>
   )
 }

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import WorkIcon from '@mui/icons-material/Work'
-import SchoolIcon from '@mui/icons-material/School'
 import EmailIcon from '@mui/icons-material/Email'
 import PhoneIcon from '@mui/icons-material/Phone'
 import LanguageIcon from '@mui/icons-material/Language'
@@ -26,6 +25,23 @@ import { resolveMediaUrl } from '../../utils/mediaUrl'
 type PublicProfileType = ProfileServicePublicProfile
 import LayoutCustomizer from '../../components/profile/LayoutCustomizer'
 import LayoutPreview from '../../components/profile/LayoutPreview'
+import CareerEntryList, {
+  EDUCATION_FIELDS,
+  RECOGNITION_FIELDS,
+  WORK_EXPERIENCE_FIELDS,
+} from '../../components/profile/CareerEntryList'
+import {
+  createEducation,
+  createRecognition,
+  createWorkExperience,
+  resolveCareer,
+  sanitizeEducations,
+  sanitizeRecognitions,
+  sanitizeWorkExperiences,
+  type EducationEntry,
+  type RecognitionEntry,
+  type WorkExperienceEntry,
+} from '../../utils/profileCareer'
 
 const PROFESSIONAL_SPECIALTIES = [
   'Alergias alimentares',
@@ -94,10 +110,14 @@ const PublicProfile = () => {
     facebook: '',
     facebookUrl: '',
     specialties: [] as string[],
-    awards: '',
-    education: '',
     avatar: '',
     coverImage: '',
+  })
+
+  const [career, setCareer] = useState({
+    workExperiences: [] as WorkExperienceEntry[],
+    educations: [] as EducationEntry[],
+    recognitions: [] as RecognitionEntry[],
   })
 
   const [locationQuery, setLocationQuery] = useState('')
@@ -195,11 +215,10 @@ const PublicProfile = () => {
           facebook: profile.social?.facebook?.username || '',
           facebookUrl: profile.social?.facebook?.url || '',
           specialties: profile.specialties || [],
-          awards: profile.awards || '',
-          education: profile.education || '',
           avatar: profile.avatar || '',
           coverImage: profile.coverImage || '',
         })
+        setCareer(resolveCareer(profile))
         setLocationQuery(
           profile.location?.address?.city
             ? `${profile.location.address.city}, ${profile.location.address.state}`
@@ -304,14 +323,6 @@ const PublicProfile = () => {
       case 'facebookUrl':
         sanitizedValue = sanitizeUrl(value)
         sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.WEBSITE)
-        break
-      case 'education':
-        sanitizedValue = sanitizeText(value, [' ', ',', '.', '-', '/', '(', ')', '+'])
-        sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.EDUCATION)
-        break
-      case 'awards':
-        sanitizedValue = sanitizeText(value, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';', '(', ')', '/'])
-        sanitizedValue = limitLength(sanitizedValue, INPUT_LIMITS.AWARDS)
         break
       default:
         sanitizedValue = sanitizeText(value, [' ', ',', '.', '-', ':', ';'])
@@ -481,8 +492,11 @@ const PublicProfile = () => {
         email: formData.email.toLowerCase().trim(),
         phone: formData.phone ? unmask(formData.phone) : undefined,
         specialties: formData.specialties,
-        awards: sanitizeText(formData.awards, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';']),
-        education: sanitizeText(formData.education, [' ', ',', '.', '-', '/']),
+        workExperiences: sanitizeWorkExperiences(career.workExperiences),
+        educations: sanitizeEducations(career.educations),
+        recognitions: sanitizeRecognitions(career.recognitions),
+        education: '',
+        awards: '',
         customization: mergeCustomization(customization),
         location: formData.location ? {
           address: {
@@ -515,6 +529,7 @@ const PublicProfile = () => {
         if (response.data.customization) {
           setCustomization(mergeCustomization(response.data.customization))
         }
+        setCareer(resolveCareer(response.data))
         showToast('Perfil salvo com sucesso!', 'success')
       } else {
         showToast(response.error || 'Erro ao salvar perfil', 'error')
@@ -533,9 +548,13 @@ const PublicProfile = () => {
     username: formData.username,
     bio: formData.bio,
     specialty: formData.specialty,
+    experience: formData.experience,
     avatar: formData.avatar,
     coverImage: formData.coverImage,
     specialties: formData.specialties,
+    workExperiences: career.workExperiences,
+    educations: career.educations,
+    recognitions: career.recognitions,
     email: formData.email,
     phone: formData.phone,
     projectsCount: 12,
@@ -804,7 +823,7 @@ const PublicProfile = () => {
 
                 <div>
                   <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                    Experiência
+                    Resumo de experiência (opcional)
                   </label>
                   <input
                     type="text"
@@ -813,8 +832,9 @@ const PublicProfile = () => {
                     onChange={handleChange}
                     maxLength={INPUT_LIMITS.EXPERIENCE}
                     className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Ex: 10+ anos"
+                    placeholder="Ex: 10+ anos de atuação"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Texto curto exibido em buscas. Detalhes completos na trajetória abaixo.</p>
                 </div>
 
                 {(user?.role === 'nutricionista' || user?.role === 'medico') && (
@@ -920,41 +940,47 @@ const PublicProfile = () => {
 
             {/* Professional Info */}
             <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
-              <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Informações Profissionais</h2>
-              
-              <div className="space-y-3 md:space-y-4">
-                <div>
-                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                    <SchoolIcon sx={{ fontSize: 16 }} />
-                    Formação Acadêmica
-                  </label>
-                  <input
-                    type="text"
-                    name="education"
-                    value={formData.education}
-                    onChange={handleChange}
-                    maxLength={INPUT_LIMITS.EDUCATION}
-                    className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Ex: FAU-USP, Pós-graduação em..."
+              <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-1">Trajetória profissional</h2>
+              <p className="text-xs md:text-sm text-gray-500 mb-5">
+                Adicione experiências, formações e reconhecimentos no estilo LinkedIn. Você pode incluir vários itens em cada seção.
+              </p>
+
+              <div className="space-y-6 md:space-y-8">
+                <CareerEntryList
+                  title="Experiência profissional"
+                  description="Cargos, clínicas, hospitais e consultórios onde você atuou."
+                  entries={career.workExperiences}
+                  fields={WORK_EXPERIENCE_FIELDS}
+                  emptyLabel="Nenhuma experiência adicionada ainda."
+                  addLabel="Adicionar experiência"
+                  onChange={(workExperiences) => setCareer((prev) => ({ ...prev, workExperiences }))}
+                  createEntry={createWorkExperience}
+                />
+
+                <div className="border-t border-gray-100 pt-6">
+                  <CareerEntryList
+                    title="Formação acadêmica"
+                    description="Graduação, especializações, mestrado, doutorado e cursos relevantes."
+                    entries={career.educations}
+                    fields={EDUCATION_FIELDS}
+                    emptyLabel="Nenhuma formação adicionada ainda."
+                    addLabel="Adicionar formação"
+                    onChange={(educations) => setCareer((prev) => ({ ...prev, educations }))}
+                    createEntry={createEducation}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                    Prêmios e Reconhecimentos
-                  </label>
-                  <textarea
-                    name="awards"
-                    value={formData.awards}
-                    onChange={handleChange}
-                    rows={3}
-                    maxLength={INPUT_LIMITS.AWARDS}
-                    className="w-full px-3 md:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Liste seus prêmios e reconhecimentos..."
+                <div className="border-t border-gray-100 pt-6">
+                  <CareerEntryList
+                    title="Prêmios e reconhecimentos"
+                    description="Certificações, premiações e distinções profissionais."
+                    entries={career.recognitions}
+                    fields={RECOGNITION_FIELDS}
+                    emptyLabel="Nenhum reconhecimento adicionado ainda."
+                    addLabel="Adicionar reconhecimento"
+                    onChange={(recognitions) => setCareer((prev) => ({ ...prev, recognitions }))}
+                    createEntry={createRecognition}
                   />
-                <p className="text-xs text-gray-500 mt-1">
-                  {formData.awards.length}/{INPUT_LIMITS.AWARDS} caracteres
-                </p>
                 </div>
               </div>
             </div>

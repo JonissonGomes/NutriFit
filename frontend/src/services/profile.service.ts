@@ -71,6 +71,32 @@ export interface Ratings {
   distribution?: Record<string, number>
 }
 
+export interface WorkExperienceEntry {
+  id: string
+  title: string
+  organization?: string
+  startYear?: string
+  endYear?: string
+  description?: string
+}
+
+export interface EducationEntry {
+  id: string
+  degree: string
+  institution?: string
+  startYear?: string
+  endYear?: string
+  description?: string
+}
+
+export interface RecognitionEntry {
+  id: string
+  title: string
+  issuer?: string
+  year?: string
+  description?: string
+}
+
 export interface PublicProfile {
   id: string
   userId: string
@@ -86,6 +112,9 @@ export interface PublicProfile {
   specialties?: string[]
   education?: string
   awards?: string
+  workExperiences?: WorkExperienceEntry[]
+  educations?: EducationEntry[]
+  recognitions?: RecognitionEntry[]
   website?: string
   email?: string
   phone?: string
