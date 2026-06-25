@@ -21,6 +21,32 @@ interface LayoutPreviewProps {
   customization: ProfileCustomization
 }
 
+const PREVIEW_CONTENT_ITEMS = [
+  {
+    image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=480&h=320&fit=crop',
+    title: 'Alimentação equilibrada',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=480&h=320&fit=crop',
+    title: 'Saladas nutritivas',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=480&h=320&fit=crop',
+    title: 'Refeições coloridas',
+  },
+] as const
+
+const PREVIEW_RECIPE_ITEMS = [
+  {
+    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=320&h=200&fit=crop',
+    title: 'Salmão grelhado',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=320&h=200&fit=crop',
+    title: 'Bowl proteico',
+  },
+] as const
+
 const LayoutPreview = ({ profile, customization: rawCustomization }: LayoutPreviewProps) => {
   const customization = mergeCustomization(rawCustomization)
   const cardClasses = projectCardClasses(customization.projectCardStyle ?? 'simple')
@@ -191,6 +217,10 @@ const LayoutPreview = ({ profile, customization: rawCustomization }: LayoutPrevi
 
   const renderContents = () => {
     if (!showContents) return null
+    const cardStyle = customization.projectCardStyle ?? 'simple'
+    const isOverlay = cardStyle === 'overlay'
+    const showText = cardStyle === 'detailed' || isOverlay
+
     return (
       <div className={`border-t ${borderClass}`}>
         <div className="px-3 pt-3 pb-1">
@@ -198,13 +228,19 @@ const LayoutPreview = ({ profile, customization: rawCustomization }: LayoutPrevi
         </div>
         <div className="p-3">
           <div className={contentsLayout}>
-            {[1, 2, 3].map((n) => (
-              <div key={n} className={cardClasses.wrapper}>
-                <div className={`${cardClasses.image} bg-gradient-to-r from-primary-400 to-accent-400`} />
-                <div className={cardClasses.body}>
-                  <p className={`${cardClasses.title} ${textClass}`}>Exemplo de conteúdo {n}</p>
-                  <p className={cardClasses.excerpt}>Prévia do layout selecionado</p>
-                </div>
+            {PREVIEW_CONTENT_ITEMS.map((item) => (
+              <div key={item.image} className={cardClasses.wrapper}>
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className={cardClasses.image}
+                  loading="lazy"
+                />
+                {showText ? (
+                  <div className={cardClasses.body}>
+                    <p className={`${cardClasses.title} ${isOverlay ? '' : textClass}`}>{item.title}</p>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -219,10 +255,15 @@ const LayoutPreview = ({ profile, customization: rawCustomization }: LayoutPrevi
       <div className={`border-t ${borderClass} p-3`}>
         <h3 className={`font-semibold text-xs ${textClass} mb-2`}>Receitas</h3>
         <div className="grid grid-cols-2 gap-2">
-          {[1, 2].map((n) => (
-            <div key={n} className={`${cardBgClass} border ${borderClass} rounded-lg p-2`}>
-              <div className="h-10 rounded bg-gray-200 mb-1" />
-              <p className={`text-[10px] font-semibold ${textClass}`}>Receita {n}</p>
+          {PREVIEW_RECIPE_ITEMS.map((item) => (
+            <div key={item.image} className={`${cardBgClass} border ${borderClass} rounded-lg overflow-hidden`}>
+              <img
+                src={item.image}
+                alt={item.title}
+                className="w-full h-14 object-cover"
+                loading="lazy"
+              />
+              <p className={`text-[10px] font-semibold ${textClass} px-2 py-1.5 truncate`}>{item.title}</p>
             </div>
           ))}
         </div>
