@@ -94,9 +94,9 @@ type BlogComment struct {
 
 // CreateBlogPostRequest representa a requisição para criar um post
 type CreateBlogPostRequest struct {
-	Title         string       `json:"title" binding:"required,min=5,max=200"`
-	Excerpt       string       `json:"excerpt" binding:"required,min=10,max=500"`
-	Content       string       `json:"content" binding:"required,min=100"`
+	Title         string       `json:"title" binding:"required,min=5,max=80"`
+	Excerpt       string       `json:"excerpt" binding:"required,min=20,max=320"`
+	Content       string       `json:"content" binding:"required,min=80,max=2000"`
 	FeaturedImage string       `json:"featuredImage,omitempty"`
 	Category      BlogCategory `json:"category" binding:"required"`
 	Tags          []string     `json:"tags,omitempty"`

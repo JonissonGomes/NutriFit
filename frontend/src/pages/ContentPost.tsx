@@ -5,6 +5,7 @@ import type { BlogPost } from '../services/blog.service'
 import ReactMarkdown from 'react-markdown'
 import InlineAlert from '../components/common/InlineAlert'
 import LoadingState from '../components/common/LoadingState'
+import { BlogPostDateMeta } from '../components/blog/BlogPostDateMeta'
 import { getFriendlyErrorMessage } from '../utils/feedbackMessages'
 
 const ContentPost = () => {
@@ -62,9 +63,12 @@ const ContentPost = () => {
           <div className="p-6 md:p-8">
             <h1 className="app-page-title">{post.title}</h1>
             <p className="text-sm text-gray-600 mt-2">{post.excerpt}</p>
-            <p className="text-xs text-gray-500 mt-4">
-              {post.author?.name ? `Por ${post.author.name}` : 'Autor NuFit'} • {post.readTime || 1} min de leitura
-            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+              <span>{post.author?.name ? `Por ${post.author.name}` : 'Autor NuFit'}</span>
+              <span aria-hidden>·</span>
+              <span>{post.readTime || 1} min de leitura</span>
+            </div>
+            <BlogPostDateMeta post={post} className="mt-2" />
 
             <div className="mt-6 text-gray-700">
               <ReactMarkdown

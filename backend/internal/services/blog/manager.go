@@ -23,10 +23,11 @@ import (
 // ============================================
 
 var (
-	ErrPostNotFound     = errors.New("post não encontrado")
-	ErrUnauthorized     = errors.New("não autorizado")
+	ErrPostNotFound      = errors.New("post não encontrado")
+	ErrUnauthorized      = errors.New("não autorizado")
 	ErrSlugAlreadyExists = errors.New("slug já existe")
-	ErrAlreadyLiked     = errors.New("você já curtiu este post")
+	ErrAlreadyLiked      = errors.New("você já curtiu este post")
+	ErrInvalidData       = errors.New("dados inválidos")
 )
 
 // ============================================
@@ -71,13 +72,29 @@ func generateSlug(title string) string {
 	return slug
 }
 
-// calculateReadTime calcula o tempo de leitura em minutos
-func calculateReadTime(content string) int {
-	// Média de 200 palavras por minuto
-	words := len(strings.Fields(content))
+// calculateReadTime calcula o tempo de leitura em minutos (título + resumo + conteúdo).
+func calculateReadTime(parts ...string) int {
+	var b strings.Builder
+	for _, part := range parts {
+		p := strings.TrimSpace(part)
+		if p == "" {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(p)
+	}
+	words := len(strings.Fields(b.String()))
+	if words == 0 {
+		return 1
+	}
 	readTime := words / 200
 	if readTime < 1 {
 		readTime = 1
+	}
+	if readTime > 2 {
+		readTime = 2
 	}
 	return readTime
 }
@@ -219,7 +236,7 @@ func CreatePost(ctx context.Context, authorID, authorName, authorAvatar, authorU
 		CommentsCount: 0,
 		SEO:           req.SEO,
 		Featured:      false,
-		ReadTime:      calculateReadTime(req.Content),
+		ReadTime:      calculateReadTime(req.Title, req.Excerpt, req.Content),
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
@@ -388,6 +405,9 @@ func UpdatePost(ctx context.Context, postID, userID string, req models.UpdateBlo
 	}
 
 	if req.Title != "" {
+		if !validateTitle(req.Title) {
+			return nil, ErrInvalidData
+		}
 		update["$set"].(bson.M)["title"] = req.Title
 		// Atualizar slug se título mudou
 		newSlug := generateSlug(req.Title)
@@ -403,12 +423,26 @@ func UpdatePost(ctx context.Context, postID, userID string, req models.UpdateBlo
 	}
 
 	if req.Excerpt != "" {
+		if !validateExcerpt(req.Excerpt) {
+			return nil, ErrInvalidData
+		}
 		update["$set"].(bson.M)["excerpt"] = req.Excerpt
 	}
 
 	if req.Content != "" {
+		if !validateContent(req.Content) {
+			return nil, ErrInvalidData
+		}
 		update["$set"].(bson.M)["content"] = req.Content
-		update["$set"].(bson.M)["readTime"] = calculateReadTime(req.Content)
+		nextTitle := post.Title
+		nextExcerpt := post.Excerpt
+		if req.Title != "" {
+			nextTitle = req.Title
+		}
+		if req.Excerpt != "" {
+			nextExcerpt = req.Excerpt
+		}
+		update["$set"].(bson.M)["readTime"] = calculateReadTime(nextTitle, nextExcerpt, req.Content)
 	}
 
 	if req.FeaturedImage != "" {

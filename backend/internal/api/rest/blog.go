@@ -401,6 +401,10 @@ func updateBlogPost(c *gin.Context) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Você não tem permissão para editar este post"})
 			return
 		}
+		if err == blog.ErrInvalidData {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Título, resumo ou conteúdo fora dos limites permitidos"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar post"})
 		return
 	}
