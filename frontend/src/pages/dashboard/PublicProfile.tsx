@@ -483,7 +483,7 @@ const PublicProfile = () => {
         specialties: formData.specialties,
         awards: sanitizeText(formData.awards, ['\n', ' ', '.', ',', '!', '?', '-', ':', ';']),
         education: sanitizeText(formData.education, [' ', ',', '.', '-', '/']),
-        customization,
+        customization: mergeCustomization(customization),
         location: formData.location ? {
           address: {
             city: formData.location.split(',')[0]?.trim() || '',
@@ -512,6 +512,9 @@ const PublicProfile = () => {
 
       if (response.data) {
         setProfileExists(true)
+        if (response.data.customization) {
+          setCustomization(mergeCustomization(response.data.customization))
+        }
         showToast('Perfil salvo com sucesso!', 'success')
       } else {
         showToast(response.error || 'Erro ao salvar perfil', 'error')

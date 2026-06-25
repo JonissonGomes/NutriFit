@@ -44,6 +44,7 @@ func GetProfileByUserID(ctx context.Context, userID string) (*models.PublicProfi
 	}
 
 	EnrichProfileMedia(ctx, &profile)
+	applyCustomizationToProfile(&profile)
 	return &profile, nil
 }
 
@@ -61,6 +62,7 @@ func GetProfileByUsername(ctx context.Context, username string) (*models.PublicP
 	}
 
 	EnrichProfileMedia(ctx, &profile)
+	applyCustomizationToProfile(&profile)
 	return &profile, nil
 }
 
@@ -146,6 +148,14 @@ func UpdateProfile(ctx context.Context, userID string, updates map[string]interf
 			}
 			updates["username"] = newUsername
 		}
+	}
+
+	if rawCustomization, ok := updates["customization"]; ok {
+		parsed, err := ParseCustomizationUpdate(rawCustomization)
+		if err != nil {
+			return nil, ErrInvalidData
+		}
+		updates["customization"] = parsed
 	}
 
 	updates["updatedAt"] = time.Now()
