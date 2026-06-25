@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Info, Loader2, Plus, Save, Sparkles } from 'lucide-react'
 import { anamnesisService, anthropometricService, labExamService, mealPlanService, patientService } from '../../services'
 import { useToast } from '../../contexts/ToastContext'
-import { sanitizeInput, limitLength } from '../../utils/inputUtils'
+import { sanitizeInput, limitLength, maskHeight, maskWeight, parseDecimalInput } from '../../utils/inputUtils'
 import type { ClinicalSnapshot, MealPlanCategory, MealPlanStatus, MealType } from '../../types/api'
 
 const categoryLabel: Record<MealPlanCategory, string> = {
@@ -88,6 +88,25 @@ const MealPlanCreate = () => {
   const selectedPlatformPatientId = useMemo(() => String(selectedPatient?.userId || '').trim(), [selectedPatient])
   const canSave = useMemo(() => title.trim().length >= 3 && patientId.trim().length > 0, [title, patientId])
 
+  const canGenerateAI = useMemo(() => {
+    const cal = Number(calories)
+    const p = Number(proteins)
+    const c = Number(carbohydrates)
+    const f = Number(fats)
+    const mpd = Number(mealsPerDay)
+    return cal > 0 && p > 0 && c > 0 && f > 0 && mpd >= 3
+  }, [calories, proteins, carbohydrates, fats, mealsPerDay])
+
+  const aiMissingFields = useMemo(() => {
+    const missing: string[] = []
+    if (!(Number(calories) > 0)) missing.push('calorias alvo')
+    if (!(Number(proteins) > 0)) missing.push('proteínas')
+    if (!(Number(carbohydrates) > 0)) missing.push('carboidratos')
+    if (!(Number(fats) > 0)) missing.push('gorduras')
+    if (!(Number(mealsPerDay) >= 3)) missing.push('refeições por dia (mín. 3)')
+    return missing
+  }, [calories, proteins, carbohydrates, fats, mealsPerDay])
+
   useEffect(() => {
     const loadPatients = async () => {
       const res = await patientService.list()
@@ -120,8 +139,8 @@ const MealPlanCreate = () => {
       const latest = sortedAnthro[0]
       setLatestAnthro(latest || null)
       if (latest) {
-        if (!height && latest.height) setHeight(String(latest.height))
-        if (!weight && latest.weight) setWeight(String(latest.weight))
+        if (!height && latest.height) setHeight(maskHeight(String(latest.height).replace('.', ',')))
+        if (!weight && latest.weight) setWeight(maskWeight(String(latest.weight).replace('.', ',')))
       }
 
       const exams = (((labsRes.data as any)?.data || []) as any[]).sort((a, b) => {
@@ -152,15 +171,15 @@ const MealPlanCreate = () => {
   }
 
   const generateAIDraft = async () => {
+    if (!canGenerateAI) {
+      showToast('Preencha calorias, macros e refeições por dia para gerar rascunho com IA.', 'warning')
+      return
+    }
     const cal = Number(calories)
     const p = Number(proteins)
     const c = Number(carbohydrates)
     const f = Number(fats)
     const mpd = Number(mealsPerDay)
-    if (!(cal > 0 && p > 0 && c > 0 && f > 0 && mpd >= 3)) {
-      showToast('Preencha calorias/macros e refeições por dia para gerar rascunho com IA.', 'warning')
-      return
-    }
     setAIGenerating(true)
     try {
       const res = await mealPlanService.generateWithAI({
@@ -246,8 +265,8 @@ const MealPlanCreate = () => {
         phone: selectedPatient?.phone || undefined,
         age: toInt(age),
         sex: sex.trim() || undefined,
-        height: toNumber(height),
-        weight: toNumber(weight),
+        height: parseDecimalInput(height),
+        weight: parseDecimalInput(weight),
       },
       energy: {
         objective: objective.trim() || undefined,
@@ -322,31 +341,35 @@ const MealPlanCreate = () => {
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <h1 className="app-page-title">Novo plano alimentar</h1>
-          <p className="text-gray-600 mt-1">Wizard: paciente, baseline, estratégia e revisão final.</p>
+          <p className="text-gray-600 mt-1">
+            Monte o plano em quatro etapas: paciente, avaliação clínica, metas nutricionais e revisão final.
+          </p>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <div className="flex items-center gap-3">
+      <div className="bg-white border border-gray-200 rounded-xl p-4 md:p-6">
+        <div className="max-w-xl mx-auto">
+          <div className="flex items-center justify-center gap-2 md:gap-4">
           {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="flex-1">
-              <div className="flex items-center">
+            <div key={n} className="flex items-center">
+              <div className="flex flex-col items-center min-w-[4.5rem]">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-bold ${
                     n <= step ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500'
                   }`}
                 >
                   {n}
                 </div>
-                {n !== 4 ? (
-                  <div className={`flex-1 h-[2px] mx-2 ${n < step ? 'bg-primary-600' : 'bg-gray-200'}`} />
-                ) : null}
+                <div className={`mt-2 text-xs font-semibold text-center ${n <= step ? 'text-primary-700' : 'text-gray-400'}`}>
+                  {n === 1 ? 'Paciente' : n === 2 ? 'Avaliação' : n === 3 ? 'Macros' : 'Revisão'}
+                </div>
               </div>
-              <div className={`mt-2 text-xs font-semibold ${n <= step ? 'text-primary-700' : 'text-gray-400'}`}>
-                {n === 1 ? 'Paciente' : n === 2 ? 'Baseline' : n === 3 ? 'Estratégia' : 'Revisão'}
-              </div>
+              {n !== 4 ? (
+                <div className={`w-8 md:w-14 h-[2px] mx-1 md:mx-2 mb-5 ${n < step ? 'bg-primary-600' : 'bg-gray-200'}`} />
+              ) : null}
             </div>
           ))}
+          </div>
         </div>
       </div>
 
@@ -424,8 +447,26 @@ const MealPlanCreate = () => {
                   ))}
                 </select>
               </div>
-              <div><label className="text-sm font-semibold">Altura (cm)</label><input value={height} onChange={(e) => setHeight(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">Peso (kg)</label><input value={weight} onChange={(e) => setWeight(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
+              <div>
+                <label className="text-sm font-semibold">Altura (cm)</label>
+                <input
+                  value={height}
+                  onChange={(e) => setHeight(maskHeight(e.target.value))}
+                  inputMode="decimal"
+                  placeholder="Ex.: 175"
+                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold">Peso (kg)</label>
+                <input
+                  value={weight}
+                  onChange={(e) => setWeight(maskWeight(e.target.value))}
+                  inputMode="decimal"
+                  placeholder="Ex.: 72,5"
+                  className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300"
+                />
+              </div>
               <div>
                 <label className="text-sm font-semibold">Nível de atividade</label>
                 <select
@@ -499,18 +540,58 @@ const MealPlanCreate = () => {
 
         {step === 3 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div><label className="text-sm font-semibold">Calorias alvo</label><input value={calories} onChange={(e) => setCalories(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">Proteínas (g)</label><input value={proteins} onChange={(e) => setProteins(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">Carboidratos (g)</label><input value={carbohydrates} onChange={(e) => setCarbohydrates(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">Gorduras (g)</label><input value={fats} onChange={(e) => setFats(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
-              <div><label className="text-sm font-semibold">Refeições por dia</label><input value={mealsPerDay} onChange={(e) => setMealsPerDay(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" /></div>
+            <div className="rounded-xl border border-primary-100 bg-primary-50/60 p-4 text-sm text-gray-700 space-y-2">
+              <p>
+                <b>Metas nutricionais:</b> com base no baseline do paciente, defina o alvo calórico e a distribuição de macronutrientes que orientarão o plano.
+              </p>
+              <p>
+                <b>Como usar:</b> preencha calorias, proteínas, carboidratos, gorduras e quantas refeições por dia deseja. Com esses dados, a IA pode sugerir um rascunho de cardápio — ou você pode montar as refeições manualmente abaixo.
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={() => void generateAIDraft()} disabled={aiGenerating} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-600 text-white font-semibold hover:bg-accent-700 disabled:opacity-60">
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-sm font-semibold">Calorias alvo</label>
+                <input value={calories} onChange={(e) => setCalories(e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="Ex.: 2000" className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" />
+                <p className="text-xs text-gray-500 mt-1">Energia diária desejada (kcal)</p>
+              </div>
+              <div>
+                <label className="text-sm font-semibold">Proteínas (g)</label>
+                <input value={proteins} onChange={(e) => setProteins(e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="Ex.: 120" className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" />
+                <p className="text-xs text-gray-500 mt-1">Massa magra e saciedade</p>
+              </div>
+              <div>
+                <label className="text-sm font-semibold">Carboidratos (g)</label>
+                <input value={carbohydrates} onChange={(e) => setCarbohydrates(e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="Ex.: 200" className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" />
+                <p className="text-xs text-gray-500 mt-1">Energia e desempenho</p>
+              </div>
+              <div>
+                <label className="text-sm font-semibold">Gorduras (g)</label>
+                <input value={fats} onChange={(e) => setFats(e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="Ex.: 60" className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" />
+                <p className="text-xs text-gray-500 mt-1">Hormônios e absorção de vitaminas</p>
+              </div>
+              <div>
+                <label className="text-sm font-semibold">Refeições por dia</label>
+                <input value={mealsPerDay} onChange={(e) => setMealsPerDay(e.target.value.replace(/\D/g, ''))} inputMode="numeric" placeholder="Ex.: 5" className="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" />
+                <p className="text-xs text-gray-500 mt-1">Mínimo de 3 para gerar com IA</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void generateAIDraft()}
+                disabled={aiGenerating || !canGenerateAI}
+                title={!canGenerateAI ? `Preencha: ${aiMissingFields.join(', ')}` : 'Gerar sugestão de cardápio com IA'}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-accent-600 text-white font-semibold hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 {aiGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 Gerar rascunho IA
               </button>
+              {!canGenerateAI ? (
+                <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  Para habilitar a IA, preencha: {aiMissingFields.join(', ')}.
+                </span>
+              ) : null}
               {mealsDraft.length > 0 ? <span className="text-sm text-gray-700">Refeições no plano: {mealsDraft.length}</span> : null}
             </div>
 

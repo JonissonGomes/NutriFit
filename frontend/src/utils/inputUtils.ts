@@ -170,6 +170,36 @@ export const maskCNPJ = (value: string): string => {
     .replace(/(-\d{2})\d+?$/, '$1')
 }
 
+/** Altura em cm — até 3 dígitos + 1 decimal (ex.: 175 ou 175,5) */
+export const maskHeight = (value: string): string => {
+  const cleaned = value.replace(/[^\d,]/g, '')
+  const commaIdx = cleaned.indexOf(',')
+  const intRaw = commaIdx >= 0 ? cleaned.slice(0, commaIdx) : cleaned
+  const decRaw = commaIdx >= 0 ? cleaned.slice(commaIdx + 1).replace(/,/g, '') : ''
+  const intPart = intRaw.slice(0, 3)
+  const decPart = decRaw.slice(0, 1)
+  return decPart ? `${intPart},${decPart}` : intPart
+}
+
+/** Peso em kg — até 3 dígitos + 2 decimais (ex.: 72 ou 72,50) */
+export const maskWeight = (value: string): string => {
+  const cleaned = value.replace(/[^\d,]/g, '')
+  const commaIdx = cleaned.indexOf(',')
+  const intRaw = commaIdx >= 0 ? cleaned.slice(0, commaIdx) : cleaned
+  const decRaw = commaIdx >= 0 ? cleaned.slice(commaIdx + 1).replace(/,/g, '') : ''
+  const intPart = intRaw.slice(0, 3)
+  const decPart = decRaw.slice(0, 2)
+  return decPart ? `${intPart},${decPart}` : intPart
+}
+
+/** Converte valor mascarado com vírgula para número */
+export const parseDecimalInput = (value: string): number | undefined => {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  const n = Number(trimmed.replace(',', '.'))
+  return Number.isFinite(n) ? n : undefined
+}
+
 /**
  * Formata CRN durante a digitação (ex.: 4146 → CRN-4 146).
  * Aceita apenas dígitos; região = primeiro dígito, resto = número.

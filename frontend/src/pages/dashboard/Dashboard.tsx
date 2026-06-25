@@ -12,6 +12,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import { Link } from 'react-router-dom'
 import { dashboardService } from '../../services'
+import { useAuth } from '../../contexts/AuthContext'
 import type { ArchitectStats, RecentProject, UpcomingEvent } from '../../services/dashboard.service'
 import InlineAlert from '../../components/common/InlineAlert'
 import { getFriendlyErrorMessage } from '../../utils/feedbackMessages'
@@ -27,6 +28,12 @@ interface StatCard {
 }
 
 const Dashboard = () => {
+  const { user } = useAuth()
+  const basePath = user?.role === 'medico' ? '/medico' : '/nutritionist'
+  const mealPlansPath = `${basePath}/meal-plans`
+  const newMealPlanPath = `${basePath}/meal-plans/new`
+  const calendarPath = `${basePath}/calendar`
+
   const [stats, setStats] = useState<ArchitectStats | null>(null)
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
@@ -189,7 +196,7 @@ const Dashboard = () => {
             </p>
           </div>
           <Link
-            to="/nutritionist/meal-plans"
+            to={newMealPlanPath}
             className="app-btn px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all shadow-lg"
           >
             <AddIcon sx={{ fontSize: 22 }} />
@@ -277,7 +284,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900">Planos Recentes</h2>
                 <Link 
-                  to="/nutritionist/meal-plans" 
+                  to={mealPlansPath} 
                   className="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   Ver todos
@@ -291,7 +298,7 @@ const Dashboard = () => {
                 recentProjects.map((project) => (
                   <Link
                     key={project.id}
-                    to={`/nutritionist/meal-plans/${project.id}`}
+                    to={`${mealPlansPath}/${project.id}`}
                     className="block p-6 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200 group"
                   >
                     <div className="flex items-start gap-5">
@@ -349,7 +356,7 @@ const Dashboard = () => {
                   <FolderIcon sx={{ fontSize: 48, color: '#d1d5db' }} />
                   <p className="mt-4 text-gray-500">Nenhum projeto ainda</p>
                   <Link
-                    to="/nutritionist/meal-plans"
+                    to={newMealPlanPath}
                     className="mt-4 inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold"
                   >
                     <AddIcon sx={{ fontSize: 18 }} />
@@ -366,7 +373,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900">Próximos Eventos</h2>
                 <Link 
-                  to="/nutritionist/calendar" 
+                  to={calendarPath} 
                   className="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   Ver agenda
@@ -380,7 +387,7 @@ const Dashboard = () => {
                 upcomingEvents.map((event) => (
                   <Link
                     key={event.id}
-                    to="/nutritionist/calendar"
+                    to={calendarPath}
                     className="block p-6 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200 group"
                   >
                     <div className="space-y-3">
@@ -411,7 +418,7 @@ const Dashboard = () => {
                   <CalendarTodayIcon sx={{ fontSize: 48, color: '#d1d5db' }} />
                   <p className="mt-4 text-gray-500">Nenhum evento agendado</p>
                   <Link
-                    to="/nutritionist/calendar"
+                    to={calendarPath}
                     className="mt-4 inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold"
                   >
                     <AddIcon sx={{ fontSize: 18 }} />
