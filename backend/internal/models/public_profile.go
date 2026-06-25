@@ -68,6 +68,15 @@ type Ratings struct {
 	Distribution map[string]int   `bson:"distribution" json:"distribution"` // "5": 100, "4": 20, etc
 }
 
+type ProfilePageStyle string
+
+const (
+	PageStyleBlocks    ProfilePageStyle = "blocks"
+	PageStyleLanding   ProfilePageStyle = "landing"
+	PageStyleEditorial ProfilePageStyle = "editorial"
+	PageStyleStudio    ProfilePageStyle = "studio"
+)
+
 // ProfileLayout define o layout do perfil do nutricionista
 type ProfileLayoutType string
 
@@ -82,6 +91,7 @@ const (
 
 // ProfileCustomization configurações de customização do perfil
 type ProfileCustomization struct {
+	PageStyle        ProfilePageStyle  `bson:"pageStyle,omitempty" json:"pageStyle,omitempty"`
 	Layout           ProfileLayoutType `bson:"layout" json:"layout"`
 	GridColumns      int               `bson:"gridColumns" json:"gridColumns"`       // 2, 3, 4
 	ShowStats        bool              `bson:"showStats" json:"showStats"`           // Mostrar estatísticas

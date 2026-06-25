@@ -7,6 +7,7 @@ import WorkIcon from '@mui/icons-material/Work'
 import SchoolIcon from '@mui/icons-material/School'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import type { ProfileCustomization, PublicProfile } from '../../services/profile.service'
+import { PAGE_STYLE_OPTIONS } from '../../services/profile.service'
 import { getProfileAvatarUrl, getProfileCoverUrl } from '../../utils/mediaUrl'
 import {
   mergeCustomization,
@@ -105,7 +106,57 @@ const LayoutPreview = ({ profile, customization: rawCustomization }: LayoutPrevi
     )
   }
 
+  const pageStyle = customization.pageStyle ?? 'blocks'
+  const pageStyleLabel = PAGE_STYLE_OPTIONS.find((o) => o.value === pageStyle)?.label ?? 'Blocos'
+
   const renderHero = () => {
+    if (pageStyle === 'landing') {
+      return (
+        <div className="relative h-36 bg-gradient-to-br from-primary-700 to-accent-600">
+          {coverUrl && <img src={coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+          <div className="absolute bottom-3 left-3 right-3 flex items-end gap-2">
+            {renderAvatar('w-12 h-12 rounded-xl')}
+            <div className="text-white min-w-0">
+              <h2 className="font-bold text-sm truncate">{profile.displayName || 'Nome'}</h2>
+              <p className="text-[10px] text-white/80 truncate">{profile.specialty || 'Nutrição'}</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (pageStyle === 'editorial') {
+      return (
+        <div className={`p-3 ${cardBgClass} border-b ${borderClass} grid grid-cols-5 gap-2 items-center`}>
+          <div className="col-span-2 aspect-[3/4] rounded-lg overflow-hidden bg-gray-200">
+            {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> : null}
+          </div>
+          <div className="col-span-3">
+            <p className="text-[9px] uppercase tracking-widest text-gray-400">Editorial</p>
+            <h2 className={`font-bold text-sm ${textClass} mt-1`}>{profile.displayName || 'Nome'}</h2>
+            <p className={`text-[10px] ${subtextClass} mt-1 line-clamp-3`}>{profile.bio || profile.specialty}</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (pageStyle === 'studio') {
+      return (
+        <div className={`flex ${cardBgClass} border-b ${borderClass}`}>
+          <div className={`w-1/3 p-2 border-r ${borderClass}`}>
+            {renderAvatar('w-10 h-10 mx-auto')}
+            <p className={`text-[10px] font-semibold ${textClass} text-center mt-2 truncate`}>{profile.displayName || 'Nome'}</p>
+            {showContact && <p className={`text-[9px] ${subtextClass} text-center mt-2`}>Contato</p>}
+          </div>
+          <div className="w-2/3 p-2">
+            <div className="h-8 rounded bg-gray-100 mb-1" />
+            <div className="h-8 rounded bg-gray-100" />
+          </div>
+        </div>
+      )
+    }
+
     const heroHeight = customization.heroStyle === 'full' ? 'h-32' : customization.heroStyle === 'compact' ? 'h-20' : 'h-12'
 
     if (customization.heroStyle === 'minimal') {
@@ -315,15 +366,30 @@ const LayoutPreview = ({ profile, customization: rawCustomization }: LayoutPrevi
         className="px-3 py-1.5 text-[10px] font-semibold text-white text-center"
         style={{ backgroundColor: primaryColor }}
       >
-        Preview do Perfil
+        Preview · {pageStyleLabel}
       </div>
-      {renderHero()}
-      {renderStats()}
-      {renderProfessionalInfo()}
-      {renderContents()}
-      {renderRecipes()}
-      {renderReviews()}
-      {renderContact()}
+      {pageStyle === 'studio' ? (
+        <>
+          {renderHero()}
+          {renderContents()}
+        </>
+      ) : (
+        <>
+          {renderHero()}
+          {renderStats()}
+          {renderProfessionalInfo()}
+          {renderContents()}
+          {renderRecipes()}
+          {renderReviews()}
+          {pageStyle === 'landing' && showContact ? (
+            <div className="p-2" style={{ backgroundColor: primaryColor }}>
+              <p className="text-[10px] text-white text-center font-semibold">Contato</p>
+            </div>
+          ) : (
+            renderContact()
+          )}
+        </>
+      )}
     </div>
   )
 }

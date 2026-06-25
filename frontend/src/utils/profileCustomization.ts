@@ -22,6 +22,7 @@ export function mergeCustomization(raw?: ProfileCustomization | null): ResolvedC
     showExperience: raw?.showExperience ?? true,
     showAwards: raw?.showAwards ?? true,
     show3DModels: raw?.show3DModels ?? false,
+    pageStyle: raw?.pageStyle ?? 'blocks',
   }
 }
 

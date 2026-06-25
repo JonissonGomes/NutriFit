@@ -52,8 +52,8 @@ func resolveTextModels() []string {
 	return uniqueNonEmpty(
 		config.AppConfig.GeminiTextModel,
 		config.AppConfig.GeminiModel,
+		"gemini-2.5-flash",
 		"gemini-2.0-flash",
-		"gemini-1.5-flash",
 	)
 }
 
@@ -65,8 +65,8 @@ func resolveVisionModels() []string {
 	return uniqueNonEmpty(
 		config.AppConfig.GeminiVisionModel,
 		config.AppConfig.GeminiModel,
+		"gemini-2.5-flash",
 		"gemini-2.0-flash",
-		"gemini-1.5-flash",
 	)
 }
 
@@ -75,7 +75,12 @@ func isModelNotFoundResponse(status int, body []byte) bool {
 		return false
 	}
 	lower := strings.ToLower(string(body))
-	return strings.Contains(lower, "models/") && strings.Contains(lower, "not found")
+	if !strings.Contains(lower, "models/") {
+		return false
+	}
+	return strings.Contains(lower, "not found") ||
+		strings.Contains(lower, "no longer available") ||
+		strings.Contains(lower, "\"status\": \"not_found\"")
 }
 
 // NewGeminiClient cria um novo cliente Gemini

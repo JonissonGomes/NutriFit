@@ -9,6 +9,12 @@ import type { ApiResponse } from '../types/api'
 // TIPOS
 // ============================================
 
+export type ProfilePageStyle =
+  | 'blocks'     // Cards empilhados (padrão)
+  | 'landing'    // Página estilo site profissional
+  | 'editorial'  // Visual magazine / editorial
+  | 'studio'     // Sidebar fixa + conteúdo principal
+
 export type ProfileLayoutType = 
   | 'grid'       // Grade padrão 3 colunas
   | 'masonry'    // Masonry layout (Pinterest style)
@@ -18,6 +24,7 @@ export type ProfileLayoutType =
   | 'portfolio'  // Layout tipo portfólio
 
 export interface ProfileCustomization {
+  pageStyle?: ProfilePageStyle
   layout: ProfileLayoutType
   gridColumns: number        // 1, 2, 3, 4 (mobile first)
   showStats: boolean         // Mostrar estatísticas
@@ -107,6 +114,7 @@ export interface PublicProfile {
 // ============================================
 
 export const DEFAULT_CUSTOMIZATION: ProfileCustomization = {
+  pageStyle: 'blocks',
   layout: 'grid',
   gridColumns: 3,
   showStats: true,
@@ -124,6 +132,33 @@ export const DEFAULT_CUSTOMIZATION: ProfileCustomization = {
   heroStyle: 'full',
   projectCardStyle: 'simple',
 }
+
+export const PAGE_STYLE_OPTIONS = [
+  {
+    value: 'blocks' as ProfilePageStyle,
+    label: 'Blocos',
+    description: 'Cards empilhados, ideal para visualização compacta',
+    icon: 'view_agenda',
+  },
+  {
+    value: 'landing' as ProfilePageStyle,
+    label: 'Landing',
+    description: 'Hero em tela cheia e seções amplas estilo site profissional',
+    icon: 'web',
+  },
+  {
+    value: 'editorial' as ProfilePageStyle,
+    label: 'Editorial',
+    description: 'Tipografia destacada e layout assimétrico tipo revista',
+    icon: 'article',
+  },
+  {
+    value: 'studio' as ProfilePageStyle,
+    label: 'Studio',
+    description: 'Barra lateral com contato e conteúdo principal à direita',
+    icon: 'view_sidebar',
+  },
+]
 
 export const LAYOUT_OPTIONS = [
   { 

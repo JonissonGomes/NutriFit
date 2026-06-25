@@ -6,15 +6,21 @@ import StarIcon from '@mui/icons-material/Star'
 import CropSquareIcon from '@mui/icons-material/CropSquare'
 import WorkIcon from '@mui/icons-material/Work'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ViewAgendaIcon from '@mui/icons-material/ViewAgenda'
+import LanguageIcon from '@mui/icons-material/Language'
+import ArticleIcon from '@mui/icons-material/Article'
+import ViewSidebarIcon from '@mui/icons-material/ViewSidebar'
 import SwitchField from '../common/SwitchField'
 import {
   type ProfileCustomization,
   type ProfileLayoutType,
+  type ProfilePageStyle,
   LAYOUT_OPTIONS,
   GRID_COLUMN_OPTIONS,
   HERO_STYLE_OPTIONS,
   PROJECT_CARD_STYLE_OPTIONS,
   BACKGROUND_STYLE_OPTIONS,
+  PAGE_STYLE_OPTIONS,
   DEFAULT_CUSTOMIZATION,
 } from '../../services/profile.service'
 import { PROFILE_BLOCK_OPTIONS } from '../../utils/profileCustomization'
@@ -22,6 +28,13 @@ import { PROFILE_BLOCK_OPTIONS } from '../../utils/profileCustomization'
 interface LayoutCustomizerProps {
   customization?: ProfileCustomization
   onChange: (customization: ProfileCustomization) => void
+}
+
+const PAGE_STYLE_ICONS: Record<ProfilePageStyle, React.ReactNode> = {
+  blocks: <ViewAgendaIcon sx={{ fontSize: 24 }} />,
+  landing: <LanguageIcon sx={{ fontSize: 24 }} />,
+  editorial: <ArticleIcon sx={{ fontSize: 24 }} />,
+  studio: <ViewSidebarIcon sx={{ fontSize: 24 }} />,
 }
 
 const LAYOUT_ICONS: Record<ProfileLayoutType, React.ReactNode> = {
@@ -170,6 +183,40 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
         {/* Style Tab */}
         {activeTab === 'style' && (
           <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Estilo da página
+              </label>
+              <p className="text-xs text-gray-500 mb-3">
+                Define a estrutura visual completa do perfil público
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PAGE_STYLE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleChange('pageStyle', option.value)}
+                    className={`relative p-4 rounded-xl border-2 transition-all text-left ${
+                      (customization.pageStyle ?? 'blocks') === option.value
+                        ? 'border-primary-500 bg-primary-50 shadow-md'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {(customization.pageStyle ?? 'blocks') === option.value && (
+                      <div className="absolute top-2 right-2">
+                        <CheckCircleIcon sx={{ fontSize: 18, color: '#2563eb' }} />
+                      </div>
+                    )}
+                    <div className={`mb-2 ${(customization.pageStyle ?? 'blocks') === option.value ? 'text-primary-600' : 'text-gray-400'}`}>
+                      {PAGE_STYLE_ICONS[option.value]}
+                    </div>
+                    <h4 className="font-semibold text-sm text-gray-900">{option.label}</h4>
+                    <p className="text-xs text-gray-500 mt-1">{option.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Hero Style */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
