@@ -14,8 +14,10 @@ import CloseIcon from '@mui/icons-material/Close'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
-import { profileService, DEFAULT_CUSTOMIZATION } from '../../services'
+import { profileService } from '../../services'
 import type { ProfileCustomization, PublicProfile as ProfileServicePublicProfile } from '../../services/profile.service'
+import { DEFAULT_CUSTOMIZATION } from '../../services/profile.service'
+import { mergeCustomization } from '../../utils/profileCustomization'
 import { geolocationService } from '../../services/geolocation.service'
 import LoadingButton from '../../components/common/LoadingButton'
 import { sanitizeName, sanitizeInput, sanitizeText, sanitizeUrl, maskPhone, validateUsername, validateUrl, validatePhone, unmask, INPUT_LIMITS, limitLength } from '../../utils/inputUtils'
@@ -205,17 +207,9 @@ const PublicProfile = () => {
         )
         
         if (profile.customization) {
-          // Garantir que show3DModels esteja presente (compatibilidade com perfis antigos)
-          setCustomization({
-            ...DEFAULT_CUSTOMIZATION,
-            ...profile.customization,
-            show3DModels: profile.customization.show3DModels !== undefined 
-              ? profile.customization.show3DModels 
-              : DEFAULT_CUSTOMIZATION.show3DModels
-          })
+          setCustomization(mergeCustomization(profile.customization))
         } else {
-          // Se não houver customização, usar a padrão
-          setCustomization(DEFAULT_CUSTOMIZATION)
+          setCustomization(mergeCustomization())
         }
       } else {
         // Perfil não existe (404) ou outro erro - preencher com dados do usuário para criação

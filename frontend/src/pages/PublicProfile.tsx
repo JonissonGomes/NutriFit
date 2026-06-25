@@ -11,14 +11,25 @@ import PhoneIcon from '@mui/icons-material/Phone'
 import LanguageIcon from '@mui/icons-material/Language'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import FacebookIcon from '@mui/icons-material/Facebook'
+import SchoolIcon from '@mui/icons-material/School'
+import WorkIcon from '@mui/icons-material/Work'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import { favoritesService, mealPlanService, profileService, reviewService } from '../services'
 import { INPUT_LIMITS, limitLength, sanitizeText } from '../utils/inputUtils'
+import { resolveMediaUrl } from '../utils/mediaUrl'
+import {
+  mergeCustomization,
+  hasContactInfo,
+  contentLayoutClass,
+  contentItemClass,
+  projectCardClasses,
+  isEnabled,
+} from '../utils/profileCustomization'
 import { blogService } from '../services/blog.service'
 import { recipeService } from '../services/recipe.service'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import type { PublicProfile as PublicProfileType } from '../services/profile.service'
-import { DEFAULT_CUSTOMIZATION } from '../services/profile.service'
 import type { ReviewWithDetails } from '../services/review.service'
 import ConfirmModal from '../components/common/ConfirmModal'
 import type { BlogPost } from '../services/blog.service'
@@ -238,14 +249,27 @@ const PublicProfile = () => {
     )
   }
 
-  const customization = profile.customization ?? DEFAULT_CUSTOMIZATION
-  const showStats = customization.showStats !== false
-  const showServices = customization.showServices !== false
-  const showReviews = customization.showReviews !== false
-  const showContact = customization.showContact !== false
+  const customization = mergeCustomization(profile.customization)
+  const layoutType = customization.layout ?? 'grid'
+  const gridColumns = customization.gridColumns ?? 3
+  const cardStyle = customization.projectCardStyle ?? 'simple'
+  const cardClasses = projectCardClasses(cardStyle)
+
+  const showBio = isEnabled(customization.showBio) && Boolean(profile.bio?.trim())
+  const showStats = isEnabled(customization.showStats) && (rating.count > 0 || patientsCount > 0)
+  const showServices = isEnabled(customization.showServices) && Boolean(profile.specialties?.length)
+  const showExperience = isEnabled(customization.showExperience) && Boolean(profile.experience?.trim())
+  const showEducation = isEnabled(customization.showEducation) && Boolean(profile.education?.trim())
+  const showAwards = isEnabled(customization.showAwards) && Boolean(profile.awards?.trim())
+  const showProfessionalInfo = showExperience || showEducation || showAwards
+  const showContents = isEnabled(customization.showContents) && posts.length > 0
+  const showRecipes = isEnabled(customization.showRecipes) && recipes.length > 0
+  const canSubmitReview = isAuthenticated && user?.role === 'paciente'
+  const showReviews =
+    isEnabled(customization.showReviews) && (reviews.length > 0 || canSubmitReview)
+  const showContact = isEnabled(customization.showContact) && hasContactInfo(profile)
 
   const heroStyle = customization.heroStyle ?? 'full'
-  const layoutType = customization.layout ?? 'grid'
   const isMinimalHero = heroStyle === 'minimal' || layoutType === 'minimalist'
 
   const primaryColor = customization.primaryColor?.trim() || undefined
@@ -273,11 +297,14 @@ const PublicProfile = () => {
           ? 'w-20 h-20 md:w-24 md:h-24'
           : 'w-18 h-18 md:w-20 md:h-20'
 
+  const avatarUrl = resolveMediaUrl(profile.avatar)
+  const coverUrl = resolveMediaUrl(profile.coverImage)
   const contactEmail = profile.contact?.email || profile.email
   const contactPhone = profile.contact?.phone || profile.phone
   const contactWebsite = profile.contact?.website || profile.website
-  const shouldScrollPosts = posts.length > 3
-  const shouldScrollRecipes = recipes.length > 3
+
+  const postsLayoutClass = contentLayoutClass(layoutType, posts.length, gridColumns)
+  const recipesLayoutClass = contentLayoutClass(layoutType, recipes.length, gridColumns)
 
   return (
     <div
@@ -289,8 +316,8 @@ const PublicProfile = () => {
             className={`${coverHeightClass} bg-gradient-to-r from-primary-600 to-accent-600 relative z-0`}
             style={primaryColorSolid ? { backgroundImage: `linear-gradient(90deg, ${primaryColorSolid}, #14b8a6)` } : undefined}
           >
-            {profile.coverImage && (
-              <img src={profile.coverImage} className="w-full h-full object-cover opacity-90" alt="Capa" />
+            {coverUrl && (
+              <img src={coverUrl} className="w-full h-full object-cover opacity-90" alt="Capa" />
             )}
           </div>
 
@@ -299,8 +326,8 @@ const PublicProfile = () => {
               <div className={avatarOffsetClass}>
                 <div className={`${avatarSizeClass} rounded-2xl bg-white p-1 shadow-md`}>
                   <div className="w-full h-full rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center">
-                    {profile.avatar ? (
-                      <img src={profile.avatar} alt={profile.displayName} className="w-full h-full object-cover" />
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={profile.displayName} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-2xl font-bold text-gray-600">{profile.displayName?.[0] || 'N'}</span>
                     )}
@@ -326,10 +353,12 @@ const PublicProfile = () => {
                             <>
                               {rating.avg.toFixed(1)} ({rating.count})
                             </>
+                          ) : rating.count > 0 ? (
+                            <>{rating.avg.toFixed(1)}</>
                           ) : null}
                       </span>
-                      {showStats ? <span className="text-gray-400">·</span> : null}
-                      {showStats ? <span>{patientsCount} paciente(s)</span> : null}
+                      {showStats && patientsCount > 0 ? <span className="text-gray-400">·</span> : null}
+                      {showStats && patientsCount > 0 ? <span>{patientsCount} paciente(s)</span> : null}
                       {profile.location?.address?.city && (
                         <span className="inline-flex items-center gap-1">
                           <LocationOnIcon sx={{ fontSize: 18 }} />
@@ -363,11 +392,11 @@ const PublicProfile = () => {
                   </button>
                 </div>
 
-                {profile.bio && !isMinimalHero && <p className="mt-4 text-gray-700 leading-relaxed">{profile.bio}</p>}
+                {showBio && <p className="mt-4 text-gray-700 leading-relaxed">{profile.bio}</p>}
 
-                {profile.specialties?.length && showServices && !isMinimalHero ? (
+                {showServices ? (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {profile.specialties.slice(0, 10).map((s) => (
+                    {profile.specialties?.slice(0, 10).map((s) => (
                       <span key={s} className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-700">
                         {s}
                       </span>
@@ -380,93 +409,128 @@ const PublicProfile = () => {
           </div>
         </div>
 
-        <div className="app-card rounded-2xl">
-          <div className="flex items-center justify-between gap-3 md:flex-nowrap min-w-0">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap truncate">Conteúdos</h2>
-              <p className="text-sm text-gray-600 mt-1">Artigos e materiais publicados no NuFit.</p>
+        {showProfessionalInfo ? (
+          <div className="app-card rounded-2xl">
+            <h2 className="text-lg font-bold text-gray-900">Trajetória profissional</h2>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {showExperience ? (
+                <div className="rounded-xl border border-gray-200 p-4 bg-white">
+                  <div className="flex items-center gap-2 text-primary-700 font-semibold text-sm">
+                    <WorkIcon sx={{ fontSize: 18 }} />
+                    Experiência
+                  </div>
+                  <p className="mt-2 text-sm text-gray-700 leading-relaxed">{profile.experience}</p>
+                </div>
+              ) : null}
+              {showEducation ? (
+                <div className="rounded-xl border border-gray-200 p-4 bg-white">
+                  <div className="flex items-center gap-2 text-primary-700 font-semibold text-sm">
+                    <SchoolIcon sx={{ fontSize: 18 }} />
+                    Formação
+                  </div>
+                  <p className="mt-2 text-sm text-gray-700 leading-relaxed">{profile.education}</p>
+                </div>
+              ) : null}
+              {showAwards ? (
+                <div className="rounded-xl border border-gray-200 p-4 bg-white">
+                  <div className="flex items-center gap-2 text-primary-700 font-semibold text-sm">
+                    <EmojiEventsIcon sx={{ fontSize: 18 }} />
+                    Reconhecimentos
+                  </div>
+                  <p className="mt-2 text-sm text-gray-700 leading-relaxed whitespace-pre-line">{profile.awards}</p>
+                </div>
+              ) : null}
             </div>
-            <Link
-              to={`/profile/${username}/conteudos`}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-primary-200 text-primary-700 hover:bg-primary-50"
-              aria-label="Ver todos os conteúdos"
-              title="Ver todos os conteúdos"
-            >
-              <AddIcon sx={{ fontSize: 18 }} />
-            </Link>
-            <Link
-              to={`/bio/${username}`}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-semibold"
-              title="Link na bio"
-            >
-              @
-            </Link>
           </div>
-          {posts.length === 0 ? (
-            <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
-              Este profissional ainda não publicou conteúdos.
+        ) : null}
+
+        {showContents ? (
+          <div className="app-card rounded-2xl">
+            <div className="flex items-center justify-between gap-3 md:flex-nowrap min-w-0">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap truncate">Conteúdos</h2>
+                <p className="text-sm text-gray-600 mt-1">Artigos e materiais publicados no NuFit.</p>
+              </div>
+              <Link
+                to={`/profile/${username}/conteudos`}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-primary-200 text-primary-700 hover:bg-primary-50"
+                aria-label="Ver todos os conteúdos"
+                title="Ver todos os conteúdos"
+              >
+                <AddIcon sx={{ fontSize: 18 }} />
+              </Link>
             </div>
-          ) : (
-            <div className={`mt-3 ${shouldScrollPosts ? 'overflow-x-auto' : 'overflow-hidden'}`}>
-              <div className={shouldScrollPosts ? 'flex gap-3 min-w-max pb-1' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'}>
-                {posts.slice(0, 10).map((p) => {
-                  const thumbUrl = p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url
+            <div className="mt-3">
+              <div className={postsLayoutClass}>
+                {posts.slice(0, 10).map((p, index) => {
+                  const thumbUrl = resolveMediaUrl(p.featuredImage || p.attachments?.find((a) => a.type === 'image')?.url)
+                  const itemClass = contentItemClass(layoutType, posts.length, index === 0)
+                  const isOverlay = cardStyle === 'overlay'
                   return (
                     <Link
                       key={p.id}
                       to={`/conteudos/public/${p.slug}`}
-                      className={`${shouldScrollPosts ? 'w-[31%] min-w-[31%] max-w-[31%]' : 'w-full'} bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-sm transition-shadow`}
+                      className={`${cardClasses.wrapper} ${itemClass} block`}
                     >
-                      {thumbUrl ? <img src={thumbUrl} alt={p.title} className="w-full h-28 object-cover" /> : <div className="w-full h-28 bg-gradient-to-r from-primary-600 to-accent-600" />}
-                      <div className="p-3">
-                        <p className="font-semibold text-gray-900 line-clamp-2">{p.title}</p>
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{p.excerpt}</p>
+                      {thumbUrl ? (
+                        <img src={thumbUrl} alt={p.title} className={cardClasses.image} />
+                      ) : (
+                        <div className={`${cardClasses.image} bg-gradient-to-r from-primary-600 to-accent-600`} />
+                      )}
+                      <div className={cardClasses.body}>
+                        <p className={cardClasses.title}>{p.title}</p>
+                        {p.excerpt && !isOverlay ? <p className={cardClasses.excerpt}>{p.excerpt}</p> : null}
+                        {p.excerpt && isOverlay ? <p className={cardClasses.excerpt}>{p.excerpt}</p> : null}
                       </div>
                     </Link>
                   )
                 })}
               </div>
             </div>
-          )}
-        </div>
-
-        <div className="app-card rounded-2xl">
-          <div className="flex items-center justify-between gap-3 md:flex-nowrap min-w-0">
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap truncate">Receitas</h2>
-              <p className="text-sm text-gray-600 mt-1">Receitas compartilhadas publicamente por este profissional.</p>
-            </div>
-            <Link
-              to={`/profile/${username}/receitas`}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-primary-200 text-primary-700 hover:bg-primary-50"
-              aria-label="Ver todas as receitas"
-              title="Ver todas as receitas"
-            >
-              <AddIcon sx={{ fontSize: 18 }} />
-            </Link>
           </div>
-          {recipes.length === 0 ? (
-            <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
-              Este profissional ainda não publicou receitas.
+        ) : null}
+
+        {showRecipes ? (
+          <div className="app-card rounded-2xl">
+            <div className="flex items-center justify-between gap-3 md:flex-nowrap min-w-0">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap truncate">Receitas</h2>
+                <p className="text-sm text-gray-600 mt-1">Receitas compartilhadas publicamente por este profissional.</p>
+              </div>
+              <Link
+                to={`/profile/${username}/receitas`}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-primary-200 text-primary-700 hover:bg-primary-50"
+                aria-label="Ver todas as receitas"
+                title="Ver todas as receitas"
+              >
+                <AddIcon sx={{ fontSize: 18 }} />
+              </Link>
             </div>
-          ) : (
-            <div className={`mt-3 ${shouldScrollRecipes ? 'overflow-x-auto' : 'overflow-hidden'}`}>
-              <div className={shouldScrollRecipes ? 'flex gap-3 min-w-max pb-1' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'}>
-                {recipes.slice(0, 10).map((r) => (
-                  <div
-                    key={r.id}
-                    className={`${shouldScrollRecipes ? 'w-[31%] min-w-[31%] max-w-[31%]' : 'w-full'} bg-white border border-gray-200 rounded-xl p-3`}
-                  >
-                    {r.imageUrls?.[0] ? <img src={r.imageUrls[0]} alt={r.title} className="w-full h-28 object-cover rounded-lg mb-2.5" /> : <div className="w-full h-28 rounded-lg bg-gray-100 mb-2.5" />}
-                    <div className="font-semibold text-gray-900">{r.title}</div>
-                    {r.description ? <div className="text-sm text-gray-600 mt-1 line-clamp-2">{r.description}</div> : null}
-                  </div>
-                ))}
+            <div className="mt-3">
+              <div className={recipesLayoutClass}>
+                {recipes.slice(0, 10).map((r, index) => {
+                  const imageUrl = resolveMediaUrl(r.imageUrls?.[0])
+                  const itemClass = contentItemClass(layoutType, recipes.length, index === 0)
+                  return (
+                    <div key={r.id} className={`${cardClasses.wrapper} ${itemClass}`}>
+                      {imageUrl ? (
+                        <img src={imageUrl} alt={r.title} className={cardStyle === 'overlay' ? cardClasses.image : `${cardClasses.image} rounded-lg`} />
+                      ) : (
+                        <div className={`${cardClasses.image} ${cardStyle !== 'overlay' ? 'rounded-lg' : ''} bg-gray-100`} />
+                      )}
+                      <div className={cardClasses.body}>
+                        <div className={cardClasses.title}>{r.title}</div>
+                        {r.description ? <div className={cardClasses.excerpt}>{r.description}</div> : null}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        ) : null}
 
+        {(showReviews || showContact) ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {showReviews ? (
             <div className="md:col-span-2 bg-white border border-gray-200 rounded-2xl p-6">
@@ -543,9 +607,9 @@ const PublicProfile = () => {
                   ) : null}
                 </div>
               ) : null}
-              {reviews.length === 0 ? (
+              {reviews.length === 0 && !canSubmitReview ? (
                 <p className="text-sm text-gray-600 mt-2">Ainda não há avaliações.</p>
-              ) : (
+              ) : reviews.length === 0 ? null : (
                 <div className="mt-4 space-y-4">
                   {reviews.map((r) => (
                     <div key={r.id} className="border border-gray-100 rounded-xl p-4">
@@ -629,6 +693,7 @@ const PublicProfile = () => {
             </div>
           ) : null}
         </div>
+        ) : null}
       </div>
 
       <ConfirmModal

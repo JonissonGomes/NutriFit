@@ -24,7 +24,13 @@ export interface ProfileCustomization {
   showServices: boolean      // Mostrar serviços
   showReviews: boolean       // Mostrar avaliações
   showContact: boolean       // Mostrar informações de contato
-  show3DModels: boolean      // Mostrar projetos 3D
+  show3DModels?: boolean      // Legado — não utilizado
+  showContents?: boolean     // Artigos e materiais
+  showRecipes?: boolean      // Receitas públicas
+  showBio?: boolean          // Biografia no hero
+  showEducation?: boolean    // Formação acadêmica
+  showExperience?: boolean   // Experiência profissional
+  showAwards?: boolean       // Prêmios e reconhecimentos
   primaryColor?: string      // Cor primária customizada
   backgroundStyle?: 'light' | 'dark' | 'gradient'
   heroStyle?: 'full' | 'compact' | 'minimal'
@@ -107,7 +113,13 @@ export const DEFAULT_CUSTOMIZATION: ProfileCustomization = {
   showServices: true,
   showReviews: true,
   showContact: true,
-  show3DModels: true,
+  showContents: true,
+  showRecipes: true,
+  showBio: true,
+  showEducation: true,
+  showExperience: true,
+  showAwards: true,
+  show3DModels: false,
   backgroundStyle: 'light',
   heroStyle: 'full',
   projectCardStyle: 'simple',
@@ -117,7 +129,7 @@ export const LAYOUT_OPTIONS = [
   { 
     value: 'grid' as ProfileLayoutType, 
     label: 'Grade', 
-    description: 'Layout em grade tradicional',
+    description: 'Cards alinhados em colunas responsivas',
     icon: 'grid_view'
   },
   { 
@@ -129,13 +141,13 @@ export const LAYOUT_OPTIONS = [
   { 
     value: 'carousel' as ProfileLayoutType, 
     label: 'Carrossel', 
-    description: 'Projetos em destaque com navegação',
+    description: 'Rolagem horizontal para conteúdos e receitas',
     icon: 'view_carousel'
   },
   { 
     value: 'featured' as ProfileLayoutType, 
     label: 'Destaque', 
-    description: 'Um projeto em destaque + grade',
+    description: 'Primeiro item em destaque, demais em grade',
     icon: 'star'
   },
   { 
@@ -166,9 +178,9 @@ export const HERO_STYLE_OPTIONS = [
 ]
 
 export const PROJECT_CARD_STYLE_OPTIONS = [
-  { value: 'simple' as const, label: 'Simples', description: 'Apenas imagem e título' },
-  { value: 'detailed' as const, label: 'Detalhado', description: 'Com descrição e estatísticas' },
-  { value: 'overlay' as const, label: 'Sobreposição', description: 'Informações sobre a imagem' },
+  { value: 'simple' as const, label: 'Simples', description: 'Imagem e título' },
+  { value: 'detailed' as const, label: 'Detalhado', description: 'Inclui resumo e descrição' },
+  { value: 'overlay' as const, label: 'Sobreposição', description: 'Texto sobre a imagem' },
 ]
 
 export const BACKGROUND_STYLE_OPTIONS = [

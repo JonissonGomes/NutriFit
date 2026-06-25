@@ -6,8 +6,10 @@ import PersonIcon from '@mui/icons-material/Person'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import { useAuth } from '../../contexts/AuthContext'
+import { usePublicProfileUsername } from '../../hooks/usePublicProfileUsername'
 import { Logo } from '../brand/Logo'
 
 const Header = () => {
@@ -70,21 +72,31 @@ const Header = () => {
 
   // Verificar role ou type para compatibilidade
   const userRole = user?.role || user?.type
+  const isProfessional = userRole === 'nutricionista' || userRole === 'medico'
+  const publicUsername = usePublicProfileUsername(isAuthenticated && isProfessional)
 
   const getDashboardPath = () => {
     if (userRole === 'nutricionista') return '/nutritionist/dashboard'
+    if (userRole === 'medico') return '/medico/dashboard'
     if (userRole === 'paciente') return '/patient/dashboard'
     return '/'
   }
 
   const getProfilePath = () => {
     if (userRole === 'nutricionista') return '/nutritionist/profile'
+    if (userRole === 'medico') return '/medico/profile'
     if (userRole === 'paciente') return '/patient/dashboard'
     return '/'
   }
 
+  const getPublicProfilePath = () => {
+    if (publicUsername) return `/profile/${publicUsername}`
+    return getProfilePath()
+  }
+
   const getSettingsPath = () => {
     if (userRole === 'nutricionista') return '/nutritionist/settings'
+    if (userRole === 'medico') return '/medico/settings'
     if (userRole === 'paciente') return '/patient/settings'
     return '/'
   }
@@ -170,6 +182,16 @@ const Header = () => {
                         <PersonIcon sx={{ fontSize: 18 }} />
                         Meu Perfil
                       </Link>
+                      {isProfessional ? (
+                        <Link
+                          to={getPublicProfilePath()}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <VisibilityIcon sx={{ fontSize: 18 }} />
+                          Perfil público
+                        </Link>
+                      ) : null}
                       <Link
                         to={getSettingsPath()}
                         onClick={() => setIsUserMenuOpen(false)}
@@ -296,6 +318,16 @@ const Header = () => {
                   <PersonIcon sx={{ fontSize: 18 }} />
                   Meu Perfil
                 </Link>
+                {isProfessional ? (
+                  <Link
+                    to={getPublicProfilePath()}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors py-2 px-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <VisibilityIcon sx={{ fontSize: 18 }} />
+                    Perfil público
+                  </Link>
+                ) : null}
                 <Link
                   to={getSettingsPath()}
                   className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors py-2 px-2"

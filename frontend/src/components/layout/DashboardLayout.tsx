@@ -26,8 +26,11 @@ import { useNotifications } from '../../contexts/NotificationContext'
 import LoadingButton from '../common/LoadingButton'
 import { Logo } from '../brand/Logo'
 import MenuBookIcon from '@mui/icons-material/MenuBook'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import AppSidebar from './AppSidebar'
 import { isNavItemActive, useSidebarCollapsed } from '../../hooks/useSidebarCollapsed'
+import { usePublicProfileUsername } from '../../hooks/usePublicProfileUsername'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -42,16 +45,19 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const { collapsed: isSidebarCollapsed, toggleCollapsed: toggleSidebarCollapsed } = useSidebarCollapsed()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [, setMarkingAsReadId] = useState<string | null>(null)
   const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null)
   const [markingAllAsRead, setMarkingAllAsRead] = useState(false)
   const notificationRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   const isActive = (path: string) => isNavItemActive(location.pathname, path)
   const isAdminArea = location.pathname.startsWith('/admin')
   const effectiveBasePath =
     basePath ||
     (isAdminArea ? '/admin' : user?.role === 'medico' ? '/medico' : '/nutritionist')
+  const publicUsername = usePublicProfileUsername(!isAdminArea)
 
   const adminNavItems = [
     { path: '/admin/dashboard', icon: DashboardIcon, label: 'Painel' },
@@ -87,6 +93,9 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setIsNotificationOpen(false)
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false)
       }
     }
 
@@ -299,26 +308,91 @@ const DashboardLayout = ({ children, basePath }: DashboardLayoutProps) => {
               )}
             </div>
 
-            {/* User Profile */}
-            <Link 
-              to={`${effectiveBasePath}/profile`} 
-              className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt="Perfil"
-                  className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-200 object-cover"
-                />
-              ) : (
-                <div className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-xs font-bold">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+            {/* User Menu */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Perfil"
+                    className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-200 object-cover"
+                  />
+                ) : (
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-xs font-bold">
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                )}
+                <span className="hidden lg:block text-xs md:text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                  {user?.name}
+                </span>
+                <KeyboardArrowDownIcon sx={{ fontSize: 18, color: '#6b7280' }} className="hidden lg:block" />
+              </button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                  </div>
+                  <div className="py-1">
+                    {!isAdminArea ? (
+                      <>
+                        <Link
+                          to={`${effectiveBasePath}/profile`}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <PersonIcon sx={{ fontSize: 18 }} />
+                          Editar perfil
+                        </Link>
+                        <Link
+                          to={publicUsername ? `/profile/${publicUsername}` : `${effectiveBasePath}/profile`}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <VisibilityIcon sx={{ fontSize: 18 }} />
+                          Perfil público
+                        </Link>
+                        <Link
+                          to={`${effectiveBasePath}/settings`}
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <SettingsIcon sx={{ fontSize: 18 }} />
+                          Configurações
+                        </Link>
+                      </>
+                    ) : (
+                      <Link
+                        to="/admin/dashboard"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <DashboardIcon sx={{ fontSize: 18 }} />
+                        Painel
+                      </Link>
+                    )}
+                  </div>
+                  <div className="border-t border-gray-100 py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsUserMenuOpen(false)
+                        handleLogout()
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogoutIcon sx={{ fontSize: 18 }} />
+                      Sair
+                    </button>
+                  </div>
                 </div>
               )}
-              <span className="hidden lg:block text-xs md:text-sm font-medium text-gray-700 max-w-[120px] truncate">
-                {user?.name}
-              </span>
-            </Link>
+            </div>
           </div>
         </div>
       </header>

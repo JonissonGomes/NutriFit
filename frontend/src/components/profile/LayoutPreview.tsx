@@ -3,15 +3,40 @@ import LocationOnIcon from '@mui/icons-material/LocationOn'
 import VerifiedIcon from '@mui/icons-material/Verified'
 import EmailIcon from '@mui/icons-material/Email'
 import PhoneIcon from '@mui/icons-material/Phone'
+import WorkIcon from '@mui/icons-material/Work'
+import SchoolIcon from '@mui/icons-material/School'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import type { ProfileCustomization, PublicProfile } from '../../services/profile.service'
 import { getProfileAvatarUrl, getProfileCoverUrl } from '../../utils/mediaUrl'
+import {
+  mergeCustomization,
+  hasContactInfo,
+  isEnabled,
+  contentLayoutClass,
+  projectCardClasses,
+} from '../../utils/profileCustomization'
 
 interface LayoutPreviewProps {
   profile: Partial<PublicProfile>
   customization: ProfileCustomization
 }
 
-const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
+const LayoutPreview = ({ profile, customization: rawCustomization }: LayoutPreviewProps) => {
+  const customization = mergeCustomization(rawCustomization)
+  const cardClasses = projectCardClasses(customization.projectCardStyle ?? 'simple')
+
+  const showBio = isEnabled(customization.showBio) && Boolean(profile.bio?.trim())
+  const showStats = isEnabled(customization.showStats)
+  const showServices = isEnabled(customization.showServices) && Boolean(profile.specialties?.length)
+  const showExperience = isEnabled(customization.showExperience) && Boolean(profile.experience?.trim())
+  const showEducation = isEnabled(customization.showEducation) && Boolean(profile.education?.trim())
+  const showAwards = isEnabled(customization.showAwards) && Boolean(profile.awards?.trim())
+  const showProfessionalInfo = showExperience || showEducation || showAwards
+  const showContents = isEnabled(customization.showContents)
+  const showRecipes = isEnabled(customization.showRecipes)
+  const showReviews = isEnabled(customization.showReviews)
+  const showContact = isEnabled(customization.showContact) && hasContactInfo(profile as PublicProfile)
+
   const bgClass = useMemo(() => {
     switch (customization.backgroundStyle) {
       case 'dark':
@@ -31,6 +56,8 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
   const primaryColor = customization.primaryColor || '#2563eb'
   const avatarUrl = getProfileAvatarUrl(profile)
   const coverUrl = getProfileCoverUrl(profile)
+  const layoutType = customization.layout ?? 'grid'
+  const contentsLayout = contentLayoutClass(layoutType, 3, customization.gridColumns)
 
   const renderAvatar = (sizeClass: string, overlapClass = '') => {
     if (avatarUrl) {
@@ -52,10 +79,9 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
     )
   }
 
-  // Render Hero Section based on style
   const renderHero = () => {
     const heroHeight = customization.heroStyle === 'full' ? 'h-32' : customization.heroStyle === 'compact' ? 'h-20' : 'h-12'
-    
+
     if (customization.heroStyle === 'minimal') {
       return (
         <div className={`p-4 ${cardBgClass} border-b ${borderClass}`}>
@@ -72,17 +98,14 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
 
     return (
       <div className="relative">
-        {/* Cover */}
-        <div 
+        <div
           className={`${heroHeight} bg-gradient-to-r from-gray-300 to-gray-400`}
-          style={{ 
+          style={{
             backgroundImage: coverUrl ? `url(${coverUrl})` : undefined,
             backgroundSize: 'cover',
-            backgroundPosition: 'center'
+            backgroundPosition: 'center',
           }}
         />
-        
-        {/* Profile Info */}
         <div className={`p-3 ${cardBgClass} ${customization.heroStyle === 'full' ? '-mt-6' : ''}`}>
           <div className="flex items-end gap-3">
             {renderAvatar(
@@ -101,23 +124,26 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
               </p>
             </div>
           </div>
-          
-          {customization.heroStyle === 'full' && (
-            <p className={`text-xs ${subtextClass} mt-2 line-clamp-2`}>
-              {profile.bio || 'Escreva uma breve descrição sobre você e sua abordagem.'}
-            </p>
+          {showBio && customization.heroStyle === 'full' && (
+            <p className={`text-xs ${subtextClass} mt-2 line-clamp-2`}>{profile.bio}</p>
+          )}
+          {showServices && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {profile.specialties?.slice(0, 4).map((s) => (
+                <span key={s} className={`text-[10px] px-1.5 py-0.5 rounded-full ${customization.backgroundStyle === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} ${subtextClass}`}>
+                  {s}
+                </span>
+              ))}
+            </div>
           )}
         </div>
       </div>
     )
   }
 
-  // Render Stats Section
   const renderStats = () => {
-    if (!customization.showStats) return null
-
+    if (!showStats) return null
     const viewsValue = typeof profile.viewsCount === 'number' ? profile.viewsCount : undefined
-
     return (
       <div className={`grid grid-cols-3 gap-2 p-3 border-t ${borderClass}`}>
         {[
@@ -134,28 +160,88 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
     )
   }
 
+  const renderProfessionalInfo = () => {
+    if (!showProfessionalInfo) return null
+    return (
+      <div className={`p-3 border-t ${borderClass}`}>
+        <h3 className={`font-semibold text-xs ${textClass} mb-2`}>Trajetória profissional</h3>
+        <div className="space-y-2">
+          {showExperience && (
+            <div className={`flex items-start gap-1.5 text-[10px] ${subtextClass}`}>
+              <WorkIcon sx={{ fontSize: 12 }} />
+              <span className="line-clamp-2">{profile.experience}</span>
+            </div>
+          )}
+          {showEducation && (
+            <div className={`flex items-start gap-1.5 text-[10px] ${subtextClass}`}>
+              <SchoolIcon sx={{ fontSize: 12 }} />
+              <span className="line-clamp-2">{profile.education}</span>
+            </div>
+          )}
+          {showAwards && (
+            <div className={`flex items-start gap-1.5 text-[10px] ${subtextClass}`}>
+              <EmojiEventsIcon sx={{ fontSize: 12 }} />
+              <span className="line-clamp-2">{profile.awards}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   const renderContents = () => {
+    if (!showContents) return null
     return (
       <div className={`border-t ${borderClass}`}>
         <div className="px-3 pt-3 pb-1">
           <h3 className={`font-semibold text-xs ${textClass}`}>Conteúdos</h3>
-          <p className={`text-[10px] ${subtextClass}`}>Posts e materiais compartilhados no NuFit</p>
         </div>
         <div className="p-3">
-          <div className={`${cardBgClass} border ${borderClass} rounded-lg p-3`}>
-            <p className={`text-xs ${subtextClass}`}>
-              Nenhum conteúdo publicado ainda.
-            </p>
+          <div className={contentsLayout}>
+            {[1, 2, 3].map((n) => (
+              <div key={n} className={cardClasses.wrapper}>
+                <div className={`${cardClasses.image} bg-gradient-to-r from-primary-400 to-accent-400`} />
+                <div className={cardClasses.body}>
+                  <p className={`${cardClasses.title} ${textClass}`}>Exemplo de conteúdo {n}</p>
+                  <p className={cardClasses.excerpt}>Prévia do layout selecionado</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
     )
   }
 
-  // Render Contact Section
-  const renderContact = () => {
-    if (!customization.showContact) return null
+  const renderRecipes = () => {
+    if (!showRecipes) return null
+    return (
+      <div className={`border-t ${borderClass} p-3`}>
+        <h3 className={`font-semibold text-xs ${textClass} mb-2`}>Receitas</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {[1, 2].map((n) => (
+            <div key={n} className={`${cardBgClass} border ${borderClass} rounded-lg p-2`}>
+              <div className="h-10 rounded bg-gray-200 mb-1" />
+              <p className={`text-[10px] font-semibold ${textClass}`}>Receita {n}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
+  const renderReviews = () => {
+    if (!showReviews) return null
+    return (
+      <div className={`p-3 border-t ${borderClass}`}>
+        <h3 className={`font-semibold text-xs ${textClass}`}>Avaliações</h3>
+        <p className={`text-[10px] ${subtextClass} mt-1`}>Depoimentos de pacientes</p>
+      </div>
+    )
+  }
+
+  const renderContact = () => {
+    if (!showContact) return null
     return (
       <div className={`p-3 border-t ${borderClass}`}>
         <div className="flex flex-wrap gap-2">
@@ -168,13 +254,13 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
           {profile.email && (
             <span className={`flex items-center gap-1 text-[10px] ${subtextClass}`}>
               <EmailIcon sx={{ fontSize: 12 }} />
-              Contato
+              E-mail
             </span>
           )}
           {profile.phone && (
             <span className={`flex items-center gap-1 text-[10px] ${subtextClass}`}>
               <PhoneIcon sx={{ fontSize: 12 }} />
-              WhatsApp
+              Telefone
             </span>
           )}
         </div>
@@ -184,29 +270,21 @@ const LayoutPreview = ({ profile, customization }: LayoutPreviewProps) => {
 
   return (
     <div className={`rounded-xl overflow-hidden border ${borderClass} shadow-lg ${bgClass}`}>
-      {/* Preview Label */}
-      <div 
+      <div
         className="px-3 py-1.5 text-[10px] font-semibold text-white text-center"
         style={{ backgroundColor: primaryColor }}
       >
         Preview do Perfil
       </div>
-
-      {/* Hero */}
       {renderHero()}
-
-      {/* Stats */}
       {renderStats()}
-
-      {/* Conteúdos */}
+      {renderProfessionalInfo()}
       {renderContents()}
-
-      {/* Contact */}
+      {renderRecipes()}
+      {renderReviews()}
       {renderContact()}
     </div>
   )
 }
 
 export default LayoutPreview
-
-

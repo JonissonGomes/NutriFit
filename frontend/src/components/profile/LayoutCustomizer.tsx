@@ -17,6 +17,7 @@ import {
   BACKGROUND_STYLE_OPTIONS,
   DEFAULT_CUSTOMIZATION,
 } from '../../services/profile.service'
+import { PROFILE_BLOCK_OPTIONS } from '../../utils/profileCustomization'
 
 interface LayoutCustomizerProps {
   customization?: ProfileCustomization
@@ -33,7 +34,7 @@ const LAYOUT_ICONS: Record<ProfileLayoutType, React.ReactNode> = {
 }
 
 const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: LayoutCustomizerProps) => {
-  const [activeTab, setActiveTab] = useState<'layout' | 'options' | 'style'>('layout')
+  const [activeTab, setActiveTab] = useState<'layout' | 'blocks' | 'style'>('layout')
 
   const handleChange = <K extends keyof ProfileCustomization>(
     key: K,
@@ -47,7 +48,7 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
       <div className="p-4 md:p-6 border-b border-gray-100">
         <h2 className="text-base md:text-lg font-semibold text-gray-900">Personalização do Perfil</h2>
         <p className="text-xs md:text-sm text-gray-500 mt-1">
-          Escolha como seus conteúdos e portfólio serão exibidos para os visitantes
+          Defina layout, blocos visíveis e aparência do seu perfil público
         </p>
       </div>
 
@@ -55,7 +56,7 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
       <div className="flex border-b border-gray-200">
         {[
           { id: 'layout', label: 'Layout' },
-          { id: 'options', label: 'Opções' },
+          { id: 'blocks', label: 'Blocos' },
           { id: 'style', label: 'Estilo' },
         ].map((tab) => (
           <button
@@ -79,7 +80,7 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
             {/* Layout Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Estilo de Exibição do Portfólio
+                Estilo de exibição (conteúdos e receitas)
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {LAYOUT_OPTIONS.map((option) => (
@@ -143,19 +144,14 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
           </div>
         )}
 
-        {/* Options Tab */}
-        {activeTab === 'options' && (
+        {/* Blocos Tab */}
+        {activeTab === 'blocks' && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-500 mb-4">
-              Escolha o que será exibido no seu perfil público
+            <p className="text-sm text-gray-500 mb-2">
+              Ative ou desative blocos opcionais. Blocos sem conteúdo não aparecem para visitantes, mesmo quando ativados.
             </p>
-            
-            {[
-              { key: 'showStats', label: 'Mostrar Estatísticas', description: 'Exibe visualizações, avaliações e outros indicadores do perfil' },
-              { key: 'showServices', label: 'Mostrar Serviços', description: 'Lista os serviços que você oferece' },
-              { key: 'showReviews', label: 'Mostrar Avaliações', description: 'Exibe avaliações de clientes anteriores' },
-              { key: 'showContact', label: 'Mostrar Contato', description: 'Exibe informações de contato (email, telefone, etc)' },
-            ].map((item) => (
+
+            {PROFILE_BLOCK_OPTIONS.map((item) => (
               <div
                 key={item.key}
                 className="rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition-colors"
@@ -163,8 +159,8 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
                 <SwitchField
                   label={item.label}
                   description={item.description}
-                  checked={customization[item.key as keyof ProfileCustomization] as boolean}
-                  onChange={(checked) => handleChange(item.key as keyof ProfileCustomization, checked as any)}
+                  checked={Boolean(customization[item.key])}
+                  onChange={(checked) => handleChange(item.key, checked as ProfileCustomization[typeof item.key])}
                 />
               </div>
             ))}
@@ -201,7 +197,7 @@ const LayoutCustomizer = ({ customization = DEFAULT_CUSTOMIZATION, onChange }: L
             {/* Project Card Style */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Estilo dos Cards de Projeto
+                Estilo dos cards (conteúdos e receitas)
               </label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {PROJECT_CARD_STYLE_OPTIONS.map((option) => (
