@@ -18,6 +18,7 @@ import {
   LineChart,
   BookText,
   Bot,
+  ChevronDown,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNotifications } from '../../contexts/NotificationContext'
@@ -38,10 +39,12 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const { collapsed: isSidebarCollapsed, toggleCollapsed: toggleSidebarCollapsed } = useSidebarCollapsed()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [, setMarkingAsReadId] = useState<string | null>(null)
   const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null)
   const [markingAllAsRead, setMarkingAllAsRead] = useState(false)
   const notificationRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   const isActive = (path: string) => isNavItemActive(location.pathname, path)
 
@@ -65,11 +68,14 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
     navigate('/login')
   }
 
-  // Close notification dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setIsNotificationOpen(false)
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false)
       }
     }
 
@@ -170,7 +176,8 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
           <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-2 text-gray-600 hover:text-gray-900"
+              className="lg:hidden p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label={isSidebarOpen ? 'Fechar menu' : 'Abrir menu'}
             >
               {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -278,20 +285,61 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
                 </div>
               )}
             </div>
-            <Link to="/patient/dashboard" className="flex items-center gap-2 min-w-0">
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt="Perfil"
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center text-white text-sm font-bold">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+
+            {/* User Menu */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-lg transition-colors min-w-0"
+              >
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Perfil"
+                    className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-200 object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                )}
+                <span className="hidden lg:block text-xs md:text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                  {user?.name}
+                </span>
+                <ChevronDown className="hidden lg:block h-4 w-4 text-gray-500 shrink-0" />
+              </button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                  </div>
+                  <div className="py-1">
+                    <Link
+                      to="/patient/settings"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Configurações
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsUserMenuOpen(false)
+                        handleLogout()
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sair
+                    </button>
+                  </div>
                 </div>
               )}
-              <span className="hidden lg:block text-sm font-medium text-gray-700 max-w-[120px] truncate">{user?.name}</span>
-            </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -324,24 +372,25 @@ const ClientLayout = ({ children }: ClientLayoutProps) => {
         }
       />
 
-      {/* Overlay for mobile */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
       {/* Main Content */}
       <main
-        className={`pt-14 p-3 md:p-5 lg:p-6 min-h-screen transition-[margin] duration-200 ease-in-out ${
+        className={`pt-14 min-h-screen transition-[margin] duration-200 ease-in-out ${
           isSidebarCollapsed ? 'lg:ml-[4.5rem]' : 'lg:ml-64'
         }`}
       >
-        <div className="w-full max-w-7xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto p-3 md:p-5 lg:p-6">
           {children}
         </div>
       </main>
+
+      {/* Mobile Sidebar Overlay — após o main para cobrir o conteúdo */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden
+        />
+      )}
     </div>
   )
 }

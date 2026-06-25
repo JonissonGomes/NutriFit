@@ -74,48 +74,6 @@ function App() {
                 <ScrollToTop />
                 <OnboardingTour />
                 <Routes>
-                  {/* Public Routes with Header/Footer */}
-                  <Route
-                    path="/*"
-                    element={
-                      <div className="min-h-screen flex flex-col">
-                        <Header />
-                        <main className="flex-grow pt-14">
-                          <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/explore" element={<Explore />} />
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/signup" element={<Signup />} />
-                            <Route path="/pricing" element={<Pricing />} />
-                            <Route path="/privacidade" element={<Privacy />} />
-                            <Route path="/termos" element={<Terms />} />
-                            <Route path="/conteudos" element={<Navigate to="/conteudos/public" replace />} />
-                            <Route path="/conteudos/public" element={<Contents />} />
-                            <Route path="/conteudos/public/:slug" element={<ContentPost />} />
-                            <Route
-                              path="/conteudos/meus/:slug"
-                              element={
-                                <ProtectedRoute allowedRoles={['nutricionista', 'admin', 'super_admin']}>
-                                  <ContentPost />
-                                </ProtectedRoute>
-                              }
-                            />
-                            {/* Compatibilidade: se alguém acessar a rota antiga, renderiza como conteúdo público */}
-                            <Route path="/conteudos/:slug" element={<ContentPost />} />
-                            <Route path="/portfolio/:username" element={<PublicProfile />} />
-                            {/* Rota "oficial" para perfil público */}
-                            <Route path="/profile/:username" element={<PublicProfile />} />
-                            <Route path="/profile/:username/conteudos" element={<PublicProfileContents />} />
-                            <Route path="/profile/:username/receitas" element={<PublicProfileRecipes />} />
-                            <Route path="/bio/:username" element={<PublicBio />} />
-                            <Route path="*" element={<NotFound />} />
-                          </Routes>
-                        </main>
-                        <Footer />
-                      </div>
-                    }
-                  />
-
                   {/* Dashboard Routes - Nutricionista */}
                   <Route
                     path="/nutritionist/*"
@@ -214,6 +172,46 @@ function App() {
                           </Routes>
                         </DashboardLayout>
                       </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Public Routes with Header/Footer — catch-all por último */}
+                  <Route
+                    path="/*"
+                    element={
+                      <div className="min-h-screen flex flex-col">
+                        <Header />
+                        <main className="flex-grow pt-14">
+                          <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/explore" element={<Explore />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/signup" element={<Signup />} />
+                            <Route path="/pricing" element={<Pricing />} />
+                            <Route path="/privacidade" element={<Privacy />} />
+                            <Route path="/termos" element={<Terms />} />
+                            <Route path="/conteudos" element={<Navigate to="/conteudos/public" replace />} />
+                            <Route path="/conteudos/public" element={<Contents />} />
+                            <Route path="/conteudos/public/:slug" element={<ContentPost />} />
+                            <Route
+                              path="/conteudos/meus/:slug"
+                              element={
+                                <ProtectedRoute allowedRoles={['nutricionista', 'admin', 'super_admin']}>
+                                  <ContentPost />
+                                </ProtectedRoute>
+                              }
+                            />
+                            <Route path="/conteudos/:slug" element={<ContentPost />} />
+                            <Route path="/portfolio/:username" element={<PublicProfile />} />
+                            <Route path="/profile/:username" element={<PublicProfile />} />
+                            <Route path="/profile/:username/conteudos" element={<PublicProfileContents />} />
+                            <Route path="/profile/:username/receitas" element={<PublicProfileRecipes />} />
+                            <Route path="/bio/:username" element={<PublicBio />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                        </main>
+                        <Footer />
+                      </div>
                     }
                   />
                 </Routes>

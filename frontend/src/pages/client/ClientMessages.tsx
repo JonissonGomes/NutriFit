@@ -338,14 +338,14 @@ const ClientMessages: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] max-w-7xl mx-auto">
+    <div className="flex flex-col min-h-[calc(100dvh-7rem)]">
       {/* Header - apenas no desktop ou quando nenhuma conversa está selecionada no mobile */}
-      <div className={`mb-4 ${selectedConversation ? 'hidden md:block' : 'block'}`}>
+      <div className={`mb-4 shrink-0 ${selectedConversation ? 'hidden md:block' : 'block'}`}>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900">Mensagens</h1>
         <p className="text-gray-600 mt-1 text-xs md:text-sm hidden md:block">Converse com nutricionistas</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 h-[calc(100%-5rem)] md:h-[calc(100%-5rem)] flex overflow-hidden shadow-sm">
+      <div className="bg-white rounded-xl border border-gray-200 flex-1 min-h-0 flex overflow-hidden shadow-sm">
         {/* Lista de conversas - oculta no mobile quando uma conversa está selecionada */}
         <div className={`w-full md:w-80 border-r border-gray-200 flex flex-col ${
           selectedConversation ? 'hidden md:flex' : 'flex'
